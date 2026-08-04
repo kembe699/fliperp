@@ -78,7 +78,7 @@ class RoleAndPermissionSeeder extends Seeder
         'payment-types' => ['view', 'create', 'update', 'delete'],
         'customers' => ['view', 'create', 'update', 'delete'],
         'restaurant-tables' => ['view', 'create', 'update', 'delete'],
-        'cash-drawer-sessions' => ['view', 'open', 'close'],
+        'cash-drawer-sessions' => ['view', 'open', 'close', 'reconcile'],
         'sales' => ['view', 'create', 'update', 'delete', 'hold', 'complete', 'void', 'refund'],
         'pos-reports' => ['view'],
 
@@ -158,7 +158,7 @@ class RoleAndPermissionSeeder extends Seeder
             'payment-types' => ['view', 'create', 'update', 'delete'],
             'customers' => ['view', 'create', 'update', 'delete'],
             'restaurant-tables' => ['view', 'create', 'update', 'delete'],
-            'cash-drawer-sessions' => ['view', 'open', 'close'],
+            'cash-drawer-sessions' => ['view', 'open', 'close', 'reconcile'],
             'sales' => ['view', 'create', 'update', 'delete', 'hold', 'complete', 'void', 'refund'],
             'pos-reports' => ['view'],
             'price-lists' => ['view', 'create', 'update', 'delete'],
@@ -199,7 +199,7 @@ class RoleAndPermissionSeeder extends Seeder
             'payment-types' => ['view'],
             'customers' => ['view', 'create', 'update'],
             'restaurant-tables' => ['view', 'create', 'update'],
-            'cash-drawer-sessions' => ['view', 'open', 'close'],
+            'cash-drawer-sessions' => ['view', 'open', 'close', 'reconcile'],
             'sales' => ['view', 'create', 'update', 'delete', 'hold', 'complete', 'void', 'refund'],
             'pos-reports' => ['view'],
             'price-lists' => ['view'],
@@ -217,6 +217,9 @@ class RoleAndPermissionSeeder extends Seeder
             'payment-types' => ['view'],
             'customers' => ['view', 'create', 'update'],
             'restaurant-tables' => ['view', 'update'],
+            // Deliberately no reconcile: a cashier shouldn't be able to mark
+            // their own shortage as recovered without a supervisor/accountant
+            // involved — that's exactly the control this action exists for.
             'cash-drawer-sessions' => ['view', 'open', 'close'],
             'sales' => ['view', 'create', 'update', 'delete', 'hold', 'complete', 'void', 'refund'],
             'pos-reports' => ['view'],
@@ -245,7 +248,7 @@ class RoleAndPermissionSeeder extends Seeder
             'tax-rates' => ['view'],
             'payment-types' => ['view'],
             'customers' => ['view'],
-            'cash-drawer-sessions' => ['view'],
+            'cash-drawer-sessions' => ['view', 'reconcile'],
             'sales' => ['view'],
             'pos-reports' => ['view'],
             'price-lists' => ['view'],

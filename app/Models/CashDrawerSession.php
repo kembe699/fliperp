@@ -19,6 +19,7 @@ class CashDrawerSession extends TenantModel
         'expected_closing',
         'variance',
         'journal_entry_id',
+        'recovered_amount',
         'opened_at',
         'closed_at',
         'status',
@@ -31,6 +32,7 @@ class CashDrawerSession extends TenantModel
             'closing_float' => 'decimal:2',
             'expected_closing' => 'decimal:2',
             'variance' => 'decimal:2',
+            'recovered_amount' => 'decimal:2',
             'opened_at' => 'datetime',
             'closed_at' => 'datetime',
         ];
@@ -54,5 +56,10 @@ class CashDrawerSession extends TenantModel
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function varianceRecoveries(): HasMany
+    {
+        return $this->hasMany(CashDrawerVarianceRecovery::class);
     }
 }

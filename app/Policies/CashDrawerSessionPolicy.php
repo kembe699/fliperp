@@ -26,4 +26,9 @@ class CashDrawerSessionPolicy
     {
         return $user->can('cash-drawer-sessions.close') && $session->company_id === $user->company_id;
     }
+
+    public function reconcile(User $user, CashDrawerSession $session): bool
+    {
+        return $user->can('cash-drawer-sessions.reconcile') && $session->company_id === $user->company_id;
+    }
 }

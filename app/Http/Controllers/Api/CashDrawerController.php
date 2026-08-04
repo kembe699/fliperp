@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CashDrawer\CloseCashDrawerSessionRequest;
 use App\Http\Requests\CashDrawer\OpenCashDrawerSessionRequest;
+use App\Http\Requests\CashDrawer\RecordCashDrawerRecoveryRequest;
 use App\Http\Resources\CashDrawerSessionResource;
+use App\Http\Resources\CashDrawerVarianceRecoveryResource;
 use App\Models\CashDrawerSession;
 use App\Services\Pos\CashDrawerService;
 use Illuminate\Http\JsonResponse;
@@ -61,5 +63,14 @@ class CashDrawerController extends Controller
         $session = $this->cashDrawerService->close($session, $request->validated());
 
         return $this->success(new CashDrawerSessionResource($session), 'Cash drawer session closed successfully.');
+    }
+
+    public function recordRecovery(RecordCashDrawerRecoveryRequest $request, CashDrawerSession $session): JsonResponse
+    {
+        $this->authorize('reconcile', $session);
+
+        $recovery = $this->cashDrawerService->recordVarianceRecovery($session, $request->validated());
+
+        return $this->success(new CashDrawerVarianceRecoveryResource($recovery), 'Recovery recorded successfully.', 201);
     }
 }

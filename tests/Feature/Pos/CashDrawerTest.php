@@ -245,3 +245,94 @@ it('posts no journal entry when the drawer closes with exactly zero variance', f
 
     expect(App\Models\JournalEntry::where('source_module', 'pos_cash_drawer')->count())->toBe(0);
 });
+
+it('records a cash shortage recovery, posts a reversing journal entry, and reduces the outstanding shortage', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 500000])
+        ->assertCreated();
+    $sessionId = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => 85500])
+        ->assertOk()
+        ->json('data.id');
+
+    $accountant = createUserWithRole('accountant', $this->company, $this->branch);
+    Sanctum::actingAs($accountant, ['*']);
+
+    $response = $this->postJson("/api/v1/cash-drawer-sessions/{$sessionId}/recoveries", [
+        'amount' => 300000,
+        'notes' => 'Cashier brought back part of the shortage',
+    ])->assertCreated();
+
+    $journalEntryId = $response->json('data.journal_entry_id');
+    expect($journalEntryId)->not->toBeNull();
+    expect((float) $response->json('data.amount'))->toBe(300000.0);
+
+    $cashAccount = $this->accounts['1000'];
+    $shortOverAccount = App\Models\ChartOfAccount::where('company_id', $this->company->id)->where('code', '5400')->firstOrFail();
+
+    $this->assertDatabaseHas('journal_entry_lines', [
+        'journal_entry_id' => $journalEntryId,
+        'account_id' => $cashAccount->id,
+        'debit' => 300000,
+        'credit' => 0,
+    ]);
+    $this->assertDatabaseHas('journal_entry_lines', [
+        'journal_entry_id' => $journalEntryId,
+        'account_id' => $shortOverAccount->id,
+        'debit' => 0,
+        'credit' => 300000,
+    ]);
+
+    $session = $this->getJson('/api/v1/cash-drawer-sessions')->assertOk()->json('data.0');
+    expect((float) $session['recovered_amount'])->toBe(300000.0);
+    expect((float) $session['outstanding_shortage'])->toBe(114500.0);
+
+    // A second, smaller recovery for the remainder should bring it to zero.
+    $this->postJson("/api/v1/cash-drawer-sessions/{$sessionId}/recoveries", ['amount' => 114500])
+        ->assertCreated();
+
+    $session = $this->getJson('/api/v1/cash-drawer-sessions')->assertOk()->json('data.0');
+    expect((float) $session['recovered_amount'])->toBe(414500.0);
+    expect((float) $session['outstanding_shortage'])->toBe(0.0);
+});
+
+it('rejects a recovery amount that exceeds the outstanding shortage', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 500000])
+        ->assertCreated();
+    $sessionId = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => 85500])
+        ->assertOk()
+        ->json('data.id');
+
+    $accountant = createUserWithRole('accountant', $this->company, $this->branch);
+    Sanctum::actingAs($accountant, ['*']);
+
+    $this->postJson("/api/v1/cash-drawer-sessions/{$sessionId}/recoveries", ['amount' => 500000])
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+});
+
+it('rejects recording a recovery against a session with no shortage', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 50000])
+        ->assertCreated();
+    $sessionId = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => 50000])
+        ->assertOk()
+        ->json('data.id');
+
+    $accountant = createUserWithRole('accountant', $this->company, $this->branch);
+    Sanctum::actingAs($accountant, ['*']);
+
+    $this->postJson("/api/v1/cash-drawer-sessions/{$sessionId}/recoveries", ['amount' => 100])
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+});
+
+it('denies a cashier from recording a recovery against their own shortage', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 500000])
+        ->assertCreated();
+    $sessionId = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => 85500])
+        ->assertOk()
+        ->json('data.id');
+
+    // Still acting as $this->cashier from beforeEach — cashiers aren't
+    // granted cash-drawer-sessions.reconcile on purpose.
+    $this->postJson("/api/v1/cash-drawer-sessions/{$sessionId}/recoveries", ['amount' => 100000])
+        ->assertStatus(403);
+});

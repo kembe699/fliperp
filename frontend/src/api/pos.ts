@@ -1,6 +1,6 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
-import type { CashDrawerSession, PaymentType, PriceList, PriceListItem, TaxRate, Warehouse } from '@/types/pos'
+import type { CashDrawerSession, CashDrawerVarianceRecovery, PaymentType, PriceList, PriceListItem, TaxRate, Warehouse } from '@/types/pos'
 
 export async function fetchPaymentTypes(): Promise<PaymentType[]> {
   const { data } = await api.get<PaginatedResponse<PaymentType>>('/payment-types', { params: { per_page: 50 } })
@@ -55,4 +55,12 @@ export interface CashDrawerSessionFilters {
 export async function fetchCashDrawerSessions(filters: CashDrawerSessionFilters = {}): Promise<PaginatedResponse<CashDrawerSession>> {
   const { data } = await api.get<PaginatedResponse<CashDrawerSession>>('/cash-drawer-sessions', { params: filters })
   return data
+}
+
+export async function recordCashDrawerRecovery(
+  sessionId: number,
+  input: { amount: number; notes?: string },
+): Promise<CashDrawerVarianceRecovery> {
+  const { data } = await api.post<ApiResponse<CashDrawerVarianceRecovery>>(`/cash-drawer-sessions/${sessionId}/recoveries`, input)
+  return data.data
 }

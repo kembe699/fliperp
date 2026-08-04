@@ -259,6 +259,7 @@ Route::prefix('v1')->group(function () {
         Route::post('cash-drawer/close', [CashDrawerController::class, 'close']);
         Route::get('cash-drawer/current', [CashDrawerController::class, 'current']);
         Route::get('cash-drawer-sessions', [CashDrawerController::class, 'index']);
+        Route::post('cash-drawer-sessions/{session}/recoveries', [CashDrawerController::class, 'recordRecovery']);
 
         Route::get('sales/held', [SaleController::class, 'held']);
         Route::apiResource('sales', SaleController::class);

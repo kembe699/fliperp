@@ -54,7 +54,21 @@ export interface CashDrawerSession {
   closing_float: number | null
   expected_closing: number | null
   variance: number | null
+  journal_entry_id: number | null
+  recovered_amount: number
+  outstanding_shortage: number
   opened_at: string
   closed_at: string | null
   status: 'open' | 'closed'
+}
+
+export interface CashDrawerVarianceRecovery {
+  id: number
+  company_id: number
+  cash_drawer_session_id: number
+  amount: number
+  notes: string | null
+  received_by: number
+  journal_entry_id: number | null
+  created_at: string
 }

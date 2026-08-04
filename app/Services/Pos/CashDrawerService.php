@@ -3,6 +3,7 @@
 namespace App\Services\Pos;
 
 use App\Models\CashDrawerSession;
+use App\Models\CashDrawerVarianceRecovery;
 use App\Models\ChartOfAccount;
 use App\Models\JournalEntry;
 use App\Models\Sale;
@@ -185,6 +186,66 @@ class CashDrawerService
             'source_id' => $session->id,
             'lines' => $lines,
         ]);
+    }
+
+    /**
+     * A shortage posted at close() is a real loss recorded in the books —
+     * but if the cashier later hands over the missing cash, that needs its
+     * own entry too, rather than silently editing the original one. This
+     * reverses the shape of the shortage entry (debit Cash, credit Cash
+     * Short/Over) for the amount actually recovered, and supports partial
+     * recovery over multiple payments the same way customer/supplier
+     * payments do.
+     */
+    public function recordVarianceRecovery(CashDrawerSession $session, array $data): CashDrawerVarianceRecovery
+    {
+        return DB::transaction(function () use ($session, $data) {
+            $session = CashDrawerSession::query()->lockForUpdate()->findOrFail($session->id);
+
+            if ($session->status !== 'closed' || $session->variance === null || (float) $session->variance >= 0) {
+                throw ValidationException::withMessages([
+                    'cash_drawer_session' => ['Only a closed session with a cash shortage can have a recovery recorded against it.'],
+                ]);
+            }
+
+            $outstanding = round(abs((float) $session->variance) - (float) $session->recovered_amount, 2);
+            $amount = round((float) $data['amount'], 2);
+
+            if ($amount > $outstanding) {
+                throw ValidationException::withMessages([
+                    'amount' => ["Recovery amount exceeds the outstanding shortage of {$outstanding}."],
+                ]);
+            }
+
+            $cashAccount = $this->resolveAccount($session->company_id, self::CASH_ACCOUNT_CODE);
+            $shortOverAccount = $this->resolveAccount($session->company_id, self::CASH_SHORT_OVER_ACCOUNT_CODE);
+
+            $referenceNumber = 'CDREC-'.$session->id.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
+
+            $journalEntry = $this->journalEntryService->postModuleEntry([
+                'reference_number' => $referenceNumber,
+                'entry_date' => now()->toDateString(),
+                'description' => "Cash shortage recovery on session #{$session->id}",
+                'source_module' => 'pos_cash_drawer_recovery',
+                'source_id' => $session->id,
+                'lines' => [
+                    ['account_id' => $cashAccount->id, 'debit' => $amount, 'credit' => 0, 'description' => 'Cash shortage recovered'],
+                    ['account_id' => $shortOverAccount->id, 'debit' => 0, 'credit' => $amount, 'description' => 'Cash shortage recovered'],
+                ],
+            ]);
+
+            $recovery = CashDrawerVarianceRecovery::create([
+                'cash_drawer_session_id' => $session->id,
+                'amount' => $amount,
+                'notes' => $data['notes'] ?? null,
+                'received_by' => Auth::id(),
+                'journal_entry_id' => $journalEntry->id,
+            ]);
+
+            $session->update(['recovered_amount' => (float) $session->recovered_amount + $amount]);
+
+            return $recovery;
+        });
     }
 
     protected function resolveAccount(int $companyId, string $code): ChartOfAccount
