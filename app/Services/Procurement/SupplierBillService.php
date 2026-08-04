@@ -9,9 +9,20 @@ use Illuminate\Validation\ValidationException;
 
 class SupplierBillService
 {
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        return SupplierBill::query()->latest('bill_date')->paginate($perPage);
+        return SupplierBill::query()
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['supplier_id'] ?? null, fn ($query, $id) => $query->where('supplier_id', $id))
+            ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('bill_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('bill_date', '<=', $to))
+            ->when($filters['search'] ?? null, fn ($query, $search) => $query->where(
+                fn ($inner) => $inner
+                    ->where('reference_number', 'ilike', "%{$search}%")
+                    ->orWhereHas('supplier', fn ($supplierQuery) => $supplierQuery->where('name', 'ilike', "%{$search}%"))
+            ))
+            ->latest('bill_date')
+            ->paginate($perPage);
     }
 
     public function create(array $data): SupplierBill

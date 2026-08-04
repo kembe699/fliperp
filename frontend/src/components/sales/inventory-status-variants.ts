@@ -35,6 +35,13 @@ export const SUPPLIER_BILL_STATUS_VARIANT: Record<SupplierBillStatus, StatusVari
   overdue: 'danger',
 }
 
+export const SUPPLIER_BILL_STATUS_LABEL: Record<SupplierBillStatus, string> = {
+  unpaid: 'Unpaid',
+  partially_paid: 'Partially Paid',
+  paid: 'Paid',
+  overdue: 'Overdue',
+}
+
 export const MOVEMENT_TYPE_VARIANT: Record<string, StatusVariant> = {
   purchase: 'success',
   sale: 'danger',

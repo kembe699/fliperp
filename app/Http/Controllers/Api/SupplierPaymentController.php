@@ -19,7 +19,10 @@ class SupplierPaymentController extends Controller
     {
         $this->authorize('viewAny', SupplierPayment::class);
 
-        $payments = $this->supplierPaymentService->paginate($request->integer('per_page', 15));
+        $payments = $this->supplierPaymentService->paginate(
+            $request->only('supplier_bill_id', 'supplier_id'),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated(SupplierPaymentResource::collection($payments));
     }

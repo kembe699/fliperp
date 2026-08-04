@@ -23,9 +23,13 @@ class SupplierPaymentService
         protected JournalEntryService $journalEntryService,
     ) {}
 
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        return SupplierPayment::query()->latest('payment_date')->paginate($perPage);
+        return SupplierPayment::query()
+            ->when($filters['supplier_bill_id'] ?? null, fn ($query, $id) => $query->where('supplier_bill_id', $id))
+            ->when($filters['supplier_id'] ?? null, fn ($query, $id) => $query->where('supplier_id', $id))
+            ->latest('payment_date')
+            ->paginate($perPage);
     }
 
     public function create(array $data): SupplierPayment

@@ -67,6 +67,36 @@ it('only allows updating the reference_number on an existing payment', function 
         ->assertJsonPath('data.reference_number', 'UPDATED-REF');
 });
 
+it('filters the payment index by supplier_bill_id so a bill\'s payment history can be fetched', function () {
+    $otherBillId = $this->postJson('/api/v1/supplier-bills', [
+        'supplier_id' => $this->supplier->id,
+        'reference_number' => 'PAY-BILL-002',
+        'bill_date' => now()->toDateString(),
+        'due_date' => now()->addDays(30)->toDateString(),
+        'subtotal' => 500,
+    ])->json('data.id');
+
+    $this->postJson('/api/v1/supplier-payments', [
+        'supplier_id' => $this->supplier->id,
+        'supplier_bill_id' => $this->billId,
+        'payment_date' => now()->toDateString(),
+        'amount' => 300,
+    ])->assertCreated();
+
+    $this->postJson('/api/v1/supplier-payments', [
+        'supplier_id' => $this->supplier->id,
+        'supplier_bill_id' => $otherBillId,
+        'payment_date' => now()->toDateString(),
+        'amount' => 150,
+    ])->assertCreated();
+
+    $this->getJson("/api/v1/supplier-payments?supplier_bill_id={$this->billId}")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.supplier_bill_id', $this->billId)
+        ->assertJsonPath('data.0.amount', 300);
+});
+
 it('never allows deleting a posted supplier payment', function () {
     $paymentId = $this->postJson('/api/v1/supplier-payments', [
         'supplier_id' => $this->supplier->id,

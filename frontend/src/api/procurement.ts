@@ -8,6 +8,8 @@ import type {
   ReceivingStatus,
   Supplier,
   SupplierBill,
+  SupplierBillStatus,
+  SupplierPayment,
   SupplierStatement,
 } from '@/types/procurement'
 
@@ -145,4 +147,59 @@ export async function confirmGoodsReceivedNote(id: number): Promise<GoodsReceive
 export async function findSupplierBillByGrnId(grnId: number): Promise<SupplierBill | null> {
   const { data } = await api.get<PaginatedResponse<SupplierBill>>('/supplier-bills', { params: { per_page: 100 } })
   return data.data.find((bill) => bill.grn_id === grnId) ?? null
+}
+
+export interface SupplierBillFilters {
+  page?: number
+  per_page?: number
+  status?: SupplierBillStatus
+  supplier_id?: number
+  from?: string
+  to?: string
+  search?: string
+}
+
+export async function fetchSupplierBills(filters: SupplierBillFilters = {}): Promise<PaginatedResponse<SupplierBill>> {
+  const { data } = await api.get<PaginatedResponse<SupplierBill>>('/supplier-bills', { params: filters })
+  return data
+}
+
+export async function fetchSupplierBill(id: number): Promise<SupplierBill> {
+  const { data } = await api.get<ApiResponse<SupplierBill>>(`/supplier-bills/${id}`)
+  return data.data
+}
+
+export interface SupplierBillInput {
+  supplier_id: number
+  purchase_order_id?: number | null
+  reference_number: string
+  bill_date: string
+  due_date: string
+  subtotal: number
+  tax_amount?: number
+}
+
+export async function createSupplierBill(values: SupplierBillInput): Promise<SupplierBill> {
+  const { data } = await api.post<ApiResponse<SupplierBill>>('/supplier-bills', values)
+  return data.data
+}
+
+// Supplier payments
+export async function fetchSupplierPayments(filters: { supplier_bill_id?: number; supplier_id?: number; per_page?: number } = {}): Promise<PaginatedResponse<SupplierPayment>> {
+  const { data } = await api.get<PaginatedResponse<SupplierPayment>>('/supplier-payments', { params: filters })
+  return data
+}
+
+export interface SupplierPaymentInput {
+  supplier_id: number
+  supplier_bill_id: number
+  payment_date: string
+  amount: number
+  payment_type_id?: number | null
+  reference_number?: string | null
+}
+
+export async function createSupplierPayment(values: SupplierPaymentInput): Promise<SupplierPayment> {
+  const { data } = await api.post<ApiResponse<SupplierPayment>>('/supplier-payments', values)
+  return data.data
 }

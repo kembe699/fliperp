@@ -19,7 +19,10 @@ class SupplierBillController extends Controller
     {
         $this->authorize('viewAny', SupplierBill::class);
 
-        $bills = $this->supplierBillService->paginate($request->integer('per_page', 15));
+        $bills = $this->supplierBillService->paginate(
+            $request->only('status', 'supplier_id', 'from', 'to', 'search'),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated(SupplierBillResource::collection($bills));
     }

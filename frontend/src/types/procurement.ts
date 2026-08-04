@@ -121,4 +121,21 @@ export interface SupplierBill {
   balance_due: number
   status: SupplierBillStatus
   journal_entry_id: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SupplierPayment {
+  id: number
+  company_id: number
+  supplier_id: number
+  supplier_bill_id: number
+  payment_date: string
+  amount: number
+  payment_type_id: number | null
+  reference_number: string | null
+  paid_by: number | null
+  journal_entry_id: number | null
+  created_at: string
+  updated_at: string
 }

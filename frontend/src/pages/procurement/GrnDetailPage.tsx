@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { CheckCircle2 } from 'lucide-react'
@@ -27,6 +27,7 @@ const CONDITION_VARIANT: Record<GrnItemCondition, 'success' | 'warning' | 'dange
 export function GrnDetailPage() {
   const { id } = useParams<{ id: string }>()
   const grnId = Number(id)
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermissions()
   const [confirmedThisSession, setConfirmedThisSession] = useState(false)
@@ -144,8 +145,11 @@ export function GrnDetailPage() {
             <p className="mt-4 text-sm text-muted-foreground">
               {linkedBill ? (
                 <>
-                  A supplier bill was created for this receipt: <span className="font-medium text-foreground">{linkedBill.reference_number}</span> (
-                  {formatCurrency(linkedBill.total_amount)}).
+                  A supplier bill was created for this receipt:{' '}
+                  <button type="button" onClick={() => navigate(`/supplier-bills/${linkedBill.id}`)} className="font-medium text-primary hover:underline">
+                    {linkedBill.reference_number}
+                  </button>{' '}
+                  ({formatCurrency(linkedBill.total_amount)}).
                 </>
               ) : confirmedThisSession ? (
                 'This receipt was just confirmed. If it was linked to a purchase order, a supplier bill should follow shortly.'

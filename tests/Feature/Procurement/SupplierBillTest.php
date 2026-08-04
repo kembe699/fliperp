@@ -91,6 +91,57 @@ it('rejects a payment that exceeds the outstanding balance', function () {
     ])->assertStatus(422)->assertJsonPath('success', false);
 });
 
+it('filters the bill index by status, supplier, date range, and search', function () {
+    $otherSupplier = createSupplier($this->company, ['name' => 'Other Supplier']);
+
+    $paid = $this->postJson('/api/v1/supplier-bills', [
+        'supplier_id' => $this->supplier->id,
+        'reference_number' => 'FILTER-PAID',
+        'bill_date' => now()->subDays(10)->toDateString(),
+        'due_date' => now()->addDays(20)->toDateString(),
+        'subtotal' => 100,
+    ])->json('data.id');
+    $this->postJson('/api/v1/supplier-payments', [
+        'supplier_id' => $this->supplier->id,
+        'supplier_bill_id' => $paid,
+        'payment_date' => now()->toDateString(),
+        'amount' => 100,
+    ])->assertCreated();
+
+    $this->postJson('/api/v1/supplier-bills', [
+        'supplier_id' => $otherSupplier->id,
+        'reference_number' => 'FILTER-OTHER-SUPPLIER',
+        'bill_date' => now()->toDateString(),
+        'due_date' => now()->addDays(30)->toDateString(),
+        'subtotal' => 200,
+    ])->assertCreated();
+
+    $this->getJson('/api/v1/supplier-bills?status=paid')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.reference_number', 'FILTER-PAID');
+
+    $this->getJson("/api/v1/supplier-bills?supplier_id={$otherSupplier->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.reference_number', 'FILTER-OTHER-SUPPLIER');
+
+    $this->getJson('/api/v1/supplier-bills?search=other-supplier')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.reference_number', 'FILTER-OTHER-SUPPLIER');
+
+    $this->getJson('/api/v1/supplier-bills?search='.urlencode($otherSupplier->name))
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.reference_number', 'FILTER-OTHER-SUPPLIER');
+
+    $this->getJson('/api/v1/supplier-bills?from='.now()->subDays(15)->toDateString().'&to='.now()->subDays(5)->toDateString())
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.reference_number', 'FILTER-PAID');
+});
+
 it('blocks deleting a bill that already has a payment applied', function () {
     $billId = $this->postJson('/api/v1/supplier-bills', [
         'supplier_id' => $this->supplier->id,

@@ -35,6 +35,9 @@ import { StockAdjustmentDetailPage } from '@/pages/inventory/StockAdjustmentDeta
 
 import { SuppliersListPage } from '@/pages/procurement/SuppliersListPage'
 import { SupplierStatementPage } from '@/pages/procurement/SupplierStatementPage'
+import { SupplierBillsListPage } from '@/pages/procurement/SupplierBillsListPage'
+import { SupplierBillDetailPage } from '@/pages/procurement/SupplierBillDetailPage'
+import { SupplierBillFormPage } from '@/pages/procurement/SupplierBillFormPage'
 import { PurchaseOrdersListPage } from '@/pages/procurement/PurchaseOrdersListPage'
 import { PurchaseOrderFormPage } from '@/pages/procurement/PurchaseOrderFormPage'
 import { PurchaseOrderDetailPage } from '@/pages/procurement/PurchaseOrderDetailPage'
@@ -106,6 +109,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/suppliers',
   '/purchase-orders',
   '/goods-received-notes',
+  '/supplier-bills',
   '/employees',
   '/attendance',
   '/leave-requests',
@@ -205,6 +209,9 @@ function App() {
           <Route path="/goods-received-notes" element={<GoodsReceivedNotesListPage />} />
           <Route path="/goods-received-notes/new" element={<GrnFormPage />} />
           <Route path="/goods-received-notes/:id" element={<GrnDetailPage />} />
+          <Route path="/supplier-bills" element={<SupplierBillsListPage />} />
+          <Route path="/supplier-bills/new" element={<SupplierBillFormPage />} />
+          <Route path="/supplier-bills/:id" element={<SupplierBillDetailPage />} />
 
           <Route path="/employees" element={<EmployeesListPage />} />
           <Route path="/employees/:id" element={<EmployeeDetailPage />} />
