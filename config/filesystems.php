@@ -38,13 +38,26 @@ return [
             'report' => false,
         ],
 
+        // Everything the app writes (company logos, employee photos, signed
+        // contract PDFs, receipts) goes through Storage::disk('public') —
+        // this single disk switches between local dev storage and an
+        // S3-compatible bucket (e.g. Cloudflare R2) via PUBLIC_DISK_DRIVER,
+        // so no application code needs to know which one is active.
         'public' => [
-            'driver' => 'local',
+            'driver' => env('PUBLIC_DISK_DRIVER', 'local'),
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('PUBLIC_DISK_URL', env('APP_URL').'/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+
+            // Only read when PUBLIC_DISK_DRIVER=s3; ignored by the "local" driver.
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION', 'auto'),
+            'bucket' => env('AWS_BUCKET'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', true),
         ],
 
         's3' => [
