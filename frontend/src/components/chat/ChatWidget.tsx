@@ -4,7 +4,7 @@ import { MessageCircle, X } from 'lucide-react'
 
 import { fetchConversations, startConversationWith } from '@/api/chat'
 import { useAuthStore } from '@/lib/auth-store'
-import { getEcho } from '@/lib/echo'
+import { initEcho } from '@/lib/echo'
 import type { ChatConversation, PresenceMember } from '@/types/chat'
 
 import { ChatHomeView } from '@/components/chat/ChatHomeView'
@@ -33,7 +33,7 @@ export function ChatWidget() {
   // the instant the launcher is clicked.
   useEffect(() => {
     if (!companyId) return
-    const echo = getEcho()
+    const echo = initEcho()
     if (!echo) return
 
     const channel = echo.join(`company.${companyId}`)
@@ -51,7 +51,7 @@ export function ChatWidget() {
   // fires this at recipients who aren't actively viewing).
   useEffect(() => {
     if (!userId) return
-    const echo = getEcho()
+    const echo = initEcho()
     if (!echo) return
 
     const channel = echo.private(`user.${userId}`)

@@ -4,7 +4,7 @@ import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
 import { ArrowLeft, File, Loader2, Paperclip, Send, SmilePlus, X } from 'lucide-react'
 
 import { downloadChatAttachment, fetchMessages, markConversationRead, sendChatMessage } from '@/api/chat'
-import { getEcho } from '@/lib/echo'
+import { initEcho } from '@/lib/echo'
 import { useAuthStore } from '@/lib/auth-store'
 import { cn } from '@/lib/utils'
 import type { ChatConversation, ChatMessage, ChatMessageAttachment } from '@/types/chat'
@@ -93,7 +93,7 @@ export function ChatConversationView({ conversation, isOtherUserOnline, onBack }
   }, [messages])
 
   useEffect(() => {
-    const echo = getEcho()
+    const echo = initEcho()
     if (!echo) return
 
     const channel = echo.private(`conversation.${conversation.id}`)

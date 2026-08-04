@@ -6,7 +6,7 @@ import { Bell, CheckCheck } from 'lucide-react'
 
 import { fetchNotifications, fetchUnreadNotificationCount, markAllNotificationsRead, markNotificationRead } from '@/api/notifications'
 import { useAuthStore } from '@/lib/auth-store'
-import { getEcho } from '@/lib/echo'
+import { initEcho } from '@/lib/echo'
 import { formatRelativeTime } from '@/lib/format'
 import { iconForCategory, isToastWorthy } from '@/lib/notification-meta'
 import type { AppNotification } from '@/types/notification'
@@ -57,7 +57,7 @@ export function NotificationBell() {
   // the icon and whether it's toast-worthy.
   useEffect(() => {
     if (!userId) return
-    const echo = getEcho()
+    const echo = initEcho()
     if (!echo) return
 
     const channel = echo.private(`user.${userId}`)
