@@ -12,9 +12,23 @@ declare global {
 window.Pusher = Pusher
 
 let echoInstance: Echo<'reverb'> | null = null
+let warnedMissingKey = false
 
-export function initEcho(): Echo<'reverb'> {
+export function initEcho(): Echo<'reverb'> | null {
   if (echoInstance) return echoInstance
+
+  // Vite bakes VITE_* vars in at build time — if this environment (e.g. a
+  // deploy target) never had them set when the frontend was built, the key
+  // comes through as undefined and pusher-js throws synchronously from its
+  // constructor. Degrade to "real-time features are off" instead of taking
+  // the whole app down for every logged-in user.
+  if (!import.meta.env.VITE_REVERB_APP_KEY) {
+    if (!warnedMissingKey) {
+      console.warn('VITE_REVERB_APP_KEY is not set — notifications and chat will not receive live updates.')
+      warnedMissingKey = true
+    }
+    return null
+  }
 
   echoInstance = new Echo({
     broadcaster: 'reverb',
