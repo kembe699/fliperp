@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { Copy, KeyRound, Plus } from 'lucide-react'
 
 import {
+  createEmployeePortalAccount,
   createSalaryStructure,
   fetchAttendance,
   fetchDepartments,
@@ -52,6 +53,9 @@ export function EmployeeDetailPage() {
   const [basicSalary, setBasicSalary] = useState('')
   const [effectiveDate, setEffectiveDate] = useState('')
 
+  const [portalPasswordDialogOpen, setPortalPasswordDialogOpen] = useState(false)
+  const [temporaryPassword, setTemporaryPassword] = useState('')
+
   const { data: employee, isLoading } = useQuery({ queryKey: ['employee', employeeId], queryFn: () => fetchEmployee(employeeId), enabled: !!employeeId })
   const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments })
   const { data: positions } = useQuery({ queryKey: ['positions'], queryFn: fetchPositions })
@@ -86,6 +90,16 @@ export function EmployeeDetailPage() {
       setSalaryOpen(false)
       setBasicSalary('')
       setEffectiveDate('')
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
+  const portalAccountMutation = useMutation({
+    mutationFn: () => createEmployeePortalAccount(employeeId),
+    onSuccess: (result) => {
+      setTemporaryPassword(result.temporary_password)
+      setPortalPasswordDialogOpen(true)
+      queryClient.invalidateQueries({ queryKey: ['employee', employeeId] })
     },
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
@@ -138,7 +152,23 @@ export function EmployeeDetailPage() {
 
   return (
     <div>
-      <PageHeader parent="Employees" title={`${employee.first_name} ${employee.last_name}`} />
+      <PageHeader
+        parent="Employees"
+        title={`${employee.first_name} ${employee.last_name}`}
+        action={
+          !employee.user_id && can('employees.update') ? (
+            <Button
+              variant="outline"
+              disabled={!employee.email || portalAccountMutation.isPending}
+              title={!employee.email ? 'Add an email address to this employee first' : undefined}
+              onClick={() => portalAccountMutation.mutate()}
+            >
+              <KeyRound className="h-4 w-4" />
+              Create Portal Login
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Card className="mb-6">
         <CardContent className="flex items-center gap-6 p-6">
@@ -273,6 +303,44 @@ export function EmployeeDetailPage() {
             <Button disabled={!basicSalary || !effectiveDate || salaryMutation.isPending} onClick={() => salaryMutation.mutate()}>
               Add Salary Structure
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={portalPasswordDialogOpen} onOpenChange={setPortalPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Portal Login Created</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Share these credentials with {employee.first_name} securely (e.g. in person or a password manager). The password is shown
+              only once and cannot be retrieved again — if it's lost, you'll need to reset it.
+            </p>
+            <div className="space-y-1.5">
+              <Label>Email</Label>
+              <Input readOnly value={employee.email ?? ''} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Temporary Password</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={temporaryPassword} className="font-mono" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(temporaryPassword)
+                    toast.success('Password copied')
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setPortalPasswordDialogOpen(false)}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

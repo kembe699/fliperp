@@ -63,6 +63,16 @@ export async function deleteEmployeePhoto(id: number): Promise<Employee> {
   return data.data
 }
 
+export interface CreatePortalAccountResult {
+  employee: Employee
+  temporary_password: string
+}
+
+export async function createEmployeePortalAccount(id: number): Promise<CreatePortalAccountResult> {
+  const { data } = await api.post<ApiResponse<CreatePortalAccountResult>>(`/employees/${id}/create-portal-account`)
+  return data.data
+}
+
 // Employee contracts
 export async function fetchEmployeeContracts(employeeId: number): Promise<EmployeeContract[]> {
   const { data } = await api.get<PaginatedResponse<EmployeeContract>>('/employee-contracts', { params: { employee_id: employeeId, per_page: 50 } })
