@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GoodsReceivedNote\StoreGoodsReceivedNoteRequest;
 use App\Http\Requests\GoodsReceivedNote\UpdateGoodsReceivedNoteRequest;
 use App\Http\Resources\GoodsReceivedNoteResource;
+use App\Models\Company;
 use App\Models\GoodsReceivedNote;
 use App\Services\Procurement\GrnService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class GoodsReceivedNoteController extends Controller
 {
@@ -65,5 +68,23 @@ class GoodsReceivedNoteController extends Controller
         $goodsReceivedNote = $this->grnService->confirm($goodsReceivedNote);
 
         return $this->success(new GoodsReceivedNoteResource($goodsReceivedNote), 'Goods received note confirmed successfully.');
+    }
+
+    public function pdf(Request $request, GoodsReceivedNote $goodsReceivedNote): Response
+    {
+        $this->authorize('view', $goodsReceivedNote);
+
+        $goodsReceivedNote->load(['items.product', 'items.variant', 'supplier', 'warehouse', 'receivedBy', 'purchaseOrder']);
+        $company = Company::find($goodsReceivedNote->company_id);
+
+        $pdf = Pdf::loadView('pdf.grn', [
+            'grn' => $goodsReceivedNote,
+            'company' => $company,
+            'supplier' => $goodsReceivedNote->supplier,
+            'warehouse' => $goodsReceivedNote->warehouse,
+            'currencyCode' => $company?->currency_code ?? 'USD',
+        ])->setPaper('a4', 'portrait');
+
+        return $this->pdfResponse($pdf, "grn-{$goodsReceivedNote->reference_number}.pdf", $request->boolean('download'));
     }
 }

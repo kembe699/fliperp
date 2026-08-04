@@ -1,11 +1,13 @@
 <?php
 
+use App\Mail\DocumentMail;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     [$this->company, $this->branch] = createCompanyWithMainBranch();
     $this->admin = createUserWithRole('company_admin', $this->company, $this->branch);
-    $this->customer = createCustomer($this->company);
+    $this->customer = createCustomer($this->company, ['email' => 'customer@example.test']);
     $this->product = createProduct($this->company, ['cost_price' => 50, 'selling_price' => 100]);
 
     Sanctum::actingAs($this->admin, ['*']);
@@ -57,4 +59,37 @@ it('returns 404 for a quotation belonging to another company', function () {
 
     $this->get("/api/v1/quotations/{$otherQuotationId}/pdf")->assertStatus(404);
     $this->get("/api/v1/quotations/{$this->quotationId}/pdf")->assertOk();
+});
+
+it('emails the quotation PDF to the customer on file', function () {
+    Mail::fake();
+
+    $this->postJson("/api/v1/quotations/{$this->quotationId}/email")
+        ->assertOk()
+        ->assertJsonPath('message', 'Quotation emailed to customer@example.test.');
+
+    Mail::assertSent(DocumentMail::class, function (DocumentMail $mail) {
+        return $mail->hasTo('customer@example.test')
+            && $mail->documentType === 'Quotation'
+            && $mail->referenceNumber === 'QUO-PDF-TEST-001';
+    });
+});
+
+it('rejects emailing a quotation when the customer has no email on file', function () {
+    $customerNoEmail = createCustomer($this->company, ['name' => 'No Email Customer']);
+    $quotationId = $this->postJson('/api/v1/quotations', [
+        'branch_id' => $this->branch->id,
+        'customer_id' => $customerNoEmail->id,
+        'reference_number' => 'QUO-PDF-TEST-NOEMAIL',
+        'valid_until' => now()->addDays(7)->toDateString(),
+        'items' => [['product_id' => $this->product->id, 'quantity' => 1, 'unit_price' => 100]],
+    ])->json('data.id');
+
+    Mail::fake();
+
+    $this->postJson("/api/v1/quotations/{$quotationId}/email")
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+
+    Mail::assertNothingSent();
 });

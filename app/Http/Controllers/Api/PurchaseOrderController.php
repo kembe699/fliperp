@@ -6,10 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PurchaseOrder\StorePurchaseOrderRequest;
 use App\Http\Requests\PurchaseOrder\UpdatePurchaseOrderRequest;
 use App\Http\Resources\PurchaseOrderResource;
+use App\Mail\DocumentMail;
+use App\Models\Company;
 use App\Models\PurchaseOrder;
 use App\Services\Procurement\PurchaseOrderService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderController extends Controller
 {
@@ -93,5 +100,56 @@ class PurchaseOrderController extends Controller
         $this->authorize('view', $purchaseOrder);
 
         return $this->success($this->purchaseOrderService->receivingStatus($purchaseOrder));
+    }
+
+    public function pdf(Request $request, PurchaseOrder $purchaseOrder): Response
+    {
+        $this->authorize('view', $purchaseOrder);
+
+        $pdf = $this->buildPdf($purchaseOrder);
+
+        return $this->pdfResponse($pdf, "purchase-order-{$purchaseOrder->reference_number}.pdf", $request->boolean('download'));
+    }
+
+    public function email(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $this->authorize('view', $purchaseOrder);
+
+        $purchaseOrder->loadMissing('supplier');
+        $supplier = $purchaseOrder->supplier;
+
+        if (! $supplier?->email) {
+            throw ValidationException::withMessages([
+                'email' => ['This supplier has no email address on file.'],
+            ]);
+        }
+
+        $company = Company::find($purchaseOrder->company_id);
+        $pdf = $this->buildPdf($purchaseOrder);
+
+        Mail::to($supplier->email)->send(new DocumentMail(
+            documentType: 'Purchase Order',
+            referenceNumber: $purchaseOrder->reference_number,
+            recipientName: $supplier->name,
+            companyName: $company?->name ?? config('app.name'),
+            pdfContent: $pdf->output(),
+            pdfFilename: "purchase-order-{$purchaseOrder->reference_number}.pdf",
+        ));
+
+        return $this->success(null, "Purchase order emailed to {$supplier->email}.");
+    }
+
+    protected function buildPdf(PurchaseOrder $purchaseOrder): DomPdf
+    {
+        $purchaseOrder->loadMissing(['items.product', 'items.variant', 'supplier', 'branch', 'warehouse']);
+        $company = Company::find($purchaseOrder->company_id);
+
+        return Pdf::loadView('pdf.purchase-order', [
+            'purchaseOrder' => $purchaseOrder,
+            'company' => $company,
+            'branch' => $purchaseOrder->branch,
+            'supplier' => $purchaseOrder->supplier,
+            'currencyCode' => $company?->currency_code ?? 'USD',
+        ])->setPaper('a4', 'portrait');
     }
 }

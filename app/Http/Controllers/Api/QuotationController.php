@@ -7,13 +7,17 @@ use App\Http\Requests\Quotation\StoreQuotationRequest;
 use App\Http\Requests\Quotation\UpdateQuotationRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Http\Resources\QuotationResource;
+use App\Mail\DocumentMail;
 use App\Models\Company;
 use App\Models\Quotation;
 use App\Services\Sales\QuotationService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class QuotationController extends Controller
 {
@@ -105,17 +109,50 @@ class QuotationController extends Controller
     {
         $this->authorize('view', $quotation);
 
-        $quotation->load(['items.product', 'items.variant', 'customer', 'branch']);
+        $pdf = $this->buildPdf($quotation);
+
+        return $this->pdfResponse($pdf, "quotation-{$quotation->reference_number}.pdf", $request->boolean('download'));
+    }
+
+    public function email(Quotation $quotation): JsonResponse
+    {
+        $this->authorize('view', $quotation);
+
+        $quotation->loadMissing('customer');
+        $customer = $quotation->customer;
+
+        if (! $customer?->email) {
+            throw ValidationException::withMessages([
+                'email' => ['This customer has no email address on file.'],
+            ]);
+        }
+
+        $company = Company::find($quotation->company_id);
+        $pdf = $this->buildPdf($quotation);
+
+        Mail::to($customer->email)->send(new DocumentMail(
+            documentType: 'Quotation',
+            referenceNumber: $quotation->reference_number,
+            recipientName: $customer->name,
+            companyName: $company?->name ?? config('app.name'),
+            pdfContent: $pdf->output(),
+            pdfFilename: "quotation-{$quotation->reference_number}.pdf",
+        ));
+
+        return $this->success(null, "Quotation emailed to {$customer->email}.");
+    }
+
+    protected function buildPdf(Quotation $quotation): DomPdf
+    {
+        $quotation->loadMissing(['items.product', 'items.variant', 'customer', 'branch']);
         $company = Company::find($quotation->company_id);
 
-        $pdf = Pdf::loadView('pdf.quotation', [
+        return Pdf::loadView('pdf.quotation', [
             'quotation' => $quotation,
             'company' => $company,
             'branch' => $quotation->branch,
             'customer' => $quotation->customer,
             'currencyCode' => $company?->currency_code ?? 'USD',
         ])->setPaper('a4', 'portrait');
-
-        return $this->pdfResponse($pdf, "quotation-{$quotation->reference_number}.pdf", $request->boolean('download'));
     }
 }

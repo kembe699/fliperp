@@ -1,27 +1,42 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { fetchSales } from '@/api/sales'
+import { fetchSales, refundSale, voidSale } from '@/api/sales'
 import { fetchBranches } from '@/api/branches'
 import { fetchUsers } from '@/api/settings'
 import { fetchPaymentTypes } from '@/api/pos'
 import { fetchCustomers } from '@/api/customers'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { printPdf } from '@/lib/pdf-print'
+import { getApiErrorInfo } from '@/lib/api-errors'
+import { usePermissions } from '@/hooks/use-permissions'
 import type { Sale } from '@/types/sale'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { SaleDetailDialog } from '@/pages/receipts/SaleDetailDialog'
 
 const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
+const SALE_STATUS_VARIANT: Record<Sale['status'], 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
+  held: 'neutral',
+  completed: 'success',
+  voided: 'danger',
+  refunded: 'warning',
+}
+
 export function ReceiptsListPage() {
+  const queryClient = useQueryClient()
+  const { can } = usePermissions()
   const [page, setPage] = useState(1)
+  const [viewingSaleId, setViewingSaleId] = useState<number | null>(null)
+  const [status, setStatus] = useState<Sale['status'] | 'all'>('completed')
   const [branchId, setBranchId] = useState('all')
   const [servedBy, setServedBy] = useState('all')
   const [paymentTypeId, setPaymentTypeId] = useState('all')
@@ -35,12 +50,12 @@ export function ReceiptsListPage() {
   const { data: customersPage } = useQuery({ queryKey: ['customers-all'], queryFn: () => fetchCustomers({ per_page: 100 }) })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['receipts', page, branchId, servedBy, paymentTypeId, from, to, search],
+    queryKey: ['receipts', page, status, branchId, servedBy, paymentTypeId, from, to, search],
     queryFn: () =>
       fetchSales({
         page,
         per_page: 15,
-        status: 'completed',
+        status: status === 'all' ? undefined : status,
         branch_id: branchId === 'all' ? undefined : Number(branchId),
         served_by: servedBy === 'all' ? undefined : Number(servedBy),
         payment_type_id: paymentTypeId === 'all' ? undefined : Number(paymentTypeId),
@@ -57,13 +72,31 @@ export function ReceiptsListPage() {
       ? '—'
       : [...new Set(row.payments.map((payment) => paymentTypes?.find((type) => type.id === payment.payment_type_id)?.name ?? `#${payment.payment_type_id}`))].join(', ')
 
-  const reprint = (row: Sale) => {
+  const print = (row: Sale) => {
     toast.promise(printPdf(`/sales/${row.id}/receipt`), {
       loading: 'Preparing receipt…',
       success: 'Receipt sent to print',
       error: 'Could not print the receipt. Please try again.',
     })
   }
+
+  const voidMutation = useMutation({
+    mutationFn: voidSale,
+    onSuccess: () => {
+      toast.success('Sale voided')
+      queryClient.invalidateQueries({ queryKey: ['receipts'] })
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
+  const refundMutation = useMutation({
+    mutationFn: refundSale,
+    onSuccess: () => {
+      toast.success('Sale refunded')
+      queryClient.invalidateQueries({ queryKey: ['receipts'] })
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
 
   const columns: DataTableColumn<Sale>[] = [
     { key: 'reference_number', header: 'Reference', accessor: (row) => row.reference_number, sortable: true },
@@ -72,15 +105,39 @@ export function ReceiptsListPage() {
     { key: 'served_by', header: 'Cashier', render: (row) => cashierName(row.served_by) },
     { key: 'total_amount', header: 'Total', accessor: (row) => row.total_amount, sortable: true, render: (row) => formatCurrency(row.total_amount) },
     { key: 'payments', header: 'Payment Method(s)', render: (row) => paymentMethods(row) },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <StatusBadge label={row.status} variant={SALE_STATUS_VARIANT[row.status]} className="capitalize" />,
+    },
   ]
 
-  const rowActions: (row: Sale) => DataTableRowAction<Sale>[] = (row) => [{ label: 'Reprint', onClick: reprint }]
+  const rowActions: (row: Sale) => DataTableRowAction<Sale>[] = (row) => [
+    { label: 'View', onClick: (sale) => setViewingSaleId(sale.id) },
+    { label: 'Print', onClick: print },
+    ...(row.status === 'completed' && can('sales.refund') ? [{ label: 'Refund', onClick: (sale: Sale) => refundMutation.mutate(sale.id) }] : []),
+    ...(row.status === 'completed' && can('sales.void')
+      ? [{ label: 'Void', destructive: true, onClick: (sale: Sale) => voidMutation.mutate(sale.id) }]
+      : []),
+  ]
 
   return (
     <div>
       <PageHeader parent="Sales" title="Receipts" />
 
       <FilterBar>
+        <Select value={status} onValueChange={(value) => { setStatus(value as Sale['status'] | 'all'); setPage(1) }}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="voided">Voided</SelectItem>
+            <SelectItem value="refunded">Refunded</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Branch" />
@@ -153,6 +210,8 @@ export function ReceiptsListPage() {
           onPageChange={setPage}
         />
       )}
+
+      <SaleDetailDialog saleId={viewingSaleId} onOpenChange={(open) => !open && setViewingSaleId(null)} />
     </div>
   )
 }

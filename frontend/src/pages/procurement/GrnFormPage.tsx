@@ -60,6 +60,14 @@ export function GrnFormPage() {
     if (!po || !receivingStatus) return
     setSupplierId(String(po.supplier_id))
     setWarehouseId(String(po.warehouse_id))
+    // Unlike supplier/warehouse/items, reference_number has no PO-derived
+    // value to copy — it's a required field the backend won't default for
+    // us (unlike Invoice's reference_number, which auto-generates server
+    // side if omitted). Leaving it blank meant every other field filled
+    // itself in from the PO except this one, so the submit button looked
+    // permanently disabled with no visible cause. Pre-fill a sensible,
+    // still-editable default instead.
+    setReferenceNumber((prev) => prev || `GRN-${po.reference_number}-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`)
     const outstandingRows = receivingStatus.items
       .filter((item) => item.quantity_outstanding > 0)
       .map((item) => {

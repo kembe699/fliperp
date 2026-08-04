@@ -14,7 +14,11 @@ class BudgetPeriodService
 
     public function create(array $data): BudgetPeriod
     {
-        return BudgetPeriod::create($data);
+        // Postgres inserts only RETURNING the id, so the DB-level column
+        // default (status) never makes it back onto the in-memory model
+        // unless set explicitly here — without this the create response
+        // shows status: null even though the row is actually 'draft'.
+        return BudgetPeriod::create(['status' => 'draft', ...$data]);
     }
 
     public function update(BudgetPeriod $budgetPeriod, array $data): BudgetPeriod

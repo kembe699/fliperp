@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\PosReportController;
 use App\Http\Controllers\Api\PriceListController;
 use App\Http\Controllers\Api\PriceListItemController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PublicSaleController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\PurchaseOrderController;
@@ -93,6 +94,12 @@ Route::prefix('v1')->group(function () {
             Route::get('leave-requests', [EmployeePortalLeaveRequestController::class, 'index']);
             Route::post('leave-requests', [EmployeePortalLeaveRequestController::class, 'store']);
         });
+    });
+
+    // Unauthenticated — backs the QR code printed on receipts, scanned by a
+    // customer's own phone with no login of any kind.
+    Route::prefix('public')->group(function () {
+        Route::get('sales/{sale}/verify', [PublicSaleController::class, 'verify']);
     });
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -221,11 +228,15 @@ Route::prefix('v1')->group(function () {
         Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])->middleware('permission:purchase-orders.approve');
         Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel'])->middleware('permission:purchase-orders.cancel');
         Route::get('purchase-orders/{purchase_order}/receiving-status', [PurchaseOrderController::class, 'receivingStatus']);
+        Route::get('purchase-orders/{purchase_order}/pdf', [PurchaseOrderController::class, 'pdf']);
+        Route::post('purchase-orders/{purchase_order}/email', [PurchaseOrderController::class, 'email']);
 
         Route::apiResource('goods-received-notes', GoodsReceivedNoteController::class);
         Route::post('goods-received-notes/{goods_received_note}/confirm', [GoodsReceivedNoteController::class, 'confirm'])->middleware('permission:goods-received-notes.confirm');
+        Route::get('goods-received-notes/{goods_received_note}/pdf', [GoodsReceivedNoteController::class, 'pdf']);
 
         Route::apiResource('supplier-bills', SupplierBillController::class);
+        Route::get('supplier-bills/{supplier_bill}/pdf', [SupplierBillController::class, 'pdf']);
         Route::apiResource('supplier-payments', SupplierPaymentController::class);
 
         // POS: Tax Rates, Payment Types, Customers, Cash Drawer, Sales
@@ -267,10 +278,12 @@ Route::prefix('v1')->group(function () {
         Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->middleware('permission:quotations.reject');
         Route::post('quotations/{quotation}/convert-to-invoice', [QuotationController::class, 'convertToInvoice'])->middleware('permission:quotations.convert-to-invoice');
         Route::get('quotations/{quotation}/pdf', [QuotationController::class, 'pdf']);
+        Route::post('quotations/{quotation}/email', [QuotationController::class, 'email']);
 
         Route::get('invoices/overdue', [InvoiceController::class, 'overdue']);
         Route::apiResource('invoices', InvoiceController::class);
         Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf']);
+        Route::post('invoices/{invoice}/email', [InvoiceController::class, 'email']);
         Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->middleware('permission:invoices.send');
         Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->middleware('permission:invoices.cancel');
 

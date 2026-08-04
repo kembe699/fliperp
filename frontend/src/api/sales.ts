@@ -57,6 +57,26 @@ export async function voidSale(saleId: number): Promise<Sale> {
   return data.data
 }
 
+export async function refundSale(saleId: number): Promise<Sale> {
+  const { data } = await api.post<ApiResponse<Sale>>(`/sales/${saleId}/refund`)
+  return data.data
+}
+
 export async function deleteSale(saleId: number): Promise<void> {
   await api.delete(`/sales/${saleId}`)
+}
+
+export interface PublicSaleVerification {
+  reference_number: string
+  sale_date: string
+  total_amount: number
+  currency_code: string
+  status: string
+  company_name: string | null
+}
+
+/** Unauthenticated — backs the receipt QR code, scanned with no login. */
+export async function verifySalePublic(saleId: number): Promise<PublicSaleVerification> {
+  const { data } = await api.get<ApiResponse<PublicSaleVerification>>(`/public/sales/${saleId}/verify`)
+  return data.data
 }

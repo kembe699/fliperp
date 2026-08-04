@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'DejaVu Sans Mono', 'DejaVu Sans', monospace;
             font-size: 8pt;
             color: #000000;
             margin: 0;
@@ -22,6 +22,10 @@
 
         .center {
             text-align: center;
+        }
+
+        .bold {
+            font-weight: bold;
         }
 
         .logo {
@@ -51,13 +55,40 @@
             margin: 6px 0;
         }
 
+        .banner {
+            font-size: 10pt;
+            font-weight: bold;
+            text-align: center;
+            margin: 6px 0 2px 0;
+        }
+
+        .barcode-wrap {
+            text-align: center;
+            margin: 4px 0 6px 0;
+        }
+
+        .qr-wrap {
+            text-align: center;
+            margin: 6px 0;
+        }
+
         .meta-row {
             font-size: 7.5pt;
             line-height: 1.6;
         }
 
-        .meta-label {
-            color: #000000;
+        table.row-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.row-table td {
+            font-size: 7.5pt;
+            padding: 1px 0;
+        }
+
+        table.row-table td.right {
+            text-align: right;
         }
 
         table.items {
@@ -65,31 +96,35 @@
             border-collapse: collapse;
         }
 
+        table.items th {
+            font-size: 7.5pt;
+            font-weight: bold;
+            text-align: right;
+            border-bottom: 1px dashed #000000;
+            padding-bottom: 2px;
+        }
+
+        table.items th.item-col {
+            text-align: left;
+        }
+
+        table.items th.unit-col {
+            text-align: center;
+        }
+
         table.items td {
             font-size: 7.5pt;
-            padding: 0;
+            padding: 2px 0;
             vertical-align: top;
-        }
-
-        .item-row td {
-            padding-top: 4px;
-        }
-
-        .item-name {
-            text-align: left;
-        }
-
-        .item-total {
             text-align: right;
-            white-space: nowrap;
-            font-weight: bold;
         }
 
-        .item-meta {
-            font-size: 7pt;
-            color: #000000;
+        table.items td.item-col {
             text-align: left;
-            padding-top: 1px;
+        }
+
+        table.items td.unit-col {
+            text-align: center;
         }
 
         table.totals {
@@ -100,11 +135,7 @@
 
         table.totals td {
             font-size: 7.5pt;
-            padding: 2px 0;
-        }
-
-        table.totals td.label {
-            text-align: left;
+            padding: 1px 0;
         }
 
         table.totals td.value {
@@ -113,32 +144,46 @@
         }
 
         table.totals tr.grand-total td {
-            border-top: 1px solid #000000;
-            padding-top: 5px;
             font-size: 10pt;
             font-weight: bold;
         }
 
-        table.payments {
+        table.vat {
             width: 100%;
             border-collapse: collapse;
         }
 
-        table.payments td {
-            font-size: 7.5pt;
-            padding: 2px 0;
+        table.vat th {
+            font-size: 7pt;
+            font-weight: bold;
+            text-align: right;
+            border-top: 1px dashed #000000;
+            border-bottom: 1px dashed #000000;
+            padding: 3px 0;
         }
 
-        table.payments td.value {
+        table.vat th.label-col {
+            text-align: left;
+        }
+
+        table.vat td {
+            font-size: 7pt;
             text-align: right;
-            white-space: nowrap;
+            padding: 2px 0 4px 0;
+            border-bottom: 1px dashed #000000;
+        }
+
+        table.vat td.label-col {
+            text-align: left;
         }
 
         .footer {
-            margin-top: 10px;
+            margin-top: 8px;
             font-size: 7.5pt;
+        }
+
+        .footer.center {
             text-align: center;
-            color: #000000;
         }
     </style>
 </head>
@@ -147,90 +192,135 @@
         @if ($logoPath = $company?->logoFilePath())
             <img src="{{ $logoPath }}" alt="{{ $company->name }}" class="logo">
         @endif
-        <p class="company-name">{{ $company->name ?? 'Receipt' }}</p>
+        <p class="company-name">{{ strtoupper($company->name ?? 'Receipt') }}</p>
         <div class="company-meta">
             @if (!empty($branch?->address))
                 {{ $branch->address }}<br>
             @endif
             @if (!empty($branch?->phone))
-                {{ $branch->phone }}
+                {{ $branch->phone }}<br>
+            @endif
+            @if (!empty($company?->tax_id))
+                TIN : {{ $company->tax_id }}
             @endif
         </div>
     </div>
 
     <hr class="rule">
 
-    <div class="meta-row">
-        <span class="meta-label">Reference:</span> {{ $sale->reference_number }}<br>
-        <span class="meta-label">Date:</span> {{ \Illuminate\Support\Carbon::parse($sale->sale_date)->format('d M Y') }} {{ $sale->created_at?->format('H:i') }}<br>
-        <span class="meta-label">Cashier:</span> {{ $sale->servedBy?->name ?? '—' }}
+    <div class="banner">CASH SALE / TAX INVOICE</div>
+    <div class="center">{{ $sale->reference_number }}</div>
+
+    <div class="barcode-wrap">
+        <img src="data:image/png;base64,{{ $barcodePng }}" style="height: 40px;">
+    </div>
+
+    <table class="row-table meta-row">
+        <tr>
+            <td>Date : {{ $sale->created_at?->format('n/j/Y, g:i:s A') }}</td>
+            <td class="right">Branch: {{ $branch->name ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td colspan="2">Printed : {{ now()->format('n/j/Y') }}</td>
+        </tr>
+    </table>
+
+    <div class="meta-row" style="margin-top: 4px;">
+        Customer Name : {{ $sale->customer?->name ?: 'Cash Customer' }}
     </div>
 
     <hr class="rule">
 
     <table class="items">
-        @foreach ($sale->items as $item)
-            <tr class="item-row">
-                <td class="item-name">
-                    {{ $item->product?->name ?? 'Product #'.$item->product_id }}
-                    @if ($item->variant)
-                        ({{ $item->variant->name }})
-                    @endif
-                </td>
-                <td class="item-total">{{ $currencyCode }} {{ number_format((float) $item->line_total, 2) }}</td>
-            </tr>
+        <thead>
             <tr>
-                <td class="item-meta" colspan="2">
-                    {{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }} x {{ $currencyCode }} {{ number_format((float) $item->unit_price, 2) }}
-                </td>
+                <th class="item-col">Item</th>
+                <th>Qty</th>
+                <th class="unit-col">Unit</th>
+                <th>Price</th>
+                <th>Amount</th>
             </tr>
-        @endforeach
+        </thead>
+        <tbody>
+            @foreach ($sale->items as $item)
+                <tr>
+                    <td class="item-col">
+                        {{ \Illuminate\Support\Str::limit($item->product?->name ?? 'Product #'.$item->product_id, 20, '') }}
+                        @if ($item->variant)
+                            ({{ $item->variant->name }})
+                        @endif
+                    </td>
+                    <td>{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
+                    <td class="unit-col">PCE</td>
+                    <td>{{ number_format((float) $item->unit_price, 2) }}</td>
+                    <td>{{ number_format((float) $item->line_total, 2) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
     </table>
-
-    <hr class="rule">
 
     <table class="totals">
-        <tr>
-            <td class="label">Subtotal</td>
-            <td class="value">{{ $currencyCode }} {{ number_format((float) $sale->subtotal, 2) }}</td>
-        </tr>
-        @if ((float) $sale->discount_amount > 0)
-            <tr>
-                <td class="label">Discount</td>
-                <td class="value">-{{ $currencyCode }} {{ number_format((float) $sale->discount_amount, 2) }}</td>
-            </tr>
-        @endif
-        @if ((float) $sale->tax_amount > 0)
-            <tr>
-                <td class="label">Tax</td>
-                <td class="value">{{ $currencyCode }} {{ number_format((float) $sale->tax_amount, 2) }}</td>
-            </tr>
-        @endif
         <tr class="grand-total">
-            <td class="label">Total</td>
-            <td class="value">{{ $currencyCode }} {{ number_format((float) $sale->total_amount, 2) }}</td>
+            <td>Total :</td>
+            <td class="value">{{ number_format((float) $sale->total_amount, 2) }}</td>
         </tr>
-    </table>
-
-    <hr class="rule">
-
-    <table class="payments">
         @forelse ($sale->payments as $payment)
             <tr>
-                <td class="label">{{ $payment->paymentType?->name ?? 'Payment' }}</td>
-                <td class="value">{{ $currencyCode }} {{ number_format((float) $payment->amount, 2) }}</td>
+                <td>{{ $payment->paymentType?->name ?? 'Payment' }}</td>
+                <td class="value">{{ number_format((float) $payment->amount, 2) }}</td>
             </tr>
         @empty
             <tr>
-                <td class="label" colspan="2">No payments recorded</td>
+                <td colspan="2">No payments recorded</td>
             </tr>
         @endforelse
+        <tr>
+            <td>Change :</td>
+            <td class="value">0</td>
+        </tr>
+        <tr>
+            <td>Total Items :</td>
+            <td class="value">{{ $sale->items->count() }}</td>
+        </tr>
     </table>
 
-    <hr class="rule">
+    <table class="vat">
+        <thead>
+            <tr>
+                <th class="label-col">VAT</th>
+                <th>Amt W/o VAT</th>
+                <th>VAT Amt</th>
+                <th>Net Amt</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="label-col">Standard</td>
+                <td>{{ number_format((float) $sale->total_amount - (float) $sale->tax_amount, 2) }}</td>
+                <td>{{ number_format((float) $sale->tax_amount, 2) }}</td>
+                <td>{{ number_format((float) $sale->total_amount, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <div class="footer">
-        Thank you for your business!
+    <table class="row-table" style="margin-top: 4px;">
+        <tr>
+            <td>Fiscal Doc No :</td>
+            <td class="right bold">{{ $sale->reference_number }}</td>
+        </tr>
+        <tr>
+            <td>Verification Code :</td>
+            <td class="right bold">{{ $verificationCode }}</td>
+        </tr>
+    </table>
+
+    <div class="qr-wrap">
+        <img src="{{ $qrDataUri }}" style="width: 80px; height: 80px;">
     </div>
+
+    <div class="footer">Received By : _______________________</div>
+    <div class="footer">You Were Served By : {{ $sale->servedBy?->name ?? 'ADMIN' }}</div>
+    <div class="footer bold center">Thank You !!! Please Come Again....</div>
+    <div class="footer center">Powered by {{ config('app.name') }}</div>
 </body>
 </html>

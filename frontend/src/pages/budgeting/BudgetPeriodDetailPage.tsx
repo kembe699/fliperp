@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus, Trash2 } from 'lucide-react'
 
-import { createBudgetLine, deleteBudgetLine, fetchBudgetLines, fetchBudgetPeriod, fetchBudgetVsActual } from '@/api/budgeting'
+import { createBudgetLine, deleteBudgetLine, fetchBudgetLines, fetchBudgetPeriod, fetchBudgetVsActual, updateBudgetPeriod } from '@/api/budgeting'
 import { fetchChartOfAccounts } from '@/api/reports'
 import { fetchBranches } from '@/api/branches'
 import { fetchDepartments } from '@/api/hr'
@@ -78,6 +78,16 @@ export function BudgetPeriodDetailPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const statusMutation = useMutation({
+    mutationFn: (status: 'active' | 'closed') => updateBudgetPeriod(budgetPeriodId, { status }),
+    onSuccess: (_data, status) => {
+      toast.success(status === 'active' ? 'Budget period activated' : 'Budget period closed')
+      queryClient.invalidateQueries({ queryKey: ['budget-period', budgetPeriodId] })
+      queryClient.invalidateQueries({ queryKey: ['budget-periods'] })
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
   if (isLoading || !period) {
     return <div className="p-6 text-sm text-muted-foreground">Loading budget period…</div>
   }
@@ -91,12 +101,24 @@ export function BudgetPeriodDetailPage() {
         parent="Budget Periods"
         title={period.name}
         action={
-          can('budget-lines.create') && (
-            <Button onClick={() => setLineOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Add Budget Line
-            </Button>
-          )
+          <div className="flex gap-2">
+            {can('budget-periods.update') && period.status === 'draft' && (
+              <Button variant="outline" disabled={statusMutation.isPending} onClick={() => statusMutation.mutate('active')}>
+                Activate
+              </Button>
+            )}
+            {can('budget-periods.update') && period.status === 'active' && (
+              <Button variant="outline" disabled={statusMutation.isPending} onClick={() => statusMutation.mutate('closed')}>
+                Close Period
+              </Button>
+            )}
+            {can('budget-lines.create') && (
+              <Button onClick={() => setLineOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Add Budget Line
+              </Button>
+            )}
+          </div>
         }
       />
 

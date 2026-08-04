@@ -89,7 +89,7 @@ export function ProductGrid({ warehouseId, onAddProduct }: ProductGridProps) {
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
-              <Skeleton key={index} className="h-32 rounded-xl" />
+              <Skeleton key={index} className="h-44 rounded-xl" />
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
@@ -111,7 +111,7 @@ export function ProductGrid({ warehouseId, onAddProduct }: ProductGridProps) {
                     outOfStock && 'cursor-not-allowed opacity-50 hover:border-border hover:bg-card',
                   )}
                 >
-                  <ProductImage src={product.image_url} alt={product.name} className="mb-2 h-16 w-full rounded-lg" />
+                  <ProductImage src={product.image_url} alt={product.name} className="mb-2 h-28 w-full rounded-lg" />
                   <p className="truncate text-sm font-medium text-foreground">{product.name}</p>
                   <p className="text-xs text-muted-foreground">{product.sku}</p>
                   <div className="mt-1.5 flex items-center justify-between">

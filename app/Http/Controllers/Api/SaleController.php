@@ -11,10 +11,15 @@ use App\Http\Resources\SaleResource;
 use App\Models\Company;
 use App\Models\Sale;
 use App\Services\Pos\SaleService;
+use App\Support\Url;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use chillerlan\QRCode\Output\QRGdImagePNG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class SaleController extends Controller
 {
@@ -127,6 +132,26 @@ class SaleController extends Controller
         $sale->load(['items.product', 'items.variant', 'payments.paymentType', 'servedBy', 'branch', 'customer']);
         $company = Company::find($sale->company_id);
 
+        $verifyUrl = Url::withScheme(config('app.frontend_url'))."/verify/{$sale->id}";
+
+        // dompdf in this stack doesn't rasterize inline <svg> markup at all
+        // (confirmed directly — even a bare hand-written <svg><rect/></svg>
+        // renders as nothing), so both codes are generated as raster PNGs
+        // and embedded as ordinary base64 data-URI <img> tags instead, the
+        // same way the company logo already is. Both libraries render via
+        // GD rather than Imagick, which isn't installed here.
+        $barcodePng = base64_encode(
+            (new BarcodeGeneratorPNG)->getBarcode($sale->reference_number, BarcodeGeneratorPNG::TYPE_CODE_128, 2, 40),
+        );
+        // render() already returns a ready-to-use "data:image/png;base64,..."
+        // URI here (the imageBase64 option controls something else — the raw
+        // bytes are never returned plain), unlike BarcodeGeneratorPNG above.
+        $qrDataUri = (new QRCode(new QROptions([
+            'outputInterface' => QRGdImagePNG::class,
+            'scale' => 4,
+            'margin' => 1,
+        ])))->render($verifyUrl);
+
         // 80mm thermal paper, width fixed at 226.77pt (80mm); height is
         // estimated from content so the roll isn't cut mid-receipt or left
         // with a long blank tail.
@@ -135,6 +160,9 @@ class SaleController extends Controller
             'company' => $company,
             'branch' => $sale->branch,
             'currencyCode' => $company?->currency_code ?? 'USD',
+            'barcodePng' => $barcodePng,
+            'qrDataUri' => $qrDataUri,
+            'verificationCode' => now()->format('YmdHis').random_int(100, 999),
         ])->setPaper([0, 0, 226.77, $this->receiptHeightPoints($sale, $company)]);
 
         return $this->pdfResponse($pdf, "receipt-{$sale->reference_number}.pdf", $request->boolean('download'));
@@ -142,7 +170,7 @@ class SaleController extends Controller
 
     protected function receiptHeightPoints(Sale $sale, ?Company $company): float
     {
-        $base = $company?->logoFilePath() ? 262.0 : 232.0;
+        $base = $company?->logoFilePath() ? 462.0 : 432.0;
         $perItem = 26.0;
         $perPayment = 14.0;
 

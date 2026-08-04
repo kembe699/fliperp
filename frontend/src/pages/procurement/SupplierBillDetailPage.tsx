@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ExternalLink } from 'lucide-react'
+import { Download, ExternalLink } from 'lucide-react'
 
 import {
   createSupplierPayment,
@@ -16,6 +16,7 @@ import { fetchPaymentTypes } from '@/api/pos'
 import { fetchUsers } from '@/api/settings'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { downloadPdf } from '@/lib/pdf-download'
 import { usePermissions } from '@/hooks/use-permissions'
 import { SUPPLIER_BILL_STATUS_LABEL, SUPPLIER_BILL_STATUS_VARIANT } from '@/components/sales/inventory-status-variants'
 
@@ -41,6 +42,7 @@ export function SupplierBillDetailPage() {
   const [amountError, setAmountError] = useState<string | null>(null)
   const [referenceNumber, setReferenceNumber] = useState('')
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [downloading, setDownloading] = useState(false)
 
   const { data: bill, isLoading } = useQuery({ queryKey: ['supplier-bill', id], queryFn: () => fetchSupplierBill(billId), enabled: !!billId })
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => fetchSuppliers({ per_page: 100 }) })
@@ -125,12 +127,31 @@ export function SupplierBillDetailPage() {
 
   const canRecordPayment = can('supplier-payments.create') && bill.balance_due > 0
 
+  const handleDownloadPdf = async () => {
+    setDownloading(true)
+    try {
+      await downloadPdf(`/supplier-bills/${billId}/pdf`, `supplier-bill-${bill.reference_number}.pdf`)
+    } catch {
+      toast.error('Could not download the supplier bill PDF. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
         parent="Supplier Bills"
         title={bill.reference_number}
-        action={canRecordPayment ? <Button onClick={openPaymentDialog}>Record Payment</Button> : undefined}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={downloading} onClick={handleDownloadPdf}>
+              <Download className="h-4 w-4" />
+              {downloading ? 'Downloading…' : 'Download PDF'}
+            </Button>
+            {canRecordPayment && <Button onClick={openPaymentDialog}>Record Payment</Button>}
+          </div>
+        }
       />
 
       <Card>

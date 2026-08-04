@@ -45,3 +45,8 @@ export async function cancelInvoice(id: number): Promise<Invoice> {
 export async function deleteInvoice(id: number): Promise<void> {
   await api.delete(`/invoices/${id}`)
 }
+
+export async function emailInvoice(id: number): Promise<string> {
+  const { data } = await api.post<ApiResponse<null>>(`/invoices/${id}/email`)
+  return data.message
+}

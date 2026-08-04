@@ -54,3 +54,8 @@ export async function convertQuotationToInvoice(id: number): Promise<Invoice> {
 export async function deleteQuotation(id: number): Promise<void> {
   await api.delete(`/quotations/${id}`)
 }
+
+export async function emailQuotation(id: number): Promise<string> {
+  const { data } = await api.post<ApiResponse<null>>(`/quotations/${id}/email`)
+  return data.message
+}

@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Download, Pencil, Send, XCircle } from 'lucide-react'
+import { Download, Mail, Pencil, Send, XCircle } from 'lucide-react'
 
-import { cancelInvoice, fetchInvoice, sendInvoice } from '@/api/invoices'
+import { cancelInvoice, emailInvoice, fetchInvoice, sendInvoice } from '@/api/invoices'
 import { fetchCustomers } from '@/api/customers'
 import { fetchActiveProducts } from '@/api/products'
 import { fetchPaymentTypes } from '@/api/pos'
@@ -67,6 +67,12 @@ export function InvoiceDetailPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const emailMutation = useMutation({
+    mutationFn: () => emailInvoice(invoiceId),
+    onSuccess: (message) => toast.success(message),
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
   const paymentMutation = useMutation({
     mutationFn: () =>
       createCustomerPayment({
@@ -119,6 +125,12 @@ export function InvoiceDetailPage() {
               <Download className="h-4 w-4" />
               {downloading ? 'Downloading…' : 'Download PDF'}
             </Button>
+            {can('invoices.view') && (
+              <Button variant="outline" disabled={emailMutation.isPending} onClick={() => emailMutation.mutate()}>
+                <Mail className="h-4 w-4" />
+                {emailMutation.isPending ? 'Sending…' : 'Email'}
+              </Button>
+            )}
             {canEdit && (
               <Button variant="outline" onClick={() => navigate(`/invoices/${invoiceId}/edit`)}>
                 <Pencil className="h-4 w-4" />

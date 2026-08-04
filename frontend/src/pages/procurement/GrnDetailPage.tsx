@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Download } from 'lucide-react'
 
 import { confirmGoodsReceivedNote, fetchGoodsReceivedNote, fetchSuppliers, findSupplierBillByGrnId } from '@/api/procurement'
 import { fetchWarehouses } from '@/api/inventory'
 import { fetchActiveProducts } from '@/api/products'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { downloadPdf } from '@/lib/pdf-download'
 import { usePermissions } from '@/hooks/use-permissions'
 import { GRN_STATUS_VARIANT } from '@/components/sales/inventory-status-variants'
 import type { GrnItemCondition } from '@/types/procurement'
@@ -31,6 +32,7 @@ export function GrnDetailPage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
   const [confirmedThisSession, setConfirmedThisSession] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   const { data: grn, isLoading } = useQuery({ queryKey: ['grn', grnId], queryFn: () => fetchGoodsReceivedNote(grnId), enabled: !!grnId })
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => fetchSuppliers({ per_page: 100 }) })
@@ -64,18 +66,35 @@ export function GrnDetailPage() {
   const canConfirm = can('goods-received-notes.confirm') && grn.status === 'draft'
   const total = grn.items.reduce((sum, item) => sum + Number(item.quantity_received) * Number(item.unit_cost), 0)
 
+  const handleDownloadPdf = async () => {
+    setDownloading(true)
+    try {
+      await downloadPdf(`/goods-received-notes/${grnId}/pdf`, `grn-${grn.reference_number}.pdf`)
+    } catch {
+      toast.error('Could not download the GRN PDF. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
         parent="Goods Received Notes"
         title={grn.reference_number}
         action={
-          canConfirm && (
-            <Button disabled={confirmMutation.isPending} onClick={() => confirmMutation.mutate()}>
-              <CheckCircle2 className="h-4 w-4" />
-              Confirm
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={downloading} onClick={handleDownloadPdf}>
+              <Download className="h-4 w-4" />
+              {downloading ? 'Downloading…' : 'Download PDF'}
             </Button>
-          )
+            {canConfirm && (
+              <Button disabled={confirmMutation.isPending} onClick={() => confirmMutation.mutate()}>
+                <CheckCircle2 className="h-4 w-4" />
+                Confirm
+              </Button>
+            )}
+          </div>
         }
       />
 

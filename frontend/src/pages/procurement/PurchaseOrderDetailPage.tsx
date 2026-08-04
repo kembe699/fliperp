@@ -1,13 +1,15 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Ban, CheckCircle2, PackageCheck } from 'lucide-react'
+import { Ban, CheckCircle2, Download, Mail, PackageCheck } from 'lucide-react'
 
-import { approvePurchaseOrder, cancelPurchaseOrder, fetchPurchaseOrder, fetchReceivingStatus, fetchSuppliers } from '@/api/procurement'
+import { approvePurchaseOrder, cancelPurchaseOrder, emailPurchaseOrder, fetchPurchaseOrder, fetchReceivingStatus, fetchSuppliers } from '@/api/procurement'
 import { fetchWarehouses } from '@/api/inventory'
 import { fetchActiveProducts } from '@/api/products'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { downloadPdf } from '@/lib/pdf-download'
 import { usePermissions } from '@/hooks/use-permissions'
 import { PURCHASE_ORDER_STATUS_VARIANT } from '@/components/sales/inventory-status-variants'
 
@@ -22,6 +24,7 @@ export function PurchaseOrderDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermissions()
+  const [downloading, setDownloading] = useState(false)
 
   const { data: po, isLoading } = useQuery({ queryKey: ['purchase-order', poId], queryFn: () => fetchPurchaseOrder(poId), enabled: !!poId })
   const { data: receivingStatus } = useQuery({
@@ -61,6 +64,24 @@ export function PurchaseOrderDetailPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const emailMutation = useMutation({
+    mutationFn: () => emailPurchaseOrder(poId),
+    onSuccess: (message) => toast.success(message),
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
+  const handleDownloadPdf = async () => {
+    if (!po) return
+    setDownloading(true)
+    try {
+      await downloadPdf(`/purchase-orders/${poId}/pdf`, `purchase-order-${po.reference_number}.pdf`)
+    } catch {
+      toast.error('Could not download the purchase order PDF. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   if (isLoading || !po) {
     return <div className="p-6 text-sm text-muted-foreground">Loading purchase order…</div>
   }
@@ -77,6 +98,16 @@ export function PurchaseOrderDetailPage() {
         title={po.reference_number}
         action={
           <div className="flex gap-2">
+            <Button variant="outline" disabled={downloading} onClick={handleDownloadPdf}>
+              <Download className="h-4 w-4" />
+              {downloading ? 'Downloading…' : 'Download PDF'}
+            </Button>
+            {can('purchase-orders.view') && (
+              <Button variant="outline" disabled={emailMutation.isPending} onClick={() => emailMutation.mutate()}>
+                <Mail className="h-4 w-4" />
+                {emailMutation.isPending ? 'Sending…' : 'Email Supplier'}
+              </Button>
+            )}
             {canApprove && (
               <Button variant="outline" disabled={approveMutation.isPending} onClick={() => approveMutation.mutate()}>
                 <CheckCircle2 className="h-4 w-4" />

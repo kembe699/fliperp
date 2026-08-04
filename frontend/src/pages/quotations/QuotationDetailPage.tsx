@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle2, Download, FileOutput, Pencil, Send, XCircle } from 'lucide-react'
+import { CheckCircle2, Download, FileOutput, Mail, Pencil, Send, XCircle } from 'lucide-react'
 
-import { acceptQuotation, convertQuotationToInvoice, fetchQuotation, rejectQuotation, sendQuotation } from '@/api/quotations'
+import { acceptQuotation, convertQuotationToInvoice, emailQuotation, fetchQuotation, rejectQuotation, sendQuotation } from '@/api/quotations'
 import { fetchCustomers } from '@/api/customers'
 import { fetchActiveProducts } from '@/api/products'
 import { formatCurrency, formatDate } from '@/lib/format'
@@ -79,6 +79,12 @@ export function QuotationDetailPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const emailMutation = useMutation({
+    mutationFn: () => emailQuotation(quotationId),
+    onSuccess: (message) => toast.success(message),
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
   const handleDownloadPdf = async () => {
     if (!quotation) return
     setDownloading(true)
@@ -112,6 +118,12 @@ export function QuotationDetailPage() {
               <Download className="h-4 w-4" />
               {downloading ? 'Downloading…' : 'Download PDF'}
             </Button>
+            {can('quotations.view') && (
+              <Button variant="outline" disabled={emailMutation.isPending} onClick={() => emailMutation.mutate()}>
+                <Mail className="h-4 w-4" />
+                {emailMutation.isPending ? 'Sending…' : 'Email'}
+              </Button>
+            )}
             {canEdit && (
               <Button variant="outline" onClick={() => navigate(`/quotations/${quotationId}/edit`)}>
                 <Pencil className="h-4 w-4" />

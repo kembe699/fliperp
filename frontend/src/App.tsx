@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PortalProtectedRoute } from '@/routes/PortalProtectedRoute'
 import { PortalShell } from '@/components/portal/PortalShell'
 import { LoginPage } from '@/pages/LoginPage'
+import { ReceiptVerifyPage } from '@/pages/ReceiptVerifyPage'
 import { PortalLoginPage } from '@/pages/portal/PortalLoginPage'
 import { PortalDashboardPage } from '@/pages/portal/PortalDashboardPage'
 import { PortalClockPage } from '@/pages/portal/PortalClockPage'
@@ -151,6 +152,7 @@ function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify/:id" element={<ReceiptVerifyPage />} />
 
         <Route path="/employee-portal/login" element={<PortalLoginPage />} />
         <Route

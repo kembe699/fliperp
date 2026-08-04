@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SupplierBill\StoreSupplierBillRequest;
 use App\Http\Requests\SupplierBill\UpdateSupplierBillRequest;
 use App\Http\Resources\SupplierBillResource;
+use App\Models\Company;
 use App\Models\SupplierBill;
 use App\Services\Procurement\SupplierBillService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class SupplierBillController extends Controller
 {
@@ -61,5 +64,22 @@ class SupplierBillController extends Controller
         $this->supplierBillService->delete($supplierBill);
 
         return $this->success(null, 'Supplier bill deleted successfully.');
+    }
+
+    public function pdf(Request $request, SupplierBill $supplierBill): Response
+    {
+        $this->authorize('view', $supplierBill);
+
+        $supplierBill->load(['supplier', 'goodsReceivedNote', 'purchaseOrder']);
+        $company = Company::find($supplierBill->company_id);
+
+        $pdf = Pdf::loadView('pdf.supplier-bill', [
+            'bill' => $supplierBill,
+            'company' => $company,
+            'supplier' => $supplierBill->supplier,
+            'currencyCode' => $company?->currency_code ?? 'USD',
+        ])->setPaper('a4', 'portrait');
+
+        return $this->pdfResponse($pdf, "supplier-bill-{$supplierBill->reference_number}.pdf", $request->boolean('download'));
     }
 }

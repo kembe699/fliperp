@@ -105,6 +105,11 @@ export async function fetchReceivingStatus(id: number): Promise<ReceivingStatus>
   return data.data
 }
 
+export async function emailPurchaseOrder(id: number): Promise<string> {
+  const { data } = await api.post<ApiResponse<null>>(`/purchase-orders/${id}/email`)
+  return data.message
+}
+
 // Goods Received Notes
 export async function fetchGoodsReceivedNotes(params: { per_page?: number; page?: number } = {}): Promise<PaginatedResponse<GoodsReceivedNote>> {
   const { data } = await api.get<PaginatedResponse<GoodsReceivedNote>>('/goods-received-notes', { params })

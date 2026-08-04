@@ -1,12 +1,14 @@
 <?php
 
+use App\Mail\DocumentMail;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     [$this->company, $this->branch] = createCompanyWithMainBranch();
     seedChartOfAccounts($this->company);
     $this->admin = createUserWithRole('company_admin', $this->company, $this->branch);
-    $this->customer = createCustomer($this->company);
+    $this->customer = createCustomer($this->company, ['email' => 'customer@example.test']);
     $this->product = createProduct($this->company, ['cost_price' => 50, 'selling_price' => 100]);
 
     Sanctum::actingAs($this->admin, ['*']);
@@ -58,4 +60,34 @@ it('returns 404 for an invoice belonging to another company', function () {
 
     $this->get("/api/v1/invoices/{$otherInvoiceId}/pdf")->assertStatus(404);
     $this->get("/api/v1/invoices/{$this->invoiceId}/pdf")->assertOk();
+});
+
+it('emails the invoice PDF to the customer on file', function () {
+    Mail::fake();
+
+    $this->postJson("/api/v1/invoices/{$this->invoiceId}/email")
+        ->assertOk()
+        ->assertJsonPath('message', 'Invoice emailed to customer@example.test.');
+
+    Mail::assertSent(DocumentMail::class, function (DocumentMail $mail) {
+        return $mail->hasTo('customer@example.test') && $mail->documentType === 'Invoice';
+    });
+});
+
+it('rejects emailing an invoice when the customer has no email on file', function () {
+    $customerNoEmail = createCustomer($this->company, ['name' => 'No Email Customer']);
+    $invoiceId = $this->postJson('/api/v1/invoices', [
+        'branch_id' => $this->branch->id,
+        'customer_id' => $customerNoEmail->id,
+        'due_date' => now()->addDays(30)->toDateString(),
+        'items' => [['product_id' => $this->product->id, 'quantity' => 1, 'unit_price' => 100]],
+    ])->json('data.id');
+
+    Mail::fake();
+
+    $this->postJson("/api/v1/invoices/{$invoiceId}/email")
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+
+    Mail::assertNothingSent();
 });

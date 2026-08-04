@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { PauseCircle } from 'lucide-react'
+import { History, Lock, PauseCircle } from 'lucide-react'
 
 import { fetchCurrentCashDrawerSession, fetchPaymentTypes, fetchTaxRates, fetchWarehouses } from '@/api/pos'
 import { fetchActiveProducts } from '@/api/products'
@@ -20,8 +21,10 @@ import { CartPanel } from '@/pages/pos/CartPanel'
 import { PaymentDialog } from '@/pages/pos/PaymentDialog'
 import { HeldSalesDialog } from '@/pages/pos/HeldSalesDialog'
 import { OpenDrawerDialog } from '@/pages/pos/OpenDrawerDialog'
+import { CloseDrawerDialog } from '@/pages/pos/CloseDrawerDialog'
 
 export function PosTerminalPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
 
@@ -51,6 +54,7 @@ export function PosTerminalPage() {
   const [resumingReference, setResumingReference] = useState<string | null>(null)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [heldSalesOpen, setHeldSalesOpen] = useState(false)
+  const [closeDrawerOpen, setCloseDrawerOpen] = useState(false)
 
   const { data: heldSales } = useQuery({ queryKey: ['held-sales'], queryFn: fetchHeldSales })
 
@@ -203,15 +207,25 @@ export function PosTerminalPage() {
         parent="Sales"
         title="POS Terminal"
         action={
-          <Button variant="outline" onClick={() => setHeldSalesOpen(true)} className="gap-2">
-            <PauseCircle className="h-4 w-4" />
-            Held Sales
-            {heldSales && heldSales.length > 0 && (
-              <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs text-primary-foreground">
-                {heldSales.length}
-              </span>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/receipts')} className="gap-2">
+              <History className="h-4 w-4" />
+              Sales History
+            </Button>
+            <Button variant="outline" onClick={() => setHeldSalesOpen(true)} className="gap-2">
+              <PauseCircle className="h-4 w-4" />
+              Held Sales
+              {heldSales && heldSales.length > 0 && (
+                <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs text-primary-foreground">
+                  {heldSales.length}
+                </span>
+              )}
+            </Button>
+            <Button variant="outline" onClick={() => setCloseDrawerOpen(true)} className="gap-2">
+              <Lock className="h-4 w-4" />
+              Close Shift
+            </Button>
+          </div>
         }
       />
 
@@ -246,6 +260,10 @@ export function PosTerminalPage() {
       />
 
       <HeldSalesDialog open={heldSalesOpen} onOpenChange={setHeldSalesOpen} onResume={handleResume} />
+
+      {drawerSession && (
+        <CloseDrawerDialog open={closeDrawerOpen} onOpenChange={setCloseDrawerOpen} session={drawerSession} />
+      )}
     </div>
   )
 }

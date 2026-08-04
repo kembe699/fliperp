@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Invoice\StoreInvoiceRequest;
 use App\Http\Requests\Invoice\UpdateInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
+use App\Mail\DocumentMail;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Services\Sales\InvoiceService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class InvoiceController extends Controller
 {
@@ -88,18 +92,51 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['items.product', 'items.variant', 'customer', 'branch']);
+        $pdf = $this->buildPdf($invoice);
+
+        return $this->pdfResponse($pdf, "invoice-{$invoice->reference_number}.pdf", $request->boolean('download'));
+    }
+
+    public function email(Invoice $invoice): JsonResponse
+    {
+        $this->authorize('view', $invoice);
+
+        $invoice->loadMissing('customer');
+        $customer = $invoice->customer;
+
+        if (! $customer?->email) {
+            throw ValidationException::withMessages([
+                'email' => ['This customer has no email address on file.'],
+            ]);
+        }
+
+        $company = Company::find($invoice->company_id);
+        $pdf = $this->buildPdf($invoice);
+
+        Mail::to($customer->email)->send(new DocumentMail(
+            documentType: 'Invoice',
+            referenceNumber: $invoice->reference_number,
+            recipientName: $customer->name,
+            companyName: $company?->name ?? config('app.name'),
+            pdfContent: $pdf->output(),
+            pdfFilename: "invoice-{$invoice->reference_number}.pdf",
+        ));
+
+        return $this->success(null, "Invoice emailed to {$customer->email}.");
+    }
+
+    protected function buildPdf(Invoice $invoice): DomPdf
+    {
+        $invoice->loadMissing(['items.product', 'items.variant', 'customer', 'branch']);
         $company = Company::find($invoice->company_id);
 
-        $pdf = Pdf::loadView('pdf.invoice', [
+        return Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
             'company' => $company,
             'branch' => $invoice->branch,
             'customer' => $invoice->customer,
             'currencyCode' => $company?->currency_code ?? 'USD',
         ])->setPaper('a4', 'portrait');
-
-        return $this->pdfResponse($pdf, "invoice-{$invoice->reference_number}.pdf", $request->boolean('download'));
     }
 
     public function overdue(Request $request): JsonResponse
