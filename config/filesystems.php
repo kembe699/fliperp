@@ -45,10 +45,22 @@ return [
         // so no application code needs to know which one is active.
         'public' => [
             'driver' => env('PUBLIC_DISK_DRIVER', 'local'),
-            'root' => storage_path('app/public'),
+            // "root" is a local-filesystem base path — it must only apply to
+            // the "local" driver. The S3 adapter also reads "root" and uses
+            // it as a literal object-key prefix, so setting it unconditionally
+            // was silently prefixing every uploaded file's S3 key with
+            // "app/storage/app/public/...", producing photo_url values that
+            // 404 against the bucket.
+            'root' => env('PUBLIC_DISK_DRIVER', 'local') === 'local' ? storage_path('app/public') : null,
             'url' => env('PUBLIC_DISK_URL', env('APP_URL').'/storage'),
             'visibility' => 'public',
-            'throw' => false,
+            // Must be true: with throw=false, a failed S3 write (bad
+            // credentials, wrong bucket/endpoint, etc.) returns false from
+            // Storage rather than raising, but callers still treat the
+            // upload as successful and persist a photo_url for a file that
+            // was never actually written — a silent failure that looks like
+            // a working upload until someone tries to load the image.
+            'throw' => true,
             'report' => false,
 
             // Only read when PUBLIC_DISK_DRIVER=s3; ignored by the "local" driver.

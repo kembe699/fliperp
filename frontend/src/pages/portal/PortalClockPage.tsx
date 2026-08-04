@@ -15,19 +15,27 @@ interface ClockContext {
   token: string
 }
 
-/** Accepts either a full clock URL (from a printed/displayed QR) or a bare "branch=..&token=.." query string. */
+/** Accepts a full clock URL (from a printed/displayed QR), a scheme-less URL, or a bare "branch=..&token=.." query string. */
 function parseClockContext(decodedText: string): ClockContext | null {
-  try {
-    const url = new URL(decodedText)
-    const branch = url.searchParams.get('branch')
-    const token = url.searchParams.get('token')
-    return branch && token ? { branch, token } : null
-  } catch {
-    const params = new URLSearchParams(decodedText.replace(/^\?/, ''))
-    const branch = params.get('branch')
-    const token = params.get('token')
-    return branch && token ? { branch, token } : null
+  // A URL missing "http(s)://" (e.g. a misconfigured backend FRONTEND_URL)
+  // parses as relative rather than throwing, so `new URL()` alone can't be
+  // trusted to catch it — try it as-is, then retry with a scheme prepended.
+  for (const candidate of [decodedText, `https://${decodedText.replace(/^\/+/, '')}`]) {
+    try {
+      const url = new URL(candidate)
+      const branch = url.searchParams.get('branch')
+      const token = url.searchParams.get('token')
+      if (branch && token) return { branch, token }
+    } catch {
+      // not a valid URL even with a scheme prepended — fall through
+    }
   }
+
+  const queryString = decodedText.includes('?') ? decodedText.slice(decodedText.indexOf('?') + 1) : decodedText
+  const params = new URLSearchParams(queryString)
+  const branch = params.get('branch')
+  const token = params.get('token')
+  return branch && token ? { branch, token } : null
 }
 
 export function PortalClockPage() {

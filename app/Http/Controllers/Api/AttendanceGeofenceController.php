@@ -83,7 +83,17 @@ class AttendanceGeofenceController extends Controller
 
         $token = $this->qrTokenService->currentToken($branch) ?? $this->qrTokenService->regenerate($branch);
 
-        $url = rtrim(config('app.frontend_url'), '/')."/employee-portal/clock?branch={$branch->id}&token={$token->token}";
+        $frontendUrl = rtrim(config('app.frontend_url'), '/');
+        if (! preg_match('#^https?://#i', $frontendUrl)) {
+            // FRONTEND_URL is sometimes configured without a scheme (e.g. a
+            // Railway domain pasted as-is); a scheme-less string isn't a
+            // valid absolute URL, and the in-app QrScanCamera scanner fails
+            // to parse it, even though it still resolves fine when typed
+            // directly into a browser or scanned by an OS-level camera app.
+            $frontendUrl = 'https://'.$frontendUrl;
+        }
+
+        $url = $frontendUrl."/employee-portal/clock?branch={$branch->id}&token={$token->token}";
 
         $svg = $this->qrTokenService->svgFor($url);
 
