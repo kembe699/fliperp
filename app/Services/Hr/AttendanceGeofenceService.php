@@ -54,6 +54,20 @@ class AttendanceGeofenceService
     }
 
     /**
+     * Whether this branch has any active geofence configured at all — lets
+     * callers distinguish "nobody set up a location yet" (a setup problem)
+     * from "you're just not within range" (a real location mismatch), which
+     * otherwise look identical from isWithinBranchGeofence() alone.
+     */
+    public function hasActiveGeofences(int $branchId): bool
+    {
+        return AttendanceGeofence::query()
+            ->where('branch_id', $branchId)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
      * Whether the given point falls within the radius of at least one
      * active geofence for the branch.
      */

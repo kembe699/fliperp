@@ -54,7 +54,9 @@ export function PortalClockPage() {
     const parsed = parseClockContext(decodedText)
     if (!parsed) {
       setPhase('error')
-      setMessage("That QR code doesn't look like an attendance code. Please scan the one posted at your office.")
+      setMessage(
+        `That QR code doesn't look like an attendance code. Please scan the one posted at your office. (Scanned: "${decodedText.slice(0, 120)}")`,
+      )
       return
     }
     setContext(parsed)

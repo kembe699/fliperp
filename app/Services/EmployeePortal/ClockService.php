@@ -71,6 +71,12 @@ class ClockService
             ]);
         }
 
+        if (! $this->geofenceService->hasActiveGeofences($branchId)) {
+            throw ValidationException::withMessages([
+                'location' => ['No office location has been configured for this branch yet. Contact HR to set one up before clocking in.'],
+            ]);
+        }
+
         if (! $this->geofenceService->isWithinBranchGeofence($branchId, $latitude, $longitude)) {
             throw ValidationException::withMessages([
                 'location' => ['You must be within the office location to clock in/out.'],

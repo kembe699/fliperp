@@ -91,6 +91,13 @@ class EmployeePortalController extends Controller
             return $this->success(['within_range' => false, 'reason' => 'Invalid QR code.']);
         }
 
+        if (! $this->geofenceService->hasActiveGeofences((int) $data['branch_id'])) {
+            return $this->success([
+                'within_range' => false,
+                'reason' => 'No office location has been configured for this branch yet. Contact HR to set one up before clocking in.',
+            ]);
+        }
+
         $withinRange = $this->geofenceService->isWithinBranchGeofence(
             (int) $data['branch_id'],
             (float) $data['latitude'],
