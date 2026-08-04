@@ -106,6 +106,43 @@ it('posts a balanced journal entry with correct revenue, tax and COGS lines', fu
     expect((float) $inventoryLine->credit)->toBe(400.0);
 });
 
+it('rejects completing an already-completed sale instead of double-booking stock and journal entries', function () {
+    $sale = ($this->createHeldSale)(2);
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/payments", [
+        'payment_type_id' => $this->paymentTypeCash->id,
+        'amount' => $sale['total_amount'],
+    ])->assertCreated();
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/complete")->assertOk();
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/complete")
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+
+    $journalEntryCount = \App\Models\JournalEntry::query()
+        ->where('source_id', $sale['id'])
+        ->where('source_module', 'pos')
+        ->count();
+    expect($journalEntryCount)->toBe(1);
+});
+
+it('rejects voiding an already-voided sale instead of reversing stock twice', function () {
+    $sale = ($this->createHeldSale)(2);
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/payments", [
+        'payment_type_id' => $this->paymentTypeCash->id,
+        'amount' => $sale['total_amount'],
+    ])->assertCreated();
+    $this->postJson("/api/v1/sales/{$sale['id']}/complete")->assertOk();
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/void")->assertOk();
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/void")
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+});
+
 it('rejects completing a sale with no items', function () {
     $saleId = $this->postJson('/api/v1/sales', [
         'warehouse_id' => $this->warehouse->id,

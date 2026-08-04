@@ -12,6 +12,7 @@ export interface SaleFilters {
   search?: string
   from?: string
   to?: string
+  cash_drawer_session_id?: number
 }
 
 export async function fetchSales(filters: SaleFilters): Promise<PaginatedResponse<Sale>> {

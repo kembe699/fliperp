@@ -75,6 +75,19 @@ it('only converts an accepted quotation, copying items 1:1 and linking both reco
     $this->assertDatabaseHas('quotations', ['id' => $quotation['id'], 'status' => 'converted']);
 });
 
+it('rejects converting an already-converted quotation instead of creating a second invoice', function () {
+    $quotation = ($this->createDraftQuotation)();
+    $this->postJson("/api/v1/quotations/{$quotation['id']}/send")->assertOk();
+    $this->postJson("/api/v1/quotations/{$quotation['id']}/accept")->assertOk();
+    $this->postJson("/api/v1/quotations/{$quotation['id']}/convert-to-invoice")->assertCreated();
+
+    $this->postJson("/api/v1/quotations/{$quotation['id']}/convert-to-invoice")
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+
+    expect(\App\Models\Invoice::where('quotation_id', $quotation['id'])->count())->toBe(1);
+});
+
 it('never moves stock or posts a journal entry at any quotation stage', function () {
     $quotation = ($this->createDraftQuotation)();
     $this->postJson("/api/v1/quotations/{$quotation['id']}/send")->assertOk();

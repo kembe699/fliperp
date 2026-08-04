@@ -20,7 +20,10 @@ class CashDrawerController extends Controller
     {
         $this->authorize('viewAny', CashDrawerSession::class);
 
-        $sessions = $this->cashDrawerService->paginate($request->integer('per_page', 15));
+        $sessions = $this->cashDrawerService->paginate(
+            $request->only('user_id', 'branch_id', 'status', 'from', 'to'),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated(CashDrawerSessionResource::collection($sessions));
     }

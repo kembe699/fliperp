@@ -16,17 +16,45 @@ use Illuminate\Validation\ValidationException;
  */
 class CashDrawerService
 {
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        return CashDrawerSession::query()->latest('opened_at')->paginate($perPage);
+        return CashDrawerSession::query()
+            ->when($filters['user_id'] ?? null, fn ($query, $id) => $query->where('user_id', $id))
+            ->when($filters['branch_id'] ?? null, fn ($query, $id) => $query->where('branch_id', $id))
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('opened_at', '>=', $from))
+            ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('opened_at', '<=', $to))
+            ->latest('opened_at')
+            ->paginate($perPage);
     }
 
     public function current(): ?CashDrawerSession
     {
-        return CashDrawerSession::query()
+        $session = CashDrawerSession::query()
             ->where('user_id', Auth::id())
             ->where('status', 'open')
             ->first();
+
+        if ($session) {
+            // Not persisted — lets the close-shift screen show what to expect
+            // in the till before the cashier has counted or entered anything,
+            // by reusing the same figure close() will actually charge against.
+            $session->setAttribute('expected_closing', $this->calculateExpectedClosing($session));
+        }
+
+        return $session;
+    }
+
+    protected function calculateExpectedClosing(CashDrawerSession $session): float
+    {
+        $saleIds = Sale::query()->where('cash_drawer_session_id', $session->id)->pluck('id');
+
+        $cashCollected = (float) SalePayment::query()
+            ->whereIn('sale_id', $saleIds)
+            ->whereHas('paymentType', fn ($query) => $query->where('type', 'cash'))
+            ->sum('amount');
+
+        return round((float) $session->opening_float + $cashCollected, 2);
     }
 
     public function open(array $data): CashDrawerSession
@@ -69,14 +97,19 @@ class CashDrawerService
         return DB::transaction(function () use ($session, $data) {
             $session = CashDrawerSession::query()->lockForUpdate()->findOrFail($session->id);
 
-            $saleIds = Sale::query()->where('cash_drawer_session_id', $session->id)->pluck('id');
+            // Re-check after the lock, not just before the transaction: two
+            // concurrent close requests (a double-click, or a slow request
+            // retried) would otherwise both pass the earlier check, then the
+            // second would block on the lock and, once through, silently
+            // overwrite the first request's closing figures instead of
+            // being rejected as already-closed.
+            if ($session->status !== 'open') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only an open cash drawer session can be closed.'],
+                ]);
+            }
 
-            $cashCollected = (float) SalePayment::query()
-                ->whereIn('sale_id', $saleIds)
-                ->whereHas('paymentType', fn ($query) => $query->where('type', 'cash'))
-                ->sum('amount');
-
-            $expectedClosing = round((float) $session->opening_float + $cashCollected, 2);
+            $expectedClosing = $this->calculateExpectedClosing($session);
             $closingFloat = round((float) $data['closing_float'], 2);
             $variance = round($closingFloat - $expectedClosing, 2);
 

@@ -47,6 +47,18 @@ class PayrollRunService
         }
 
         return DB::transaction(function () use ($payrollRun) {
+            $payrollRun = PayrollRun::query()->lockForUpdate()->findOrFail($payrollRun->id);
+
+            // Re-check after the lock: without it, a duplicate process
+            // request would generate a second full set of payslips and a
+            // second salary journal entry for the same period instead of
+            // being rejected as already processed.
+            if ($payrollRun->status !== 'draft') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only draft payroll runs can be processed.'],
+                ]);
+            }
+
             $employees = Employee::query()
                 ->where('status', 'active')
                 ->when($payrollRun->branch_id, fn ($query, $branchId) => $query->where('branch_id', $branchId))

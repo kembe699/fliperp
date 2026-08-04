@@ -105,6 +105,7 @@ export const navConfig: NavItem[] = [
       { label: 'Balance Sheet', path: '/reports/balance-sheet' },
       { label: 'General Ledger', path: '/reports/general-ledger' },
       { label: 'Cash Flow', path: '/reports/cash-flow' },
+      { label: 'Shift Report', path: '/reports/shift-report' },
     ],
   },
   {

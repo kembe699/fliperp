@@ -41,3 +41,18 @@ export async function closeCashDrawer(input: { closing_float: number }): Promise
   const { data } = await api.post<ApiResponse<CashDrawerSession>>('/cash-drawer/close', input)
   return data.data
 }
+
+export interface CashDrawerSessionFilters {
+  page?: number
+  per_page?: number
+  user_id?: number
+  branch_id?: number
+  status?: 'open' | 'closed'
+  from?: string
+  to?: string
+}
+
+export async function fetchCashDrawerSessions(filters: CashDrawerSessionFilters = {}): Promise<PaginatedResponse<CashDrawerSession>> {
+  const { data } = await api.get<PaginatedResponse<CashDrawerSession>>('/cash-drawer-sessions', { params: filters })
+  return data
+}

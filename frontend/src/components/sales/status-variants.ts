@@ -1,6 +1,7 @@
 import type { StatusVariant } from '@/components/shared/StatusBadge'
 import type { InvoiceStatus } from '@/types/invoice'
 import type { QuotationStatus } from '@/types/quotation'
+import type { SaleStatus } from '@/types/sale'
 
 export const INVOICE_STATUS_VARIANT: Record<InvoiceStatus, StatusVariant> = {
   draft: 'neutral',
@@ -36,4 +37,18 @@ export const QUOTATION_STATUS_LABEL: Record<QuotationStatus, string> = {
   rejected: 'Rejected',
   expired: 'Expired',
   converted: 'Converted',
+}
+
+export const SALE_STATUS_VARIANT: Record<SaleStatus, StatusVariant> = {
+  held: 'neutral',
+  completed: 'success',
+  voided: 'danger',
+  refunded: 'warning',
+}
+
+export const SALE_STATUS_LABEL: Record<SaleStatus, string> = {
+  held: 'Held',
+  completed: 'Completed',
+  voided: 'Voided',
+  refunded: 'Refunded',
 }

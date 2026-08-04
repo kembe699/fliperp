@@ -50,6 +50,7 @@ class SaleService
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->when($filters['branch_id'] ?? null, fn ($query, $id) => $query->where('branch_id', $id))
             ->when($filters['served_by'] ?? null, fn ($query, $id) => $query->where('served_by', $id))
+            ->when($filters['cash_drawer_session_id'] ?? null, fn ($query, $id) => $query->where('cash_drawer_session_id', $id))
             ->when(
                 $filters['payment_type_id'] ?? null,
                 fn ($query, $id) => $query->whereHas('payments', fn ($payments) => $payments->where('payment_type_id', $id)),
@@ -189,6 +190,16 @@ class SaleService
 
         return DB::transaction(function () use ($sale, $data) {
             $sale = Sale::query()->lockForUpdate()->findOrFail($sale->id);
+
+            // Re-check after the lock: guards against a payment landing on a
+            // sale that was voided/refunded by a concurrent request in the
+            // gap between the check above and acquiring this lock.
+            if (! in_array($sale->status, ['held', 'completed'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Payments can only be added to held or completed sales.'],
+                ]);
+            }
+
             $amount = round((float) $data['amount'], 2);
 
             $payment = SalePayment::create([
@@ -232,6 +243,18 @@ class SaleService
 
         return DB::transaction(function () use ($sale) {
             $sale = Sale::query()->lockForUpdate()->with('items', 'payments', 'customer')->findOrFail($sale->id);
+
+            // Re-check after the lock: a double-click or duplicate retry that
+            // both passed the pre-transaction check would otherwise both
+            // reach here, and the second (blocked on the lock until the
+            // first commits) would go on to book stock movements and a
+            // journal entry a second time for the same sale instead of
+            // being rejected as already completed.
+            if ($sale->status !== 'held') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only held sales can be completed.'],
+                ]);
+            }
 
             if ($sale->items->isEmpty()) {
                 throw ValidationException::withMessages([
@@ -327,6 +350,15 @@ class SaleService
 
         return DB::transaction(function () use ($sale, $status) {
             $sale = Sale::query()->lockForUpdate()->with('items')->findOrFail($sale->id);
+
+            // Re-check after the lock — see complete() for why: without this
+            // a duplicate void/refund request reverses the stock and journal
+            // entry a second time instead of being rejected.
+            if ($sale->status !== 'completed') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only a completed sale can be '.($status === 'voided' ? 'voided' : 'refunded').'.'],
+                ]);
+            }
 
             foreach ($sale->items as $item) {
                 $this->stockMovementService->record([

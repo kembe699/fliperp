@@ -30,7 +30,7 @@ class SaleController extends Controller
         $this->authorize('viewAny', Sale::class);
 
         $sales = $this->saleService->paginate(
-            $request->only('status', 'branch_id', 'served_by', 'payment_type_id', 'search', 'from', 'to'),
+            $request->only('status', 'branch_id', 'served_by', 'payment_type_id', 'search', 'from', 'to', 'cash_drawer_session_id'),
             $request->integer('per_page', 15),
         );
 

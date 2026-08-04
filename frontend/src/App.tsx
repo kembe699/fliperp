@@ -79,6 +79,7 @@ import { ProfitAndLossReportPage } from '@/pages/accounting/ProfitAndLossReportP
 import { BalanceSheetReportPage } from '@/pages/accounting/BalanceSheetReportPage'
 import { GeneralLedgerReportPage } from '@/pages/accounting/GeneralLedgerReportPage'
 import { CashFlowReportPage } from '@/pages/accounting/CashFlowReportPage'
+import { ShiftReportPage } from '@/pages/accounting/ShiftReportPage'
 
 import { CompanySettingsPage } from '@/pages/settings/CompanySettingsPage'
 import { BranchesSettingsPage } from '@/pages/settings/BranchesSettingsPage'
@@ -131,6 +132,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/reports/balance-sheet',
   '/reports/general-ledger',
   '/reports/cash-flow',
+  '/reports/shift-report',
   '/settings/company',
   '/settings/branches',
   '/settings/users',
@@ -248,6 +250,7 @@ function App() {
           <Route path="/reports/balance-sheet" element={<BalanceSheetReportPage />} />
           <Route path="/reports/general-ledger" element={<GeneralLedgerReportPage />} />
           <Route path="/reports/cash-flow" element={<CashFlowReportPage />} />
+          <Route path="/reports/shift-report" element={<ShiftReportPage />} />
 
           <Route path="/settings/company" element={<CompanySettingsPage />} />
           <Route path="/settings/branches" element={<BranchesSettingsPage />} />

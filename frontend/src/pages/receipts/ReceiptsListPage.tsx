@@ -11,6 +11,7 @@ import { formatCurrency, formatDate } from '@/lib/format'
 import { printPdf } from '@/lib/pdf-print'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
+import { SALE_STATUS_VARIANT } from '@/components/sales/status-variants'
 import type { Sale } from '@/types/sale'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -23,13 +24,6 @@ import { Input } from '@/components/ui/input'
 import { SaleDetailDialog } from '@/pages/receipts/SaleDetailDialog'
 
 const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
-
-const SALE_STATUS_VARIANT: Record<Sale['status'], 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
-  held: 'neutral',
-  completed: 'success',
-  voided: 'danger',
-  refunded: 'warning',
-}
 
 export function ReceiptsListPage() {
   const queryClient = useQueryClient()

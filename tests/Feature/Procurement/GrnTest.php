@@ -88,6 +88,27 @@ it('creates stock movements only for good-condition items on confirmation', func
     ]);
 });
 
+it('rejects confirming an already-confirmed GRN instead of double-booking stock and a second supplier bill', function () {
+    $grnId = $this->postJson('/api/v1/goods-received-notes', [
+        'warehouse_id' => $this->warehouse->id,
+        'supplier_id' => $this->supplier->id,
+        'reference_number' => 'GRN-DOUBLE-001',
+        'received_date' => now()->toDateString(),
+        'items' => [
+            ['product_id' => $this->productGood->id, 'quantity_received' => 10, 'unit_cost' => 50, 'condition' => 'good'],
+        ],
+    ])->json('data.id');
+
+    $this->postJson("/api/v1/goods-received-notes/{$grnId}/confirm")->assertOk();
+
+    $this->postJson("/api/v1/goods-received-notes/{$grnId}/confirm")
+        ->assertStatus(422)
+        ->assertJsonPath('success', false);
+
+    expect(StockMovement::where('product_id', $this->productGood->id)->count())->toBe(1);
+    expect(SupplierBill::where('grn_id', $grnId)->count())->toBe(1);
+});
+
 it('updates the purchase order to partially_received then received across two GRNs', function () {
     $po = ($this->createApprovedPo)([
         ['product_id' => $this->productGood->id, 'quantity_ordered' => 100, 'unit_cost' => 50],

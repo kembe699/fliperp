@@ -148,6 +148,15 @@ class QuotationService
         return DB::transaction(function () use ($quotation) {
             $quotation = Quotation::query()->lockForUpdate()->with('items')->findOrFail($quotation->id);
 
+            // Re-check after the lock: without it, a duplicate conversion
+            // request creates a second invoice from the same quotation
+            // instead of being rejected as already converted.
+            if ($quotation->status !== 'accepted') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only an accepted quotation can be converted to an invoice.'],
+                ]);
+            }
+
             $invoice = Invoice::create([
                 'branch_id' => $quotation->branch_id,
                 'customer_id' => $quotation->customer_id,

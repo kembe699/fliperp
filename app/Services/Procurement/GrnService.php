@@ -97,7 +97,18 @@ class GrnService
         }
 
         return DB::transaction(function () use ($grn) {
-            $grn->loadMissing('items');
+            $grn = GoodsReceivedNote::query()->lockForUpdate()->with('items')->findOrFail($grn->id);
+
+            // Re-check after the lock: without it, a duplicate confirm
+            // request (double-click, retry) would record stock movements,
+            // update PO receiving progress, and auto-create a supplier
+            // bill a second time instead of being rejected.
+            if ($grn->status !== 'draft') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only draft GRNs can be confirmed.'],
+                ]);
+            }
+
             $goodSubtotal = 0.0;
 
             foreach ($grn->items as $item) {

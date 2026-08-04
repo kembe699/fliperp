@@ -150,6 +150,15 @@ class InvoiceService
         return DB::transaction(function () use ($invoice) {
             $invoice = Invoice::query()->lockForUpdate()->findOrFail($invoice->id);
 
+            // Re-check after the lock: without it, a duplicate send request
+            // posts a second revenue journal entry for the same invoice
+            // instead of being rejected as already sent.
+            if ($invoice->status !== 'draft') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only a draft invoice can be sent.'],
+                ]);
+            }
+
             $revenueAmount = round((float) $invoice->subtotal - (float) $invoice->discount_amount, 2);
             $taxAmount = round((float) $invoice->tax_amount, 2);
             $totalAmount = round((float) $invoice->total_amount, 2);
@@ -194,6 +203,21 @@ class InvoiceService
 
         return DB::transaction(function () use ($invoice) {
             $invoice = Invoice::query()->lockForUpdate()->findOrFail($invoice->id);
+
+            // Re-check after the lock: without it, a duplicate cancel
+            // request would try to reverse the same journal entry twice
+            // instead of being rejected as already cancelled.
+            if (! in_array($invoice->status, ['draft', 'sent'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Only a draft or sent invoice can be cancelled.'],
+                ]);
+            }
+
+            if ((float) $invoice->amount_paid > 0) {
+                throw ValidationException::withMessages([
+                    'invoice' => ['Cannot cancel an invoice that already has payments applied; use a credit note flow instead.'],
+                ]);
+            }
 
             if ($invoice->journal_entry_id) {
                 $this->journalEntryService->reverse($invoice->journalEntry);
