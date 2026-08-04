@@ -5,7 +5,7 @@
     "buildCommand": "composer install --no-dev --optimize-autoloader"
   },
   "deploy": {
-    "startCommand": "php artisan storage:link && php artisan migrate --force && php artisan db:seed --class=RoleAndPermissionSeeder --force && php artisan db:seed --class=CurrencySeeder --force && php artisan config:cache && php artisan route:cache && php artisan serve --host 0.0.0.0 --port $PORT",
+    "startCommand": "php artisan storage:link && php artisan migrate --force && php artisan db:seed --class=RoleAndPermissionSeeder --force && php artisan db:seed --class=CurrencySeeder --force && php artisan config:cache && php artisan route:cache && (php artisan reverb:start --host=0.0.0.0 --port=${REVERB_SERVER_PORT:-8080} &) && php artisan serve --host 0.0.0.0 --port $PORT",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
