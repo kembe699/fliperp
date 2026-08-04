@@ -1,33 +1,68 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, Loader2, MapPin, QrCode, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2, MapPin, QrCode, ScanLine, XCircle } from 'lucide-react'
 
 import { fetchPortalMe, portalCheckLocation, portalClockIn, portalClockOut } from '@/api/employee-portal'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { Button } from '@/components/ui/button'
+import { QrScanCamera } from '@/components/portal/QrScanCamera'
 
-type Phase = 'locating' | 'location-denied' | 'checking' | 'in-range' | 'out-of-range' | 'submitting' | 'success' | 'error'
+type Phase = 'idle' | 'scanning' | 'locating' | 'location-denied' | 'checking' | 'in-range' | 'out-of-range' | 'submitting' | 'success' | 'error'
+
+interface ClockContext {
+  branch: string
+  token: string
+}
+
+/** Accepts either a full clock URL (from a printed/displayed QR) or a bare "branch=..&token=.." query string. */
+function parseClockContext(decodedText: string): ClockContext | null {
+  try {
+    const url = new URL(decodedText)
+    const branch = url.searchParams.get('branch')
+    const token = url.searchParams.get('token')
+    return branch && token ? { branch, token } : null
+  } catch {
+    const params = new URLSearchParams(decodedText.replace(/^\?/, ''))
+    const branch = params.get('branch')
+    const token = params.get('token')
+    return branch && token ? { branch, token } : null
+  }
+}
 
 export function PortalClockPage() {
   const [searchParams] = useSearchParams()
-  const branchParam = searchParams.get('branch')
-  const tokenParam = searchParams.get('token')
   const queryClient = useQueryClient()
 
   const { data: me } = useQuery({ queryKey: ['portal-me'], queryFn: fetchPortalMe })
 
-  const [phase, setPhase] = useState<Phase>('locating')
+  const [context, setContext] = useState<ClockContext | null>(() => {
+    const branch = searchParams.get('branch')
+    const token = searchParams.get('token')
+    return branch && token ? { branch, token } : null
+  })
+
+  const [phase, setPhase] = useState<Phase>(context ? 'locating' : 'idle')
   const [message, setMessage] = useState<string | null>(null)
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
 
-  const hasScanContext = !!branchParam && !!tokenParam
   const hasClockedIn = !!me?.today_attendance?.clock_in
   const hasClockedOut = !!me?.today_attendance?.clock_out
   const action = !hasClockedIn ? 'in' : !hasClockedOut ? 'out' : null
 
+  const handleScan = (decodedText: string) => {
+    const parsed = parseClockContext(decodedText)
+    if (!parsed) {
+      setPhase('error')
+      setMessage("That QR code doesn't look like an attendance code. Please scan the one posted at your office.")
+      return
+    }
+    setContext(parsed)
+    setPhase('locating')
+  }
+
   useEffect(() => {
-    if (!hasScanContext) return
+    if (!context) return
     if (!navigator.geolocation) {
       setPhase('location-denied')
       setMessage('Your browser does not support location access, which is required to clock in/out.')
@@ -49,15 +84,15 @@ export function PortalClockPage() {
       },
       { enableHighAccuracy: true, timeout: 15000 },
     )
-  }, [hasScanContext, branchParam, tokenParam])
+  }, [context])
 
   useEffect(() => {
-    if (!coords || !branchParam || !tokenParam) return
+    if (!coords || !context) return
 
     let cancelled = false
     setPhase('checking')
 
-    portalCheckLocation({ branch_id: Number(branchParam), token: tokenParam, latitude: coords.latitude, longitude: coords.longitude })
+    portalCheckLocation({ branch_id: Number(context.branch), token: context.token, latitude: coords.latitude, longitude: coords.longitude })
       .then((result) => {
         if (cancelled) return
         if (result.within_range) {
@@ -77,13 +112,13 @@ export function PortalClockPage() {
     return () => {
       cancelled = true
     }
-  }, [coords, branchParam, tokenParam])
+  }, [coords, context])
 
   const handleConfirm = async () => {
-    if (!coords || !branchParam || !tokenParam || !action) return
+    if (!coords || !context || !action) return
     setPhase('submitting')
     try {
-      const payload = { branch_id: Number(branchParam), token: tokenParam, latitude: coords.latitude, longitude: coords.longitude }
+      const payload = { branch_id: Number(context.branch), token: context.token, latitude: coords.latitude, longitude: coords.longitude }
       if (action === 'in') {
         await portalClockIn(payload)
       } else {
@@ -97,16 +132,35 @@ export function PortalClockPage() {
     }
   }
 
-  if (!hasScanContext) {
+  const reset = () => {
+    setContext(null)
+    setCoords(null)
+    setMessage(null)
+    setPhase('idle')
+  }
+
+  if (phase === 'idle') {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
         <QrCode className="h-16 w-16 text-muted-foreground" />
         <div>
           <p className="text-base font-semibold text-foreground">Scan to Clock In or Out</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Scan the QR code posted at your office with your phone's camera to clock in or out.
+            Scan the QR code posted at your office to clock in or out.
           </p>
         </div>
+        <Button size="lg" className="h-14 w-full max-w-xs text-base" onClick={() => setPhase('scanning')}>
+          <ScanLine className="h-5 w-5" />
+          Open Camera to Scan
+        </Button>
+      </div>
+    )
+  }
+
+  if (phase === 'scanning') {
+    return (
+      <div className="py-6">
+        <QrScanCamera onScan={handleScan} onCancel={reset} />
       </div>
     )
   }
@@ -124,7 +178,7 @@ export function PortalClockPage() {
         <>
           <AlertTriangle className="h-14 w-14 text-warning" />
           <p className="text-sm text-foreground">{message}</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
+          <Button variant="outline" onClick={reset}>
             Try Again
           </Button>
         </>
@@ -159,6 +213,9 @@ export function PortalClockPage() {
           <XCircle className="h-14 w-14 text-destructive" />
           <p className="text-sm font-medium text-foreground">You're too far from the office.</p>
           {message && <p className="text-xs text-muted-foreground">{message}</p>}
+          <Button variant="outline" onClick={reset}>
+            Try Again
+          </Button>
         </>
       )}
 
@@ -180,7 +237,7 @@ export function PortalClockPage() {
         <>
           <XCircle className="h-14 w-14 text-destructive" />
           <p className="text-sm text-foreground">{message ?? 'Something went wrong. Please try again.'}</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
+          <Button variant="outline" onClick={reset}>
             Try Again
           </Button>
         </>
