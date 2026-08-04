@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Bell, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
 import { useAuthStore } from '@/lib/auth-store'
 import { useUiStore } from '@/lib/ui-store'
+import { disconnectEcho } from '@/lib/echo'
 import { fetchBranches } from '@/api/branches'
 import { logout as logoutRequest } from '@/api/auth'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -39,6 +40,7 @@ export function AppTopbar() {
     } catch {
       // Even if the API call fails, still clear local state and redirect.
     }
+    disconnectEcho()
     clearAuth()
     navigate('/login', { replace: true })
   }
@@ -70,9 +72,7 @@ export function AppTopbar() {
           </SelectContent>
         </Select>
 
-        <Button variant="outline" size="icon" className="rounded-full" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

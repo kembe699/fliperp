@@ -73,4 +73,15 @@ class User extends Authenticatable
     {
         return $this->hasOne(Employee::class);
     }
+
+    /**
+     * Controls the channel name Laravel's notification broadcasting uses
+     * (see BroadcastNotificationCreated::channelName()) — without this it
+     * defaults to "App.Models.User.{id}", which doesn't match the
+     * private-user.{id} channel routes/channels.php actually authorizes.
+     */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'user.'.$this->id;
+    }
 }

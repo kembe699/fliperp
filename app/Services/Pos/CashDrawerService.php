@@ -8,10 +8,13 @@ use App\Models\ChartOfAccount;
 use App\Models\JournalEntry;
 use App\Models\Sale;
 use App\Models\SalePayment;
+use App\Notifications\CashDrawerVarianceFlagged;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -30,7 +33,10 @@ class CashDrawerService
 
     public const CASH_SHORT_OVER_ACCOUNT_CODE = '5400';
 
-    public function __construct(protected JournalEntryService $journalEntryService) {}
+    public function __construct(
+        protected JournalEntryService $journalEntryService,
+        protected NotificationRecipientResolver $recipientResolver,
+    ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
@@ -110,7 +116,7 @@ class CashDrawerService
             ]);
         }
 
-        return DB::transaction(function () use ($session, $data) {
+        $closed = DB::transaction(function () use ($session, $data) {
             $session = CashDrawerSession::query()->lockForUpdate()->findOrFail($session->id);
 
             // Re-check after the lock, not just before the transaction: two
@@ -142,6 +148,17 @@ class CashDrawerService
 
             return $session->fresh();
         });
+
+        if ((float) $closed->variance !== 0.0) {
+            $recipients = $this->recipientResolver->usersWithPermission(
+                $closed->company_id,
+                'users.view',
+                $closed->branch_id,
+            )->reject(fn ($user) => $user->id === Auth::id());
+            Notification::send($recipients, new CashDrawerVarianceFlagged($closed));
+        }
+
+        return $closed;
     }
 
     /**

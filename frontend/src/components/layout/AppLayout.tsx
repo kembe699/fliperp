@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar'
 import { AppTopbar } from '@/components/layout/AppTopbar'
 import { RequirePermission } from '@/routes/RequirePermission'
 import { permissionForPath } from '@/nav/nav-permissions'
+import { ChatWidget } from '@/components/chat/ChatWidget'
 
 export function AppLayout() {
   const location = useLocation()
@@ -24,6 +25,7 @@ export function AppLayout() {
           )}
         </main>
       </div>
+      <ChatWidget />
     </div>
   )
 }

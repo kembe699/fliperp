@@ -4,6 +4,34 @@ export function formatDate(value: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
+const RELATIVE_TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['year', 60 * 60 * 24 * 365],
+  ['month', 60 * 60 * 24 * 30],
+  ['week', 60 * 60 * 24 * 7],
+  ['day', 60 * 60 * 24],
+  ['hour', 60 * 60],
+  ['minute', 60],
+]
+
+const relativeTimeFormatter = new Intl.RelativeTimeFormat('en-US', { numeric: 'auto' })
+
+export function formatRelativeTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  const seconds = Math.round((date.getTime() - Date.now()) / 1000)
+
+  if (Math.abs(seconds) < 60) return 'just now'
+
+  for (const [unit, unitSeconds] of RELATIVE_TIME_UNITS) {
+    if (Math.abs(seconds) >= unitSeconds) {
+      return relativeTimeFormatter.format(Math.round(seconds / unitSeconds), unit)
+    }
+  }
+
+  return relativeTimeFormatter.format(Math.round(seconds / 60), 'minute')
+}
+
 export function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10)
 }

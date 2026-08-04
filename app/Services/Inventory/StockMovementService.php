@@ -5,9 +5,13 @@ namespace App\Services\Inventory;
 use App\Models\Product;
 use App\Models\StockLevel;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
+use App\Notifications\LowStockAlert;
 use App\Services\Audit\AuditLogService;
+use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -18,7 +22,10 @@ use Illuminate\Validation\ValidationException;
  */
 class StockMovementService
 {
-    public function __construct(protected AuditLogService $auditLogService) {}
+    public function __construct(
+        protected AuditLogService $auditLogService,
+        protected NotificationRecipientResolver $recipientResolver,
+    ) {}
 
     public function record(array $data): StockMovement
     {
@@ -68,6 +75,11 @@ class StockMovementService
 
         $stockLevel->update(['quantity_on_hand' => $after]);
 
+        $reorderLevel = (float) $product->reorder_level;
+        if ($reorderLevel > 0 && $before >= $reorderLevel && $after < $reorderLevel) {
+            $this->notifyLowStock($product, $after, $data['warehouse_id']);
+        }
+
         $movement = StockMovement::create([
             'product_id' => $data['product_id'],
             'product_variant_id' => $data['product_variant_id'] ?? null,
@@ -82,6 +94,23 @@ class StockMovementService
         ]);
 
         return ['movement' => $movement, 'before' => $before, 'after' => $after];
+    }
+
+    /**
+     * Fires once per crossing (see the before/after check at the call
+     * site), not on every movement while stock stays low — otherwise every
+     * sale of an already-low-stock item would re-notify the same alert.
+     */
+    protected function notifyLowStock(Product $product, float $quantityOnHand, int $warehouseId): void
+    {
+        $warehouse = Warehouse::find($warehouseId);
+
+        $recipients = $this->recipientResolver->usersWithPermission(
+            $product->company_id,
+            'stock-adjustments.approve',
+            $warehouse?->branch_id,
+        );
+        Notification::send($recipients, new LowStockAlert($product, $quantityOnHand));
     }
 
     protected function lockOrCreateStockLevel(int $productId, ?int $productVariantId, int $warehouseId): StockLevel

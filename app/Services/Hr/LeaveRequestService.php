@@ -4,13 +4,19 @@ namespace App\Services\Hr;
 
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Notifications\LeaveRequestDecided;
+use App\Notifications\LeaveRequestSubmitted;
+use App\Services\Notifications\NotificationRecipientResolver;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class LeaveRequestService
 {
+    public function __construct(protected NotificationRecipientResolver $recipientResolver) {}
+
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return LeaveRequest::query()
@@ -32,7 +38,7 @@ class LeaveRequestService
 
         $this->assertWithinBalance($data['employee_id'], $leaveType, $start->year, $daysCount);
 
-        return LeaveRequest::create([
+        $leaveRequest = LeaveRequest::create([
             'employee_id' => $data['employee_id'],
             'leave_type_id' => $data['leave_type_id'],
             'start_date' => $data['start_date'],
@@ -41,6 +47,15 @@ class LeaveRequestService
             'reason' => $data['reason'] ?? null,
             'status' => 'pending',
         ]);
+
+        $approvers = $this->recipientResolver->usersWithPermission(
+            $leaveRequest->employee->company_id,
+            'leave-requests.approve',
+            $leaveRequest->employee->branch_id,
+        )->reject(fn ($user) => $user->id === Auth::id());
+        Notification::send($approvers, new LeaveRequestSubmitted($leaveRequest));
+
+        return $leaveRequest;
     }
 
     public function update(LeaveRequest $leaveRequest, array $data): LeaveRequest
@@ -93,6 +108,8 @@ class LeaveRequestService
             'approved_by' => Auth::id(),
         ]);
 
+        $this->notifyDecision($leaveRequest);
+
         return $leaveRequest;
     }
 
@@ -109,7 +126,18 @@ class LeaveRequestService
             'approved_by' => Auth::id(),
         ]);
 
+        $this->notifyDecision($leaveRequest);
+
         return $leaveRequest;
+    }
+
+    protected function notifyDecision(LeaveRequest $leaveRequest): void
+    {
+        $employeeUser = $leaveRequest->employee->user;
+
+        if ($employeeUser) {
+            $employeeUser->notify(new LeaveRequestDecided($leaveRequest));
+        }
     }
 
     protected function assertWithinBalance(int $employeeId, LeaveType $leaveType, int $year, int $daysCount, ?int $excludeId = null): void

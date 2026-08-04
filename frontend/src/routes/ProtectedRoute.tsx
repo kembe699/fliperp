@@ -5,6 +5,7 @@ import { Navigate } from 'react-router-dom'
 import { fetchMe } from '@/api/auth'
 import { fetchCurrencies } from '@/api/settings'
 import { useAuthStore } from '@/lib/auth-store'
+import { initEcho } from '@/lib/echo'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const token = useAuthStore((state) => state.token)
@@ -22,6 +23,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     // Currency symbols (formatCurrency reads these from the store, not via
     // a hook, since it's called from plain table-column render functions).
     fetchCurrencies().then(setCurrencies).catch(() => {})
+    // Idempotent (initEcho() returns the existing instance if already
+    // connected) — disconnecting happens on logout, see AppTopbar.
+    initEcho()
   }, [token, setAuth, setCurrencies])
 
   if (!token) {

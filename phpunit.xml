@@ -21,6 +21,11 @@
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
+        <!-- Notification broadcasting would otherwise make a real HTTP call
+             to a Reverb server that isn't running during tests, failing the
+             whole request with a connection-refused error. 'log' still lets
+             database-channel assertions work; it just no-ops the push. -->
+        <env name="BROADCAST_CONNECTION" value="log"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="pgsql"/>
         <env name="DB_HOST" value="127.0.0.1"/>

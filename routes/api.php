@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\BudgetPeriodController;
 use App\Http\Controllers\Api\CashDrawerController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChartOfAccountController;
+use App\Http\Controllers\Api\ChatAttachmentController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\CustomerController;
@@ -34,6 +36,7 @@ use App\Http\Controllers\Api\MeActivityController;
 use App\Http\Controllers\Api\MeIndicatorController;
 use App\Http\Controllers\Api\MeProjectController;
 use App\Http\Controllers\Api\MeResultController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentTypeController;
 use App\Http\Controllers\Api\PayrollRunController;
 use App\Http\Controllers\Api\PermissionController;
@@ -65,6 +68,7 @@ use App\Http\Controllers\Api\UnitOfMeasureController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WarehouseController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -109,6 +113,25 @@ Route::prefix('v1')->group(function () {
     Route::get('currencies', [CurrencyController::class, 'index']);
 
     Route::middleware('auth:sanctum')->group(function () {
+        // Echo's default authorizer is cookie/session based; this app is a
+        // bearer-token SPA, so the channel-auth request must go through
+        // auth:sanctum like every other endpoint instead of Broadcast::
+        // routes()'s 'web'-middleware default (see frontend/src/lib/echo.ts
+        // for the matching client-side authorizer override).
+        Broadcast::routes(['middleware' => ['auth:sanctum']]);
+
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::post('notifications/{id}/read', [NotificationController::class, 'markRead']);
+
+        Route::post('chat/conversations/with/{userId}', [ChatController::class, 'startConversation']);
+        Route::get('chat/conversations', [ChatController::class, 'index']);
+        Route::get('chat/conversations/{conversation}/messages', [ChatController::class, 'messages']);
+        Route::post('chat/conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
+        Route::post('chat/conversations/{conversation}/read', [ChatController::class, 'markRead']);
+        Route::get('chat/attachments/{attachment}/download', [ChatAttachmentController::class, 'download']);
+
         Route::apiResource('companies', CompanyController::class);
         Route::post('company/logo', [CompanyController::class, 'uploadLogo']);
         Route::delete('company/logo', [CompanyController::class, 'deleteLogo']);

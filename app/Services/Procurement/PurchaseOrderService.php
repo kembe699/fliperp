@@ -3,13 +3,18 @@
 namespace App\Services\Procurement;
 
 use App\Models\PurchaseOrder;
+use App\Notifications\PurchaseOrderApprovalNeeded;
+use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderService
 {
+    public function __construct(protected NotificationRecipientResolver $recipientResolver) {}
+
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return PurchaseOrder::query()
@@ -88,6 +93,13 @@ class PurchaseOrderService
         }
 
         $purchaseOrder->update(['status' => 'submitted']);
+
+        $approvers = $this->recipientResolver->usersWithPermission(
+            $purchaseOrder->company_id,
+            'purchase-orders.approve',
+            $purchaseOrder->branch_id,
+        )->reject(fn ($user) => $user->id === Auth::id());
+        Notification::send($approvers, new PurchaseOrderApprovalNeeded($purchaseOrder));
 
         return $purchaseOrder;
     }

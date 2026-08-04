@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/lib/auth-store'
+import { getEcho } from '@/lib/echo'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1',
@@ -12,6 +13,14 @@ api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  // Lets broadcast(...)->toOthers() (used when sending a chat message)
+  // exclude the sender's own open tab from the echo of their own message —
+  // without this header Echo can't tell which connection to skip and the
+  // sender would see their own message appear twice.
+  const socketId = getEcho()?.socketId()
+  if (socketId) {
+    config.headers['X-Socket-Id'] = socketId
   }
   return config
 })

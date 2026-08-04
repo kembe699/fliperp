@@ -7,10 +7,13 @@ use App\Models\Employee;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
 use App\Models\StatutoryDeductionRule;
+use App\Notifications\PayrollRunProcessed;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class PayrollRunService
@@ -21,7 +24,10 @@ class PayrollRunService
 
     public const NET_SALARIES_PAYABLE_ACCOUNT_CODE = '2200';
 
-    public function __construct(protected JournalEntryService $journalEntryService) {}
+    public function __construct(
+        protected JournalEntryService $journalEntryService,
+        protected NotificationRecipientResolver $recipientResolver,
+    ) {}
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
@@ -118,6 +124,13 @@ class PayrollRunService
                 'processed_by' => Auth::id(),
                 'journal_entry_id' => $journalEntry->id,
             ]);
+
+            $recipients = $this->recipientResolver->usersWithPermission(
+                $payrollRun->company_id,
+                'payroll-runs.process',
+                $payrollRun->branch_id,
+            )->reject(fn ($user) => $user->id === Auth::id());
+            Notification::send($recipients, new PayrollRunProcessed($payrollRun));
 
             return $payrollRun->fresh(['payslips', 'journalEntry.lines']);
         });

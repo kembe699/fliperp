@@ -19,6 +19,7 @@ class Invoice extends TenantModel
         'reference_number',
         'invoice_date',
         'due_date',
+        'overdue_notified_at',
         'status',
         'subtotal',
         'tax_amount',
@@ -34,6 +35,7 @@ class Invoice extends TenantModel
         return [
             'invoice_date' => 'date',
             'due_date' => 'date',
+            'overdue_notified_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',

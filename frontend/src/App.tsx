@@ -12,6 +12,7 @@ import { PortalDashboardPage } from '@/pages/portal/PortalDashboardPage'
 import { PortalClockPage } from '@/pages/portal/PortalClockPage'
 import { PortalLeavePage } from '@/pages/portal/PortalLeavePage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { NotificationsPage } from '@/pages/NotificationsPage'
 import { ComingSoonPage } from '@/pages/ComingSoonPage'
 
 import { CustomersListPage } from '@/pages/customers/CustomersListPage'
@@ -179,6 +180,7 @@ function App() {
           }
         >
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
 
           <Route path="/customers" element={<CustomersListPage />} />
           <Route path="/customers/:id/statement" element={<CustomerStatementPage />} />

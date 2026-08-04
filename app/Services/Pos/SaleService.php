@@ -9,12 +9,15 @@ use App\Models\RestaurantTable;
 use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\TaxRate;
+use App\Notifications\SaleVoided;
 use App\Services\Finance\JournalEntryService;
 use App\Services\Inventory\StockMovementService;
+use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -41,6 +44,7 @@ class SaleService
         protected StockMovementService $stockMovementService,
         protected JournalEntryService $journalEntryService,
         protected CashDrawerService $cashDrawerService,
+        protected NotificationRecipientResolver $recipientResolver,
     ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -348,7 +352,7 @@ class SaleService
             ]);
         }
 
-        return DB::transaction(function () use ($sale, $status) {
+        $reversed = DB::transaction(function () use ($sale, $status) {
             $sale = Sale::query()->lockForUpdate()->with('items')->findOrFail($sale->id);
 
             // Re-check after the lock — see complete() for why: without this
@@ -382,6 +386,17 @@ class SaleService
 
             return $sale->fresh(['items', 'payments']);
         });
+
+        if ($status === 'voided') {
+            $recipients = $this->recipientResolver->usersWithPermission(
+                $reversed->company_id,
+                'users.view',
+                $reversed->branch_id,
+            )->reject(fn ($user) => $user->id === Auth::id());
+            Notification::send($recipients, new SaleVoided($reversed));
+        }
+
+        return $reversed;
     }
 
     protected function postSaleJournalEntry(Sale $sale, float $paid, float $outstanding, float $cogsTotal): JournalEntry
