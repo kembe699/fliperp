@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class StatutoryDeductionRuleResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'company_id' => $this->company_id,
+            'name' => $this->name,
+            'type' => $this->type,
+            'calculation_type' => $this->calculation_type,
+            'config' => $this->config,
+            'country_code' => $this->country_code,
+            'is_active' => $this->is_active,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
+        ];
+    }
+}
