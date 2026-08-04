@@ -11,6 +11,7 @@ import {
 } from '@/api/hr'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { downloadPdf } from '@/lib/pdf-download'
+import { useAuthStore } from '@/lib/auth-store'
 import type { Employee, EmployeeContract } from '@/types/hr'
 
 import { Button } from '@/components/ui/button'
@@ -30,13 +31,14 @@ interface ContractFlowDialogProps {
   resumeContract?: EmployeeContract | null
 }
 
-const emptyDetails = { contractType: '', startDate: '', endDate: '', baseSalary: '', currencyCode: 'USD' }
+const getEmptyDetails = (currencyCode: string) => ({ contractType: '', startDate: '', endDate: '', baseSalary: '', currencyCode })
 
 export function ContractFlowDialog({ open, onOpenChange, employee, resumeContract }: ContractFlowDialogProps) {
   const queryClient = useQueryClient()
+  const companyCurrencyCode = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
 
   const [step, setStep] = useState<Step>('choose')
-  const [details, setDetails] = useState(emptyDetails)
+  const [details, setDetails] = useState(() => getEmptyDetails(companyCurrencyCode))
   const [contract, setContract] = useState<EmployeeContract | null>(null)
   const [bodyDraft, setBodyDraft] = useState('')
   const [signedByName, setSignedByName] = useState('')
@@ -53,14 +55,14 @@ export function ContractFlowDialog({ open, onOpenChange, employee, resumeContrac
       setStep('edit')
     } else {
       setStep('choose')
-      setDetails(emptyDetails)
+      setDetails(getEmptyDetails(companyCurrencyCode))
       setContract(null)
       setBodyDraft('')
     }
     setSignedByName('')
     setUploadFile(null)
     setUploadSignedByName('')
-  }, [open, resumeContract])
+  }, [open, resumeContract, companyCurrencyCode])
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['employee-contracts', employee.id] })
 

@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { fetchCategories, fetchProducts, fetchStockLevels, updateProduct } from '@/api/inventory'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Product } from '@/types/inventory'

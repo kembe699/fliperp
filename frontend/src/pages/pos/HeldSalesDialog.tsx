@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchHeldSales } from '@/api/sales'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import type { Sale } from '@/types/sale'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'

@@ -26,6 +26,7 @@ export interface Role {
   name: string
   guard_name: string
   permissions: string[]
+  users_count?: number
 }
 
 export interface Permission {

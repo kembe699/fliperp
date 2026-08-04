@@ -5,7 +5,8 @@ import { PlayCircle } from 'lucide-react'
 
 import { fetchEmployees, fetchPayrollRun, fetchPayslips, processPayrollRun } from '@/api/hr'
 import { fetchBranches } from '@/api/branches'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 

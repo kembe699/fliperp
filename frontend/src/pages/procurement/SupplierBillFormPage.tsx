@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 
 import { createSupplierBill, fetchSuppliers } from '@/api/procurement'
 import { applyFieldErrors, getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'

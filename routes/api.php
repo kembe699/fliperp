@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CashDrawerController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChartOfAccountController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerPaymentController;
 use App\Http\Controllers\Api\DashboardController;
@@ -101,6 +102,11 @@ Route::prefix('v1')->group(function () {
     Route::prefix('public')->group(function () {
         Route::get('sales/{sale}/verify', [PublicSaleController::class, 'verify']);
     });
+
+    // Also unauthenticated: non-sensitive reference data, and the public
+    // receipt-verification page (no login) needs it to render amounts
+    // with the right symbol instead of falling back to a raw currency code.
+    Route::get('currencies', [CurrencyController::class, 'index']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('companies', CompanyController::class);

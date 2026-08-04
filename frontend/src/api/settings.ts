@@ -2,6 +2,12 @@ import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
 import type { Company, Permission, Role, SettingsUser } from '@/types/settings'
 import type { PaymentType, PaymentTypeKind, TaxRate } from '@/types/pos'
+import type { Currency } from '@/types/auth'
+
+export async function fetchCurrencies(): Promise<Currency[]> {
+  const { data } = await api.get<ApiResponse<Currency[]>>('/currencies')
+  return data.data
+}
 
 // Company (single-record settings form)
 export async function fetchCompany(id: number): Promise<Company> {

@@ -149,3 +149,99 @@ it('allows opening a new session again after the previous one is closed', functi
         ->assertCreated()
         ->assertJsonPath('data.status', 'open');
 });
+
+it('posts a journal entry debiting Cash Short/Over and crediting Cash for a shortage, and it shows up on the Trial Balance and P&L', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 500000])
+        ->assertCreated();
+
+    // Close 414500 short of the opening float (no sales this session, so
+    // expected_closing === opening_float) — mirrors the real shortage
+    // reported in production. closing_float can't go negative, hence the
+    // larger opening float here versus the other scenarios in this file.
+    $closingFloat = 500000 - 414500;
+
+    $response = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => $closingFloat])->assertOk();
+
+    expect((float) $response->json('data.variance'))->toBe(-414500.0);
+    $journalEntryId = $response->json('data.journal_entry_id');
+    expect($journalEntryId)->not->toBeNull();
+
+    $this->assertDatabaseHas('journal_entries', [
+        'id' => $journalEntryId,
+        'status' => 'posted',
+        'source_module' => 'pos_cash_drawer',
+    ]);
+
+    $cashAccount = $this->accounts['1000'];
+    $shortOverAccount = App\Models\ChartOfAccount::where('company_id', $this->company->id)->where('code', '5400')->firstOrFail();
+
+    $this->assertDatabaseHas('journal_entry_lines', [
+        'journal_entry_id' => $journalEntryId,
+        'account_id' => $shortOverAccount->id,
+        'debit' => 414500,
+        'credit' => 0,
+    ]);
+    $this->assertDatabaseHas('journal_entry_lines', [
+        'journal_entry_id' => $journalEntryId,
+        'account_id' => $cashAccount->id,
+        'debit' => 0,
+        'credit' => 414500,
+    ]);
+
+    // Confirm it actually shows up correctly on the reports, not just in the raw tables.
+    $admin = createUserWithRole('company_admin', $this->company, $this->branch);
+    Sanctum::actingAs($admin, ['*']);
+    $today = now()->toDateString();
+
+    $trialBalance = $this->getJson("/api/v1/reports/trial-balance?from={$today}&to={$today}")->assertOk()->json('data');
+    $byCode = collect($trialBalance['accounts'])->keyBy('code');
+    expect((float) $byCode['1000']['balance'])->toBe(-414500.0);
+    expect((float) $byCode['5400']['balance'])->toBe(414500.0);
+    expect((float) $trialBalance['total_debit'])->toBe((float) $trialBalance['total_credit']);
+
+    $profitAndLoss = $this->getJson("/api/v1/reports/profit-and-loss?from={$today}&to={$today}")->assertOk()->json('data');
+    $opEx = collect($profitAndLoss['operating_expenses']['accounts'])->keyBy('code');
+    expect((float) $opEx['5400']['amount'])->toBe(414500.0);
+    expect((float) $profitAndLoss['net_profit'])->toBe(-414500.0);
+});
+
+it('posts a journal entry debiting Cash and crediting Cash Short/Over for an overage', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 50000])
+        ->assertCreated();
+
+    $closingFloat = 50000 + 2000;
+
+    $response = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => $closingFloat])->assertOk();
+
+    expect((float) $response->json('data.variance'))->toBe(2000.0);
+    $journalEntryId = $response->json('data.journal_entry_id');
+    expect($journalEntryId)->not->toBeNull();
+
+    $cashAccount = $this->accounts['1000'];
+    $shortOverAccount = App\Models\ChartOfAccount::where('company_id', $this->company->id)->where('code', '5400')->firstOrFail();
+
+    $this->assertDatabaseHas('journal_entry_lines', [
+        'journal_entry_id' => $journalEntryId,
+        'account_id' => $cashAccount->id,
+        'debit' => 2000,
+        'credit' => 0,
+    ]);
+    $this->assertDatabaseHas('journal_entry_lines', [
+        'journal_entry_id' => $journalEntryId,
+        'account_id' => $shortOverAccount->id,
+        'debit' => 0,
+        'credit' => 2000,
+    ]);
+});
+
+it('posts no journal entry when the drawer closes with exactly zero variance', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 50000])
+        ->assertCreated();
+
+    $response = $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => 50000])->assertOk();
+
+    expect((float) $response->json('data.variance'))->toBe(0.0);
+    expect($response->json('data.journal_entry_id'))->toBeNull();
+
+    expect(App\Models\JournalEntry::where('source_module', 'pos_cash_drawer')->count())->toBe(0);
+});

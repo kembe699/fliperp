@@ -11,7 +11,7 @@ import { fetchBranches } from '@/api/branches'
 import { fetchActiveProducts } from '@/api/products'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { useAuthStore } from '@/lib/auth-store'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'

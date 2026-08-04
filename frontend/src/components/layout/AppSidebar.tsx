@@ -5,6 +5,7 @@ import { Building2, ChevronDown, ChevronRight, Headset, LogOut } from 'lucide-re
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/auth-store'
 import { logout as logoutRequest } from '@/api/auth'
+import { usePermissions } from '@/hooks/use-permissions'
 import { navConfig } from '@/nav/nav-config'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -29,10 +30,27 @@ export function AppSidebar() {
   const user = useAuthStore((state) => state.user)
   const company = useAuthStore((state) => state.company)
   const clearAuth = useAuthStore((state) => state.clearAuth)
+  const { can } = usePermissions()
+
+  // Filter first, then everything below (active-section detection,
+  // rendering) works off this list only — so a hidden item can never be
+  // "active" from a stale URL, and a parent whose every child got filtered
+  // out is dropped entirely rather than rendering as a dead expand toggle.
+  const visibleNavConfig = useMemo(() => {
+    return navConfig
+      .map((item) => {
+        const visibleChildren = item.children?.filter((child) => !child.requiredPermission || can(child.requiredPermission))
+        if (item.children) {
+          return visibleChildren && visibleChildren.length > 0 ? { ...item, children: visibleChildren } : null
+        }
+        return !item.requiredPermission || can(item.requiredPermission) ? item : null
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+  }, [can])
 
   const activeParentLabel = useMemo(() => {
-    return navConfig.find((item) => item.children?.some((child) => location.pathname.startsWith(child.path)))?.label
-  }, [location.pathname])
+    return visibleNavConfig.find((item) => item.children?.some((child) => location.pathname.startsWith(child.path)))?.label
+  }, [location.pathname, visibleNavConfig])
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(activeParentLabel ? [activeParentLabel] : []))
 
@@ -91,7 +109,7 @@ export function AppSidebar() {
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
         <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Main Menu</p>
         <ul className="space-y-0.5">
-          {navConfig.map((item) => {
+          {visibleNavConfig.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.path
             const isExpanded = expanded.has(item.label)

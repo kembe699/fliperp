@@ -18,6 +18,7 @@ class CashDrawerSessionResource extends JsonResource
             'closing_float' => $this->closing_float !== null ? (float) $this->closing_float : null,
             'expected_closing' => $this->expected_closing !== null ? (float) $this->expected_closing : null,
             'variance' => $this->variance !== null ? (float) $this->variance : null,
+            'journal_entry_id' => $this->journal_entry_id,
             'opened_at' => $this->opened_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'status' => $this->status,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { round2 } from '@/pages/pos/types'
 import type { PaymentType } from '@/types/pos'
 

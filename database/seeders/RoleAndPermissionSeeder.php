@@ -98,14 +98,25 @@ class RoleAndPermissionSeeder extends Seeder
     /**
      * super_admin implicitly gets every permission (see run()). Every other
      * role lists the modules/actions it is granted.
+     *
+     * IMPORTANT: Spatie's roles/permissions tables have no company_id — a
+     * role like "cashier" is one shared row used by every company in this
+     * database, not a per-tenant copy (Spatie's "teams" feature, which
+     * would fix this properly, is present in the migration but disabled —
+     * see config/permission.php). Granting company_admin roles.create/
+     * update/delete means a company_admin can rename, re-permission, or
+     * delete a role that other companies' users also hold. This is an
+     * accepted, flagged tradeoff for now so the in-app role management UI
+     * is actually usable; proper isolation needs Spatie teams enabled plus
+     * a data migration to split existing shared role rows per company.
      */
     protected array $rolePermissions = [
         'company_admin' => [
             'companies' => ['view', 'update'],
             'branches' => ['view', 'create', 'update', 'delete'],
             'users' => ['view', 'create', 'update', 'delete'],
-            'roles' => ['view'],
-            'permissions' => ['view'],
+            'roles' => ['view', 'create', 'update', 'delete'],
+            'permissions' => ['view', 'assign'],
             'audit-logs' => ['view'],
             'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
             'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],

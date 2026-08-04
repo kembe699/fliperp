@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 
 import { fetchEmployees, fetchSalaryStructures } from '@/api/hr'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { SalaryStructure } from '@/types/hr'
 

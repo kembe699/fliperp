@@ -32,3 +32,10 @@ export interface AuthPayload {
   roles: string[]
   permissions: string[]
 }
+
+export interface Currency {
+  id: number
+  code: string
+  name: string
+  symbol: string
+}

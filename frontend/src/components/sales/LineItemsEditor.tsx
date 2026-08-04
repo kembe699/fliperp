@@ -1,6 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react'
 
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import type { Product } from '@/types/product'
 import type { PriceListItem, TaxRate } from '@/types/pos'
 

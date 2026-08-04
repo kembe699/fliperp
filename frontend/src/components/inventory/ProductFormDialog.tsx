@@ -18,7 +18,7 @@ import {
 } from '@/api/inventory'
 import { fetchTaxRates } from '@/api/pos'
 import { applyFieldErrors, getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import type { Product } from '@/types/inventory'
 

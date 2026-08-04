@@ -28,11 +28,13 @@ class EmployeeContractService
 
     public function create(array $data): EmployeeContract
     {
+        $employee = Employee::findOrFail($data['employee_id']);
+        $currencyCode = $data['currency_code'] ?? Company::find($employee->company_id)?->currency_code ?? 'USD';
+
         $contractBody = $data['contract_body'] ?? null;
 
         if (! $contractBody && empty($data['document_url'])) {
-            $employee = Employee::findOrFail($data['employee_id']);
-            $contractBody = $this->generateTemplate($employee, $data);
+            $contractBody = $this->generateTemplate($employee, [...$data, 'currency_code' => $currencyCode]);
         }
 
         return EmployeeContract::create([
@@ -41,7 +43,7 @@ class EmployeeContractService
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'] ?? null,
             'base_salary' => $data['base_salary'],
-            'currency_code' => $data['currency_code'] ?? 'USD',
+            'currency_code' => $currencyCode,
             'document_url' => $data['document_url'] ?? null,
             'contract_body' => $contractBody,
             'status' => 'draft',

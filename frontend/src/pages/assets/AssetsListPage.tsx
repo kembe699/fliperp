@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Plus, RefreshCw } from 'lucide-react'
 
 import { fetchAssetCategories, fetchAssets, runDepreciation } from '@/api/assets'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'

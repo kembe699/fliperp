@@ -9,10 +9,11 @@ use Illuminate\Database\Seeder;
 class ChartOfAccountsSeeder extends Seeder
 {
     /**
-     * Codes 1000, 1200, 1900, 2000, 2100, 2200, 2300, 5000, 5100 and 5300 are
-     * relied on by code in PayrollRunService, DepreciationService, the
-     * procurement services (GrnService, SupplierPaymentService) and the POS
-     * services (SaleService) when posting journal entries.
+     * Codes 1000, 1200, 1900, 2000, 2100, 2200, 2300, 5000, 5100, 5300 and
+     * 5400 are relied on by code in PayrollRunService, DepreciationService,
+     * the procurement services (GrnService, SupplierPaymentService), and the
+     * POS services (SaleService, CashDrawerService) when posting journal
+     * entries.
      */
     protected array $accounts = [
         ['code' => '1000', 'name' => 'Cash and Bank', 'type' => 'asset'],
@@ -29,6 +30,7 @@ class ChartOfAccountsSeeder extends Seeder
         ['code' => '5100', 'name' => 'Depreciation Expense', 'type' => 'expense'],
         ['code' => '5200', 'name' => 'General Operating Expenses', 'type' => 'expense'],
         ['code' => '5300', 'name' => 'Cost of Goods Sold', 'type' => 'expense'],
+        ['code' => '5400', 'name' => 'Cash Short/Over', 'type' => 'expense'],
     ];
 
     public function run(): void

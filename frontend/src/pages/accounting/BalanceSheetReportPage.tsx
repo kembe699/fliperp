@@ -5,7 +5,8 @@ import { Camera, Download } from 'lucide-react'
 
 import { downloadReport, fetchBalanceSheet, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency, toISODate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { toISODate } from '@/lib/format'
 import type { ReportAccountLine } from '@/types/accounting'
 
 import { PageHeader } from '@/components/layout/PageHeader'

@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react'
 
 import { fetchCustomers, deactivateCustomer } from '@/api/customers'
 import { fetchBranches } from '@/api/branches'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Customer, CustomerType } from '@/types/customer'

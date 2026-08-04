@@ -1,6 +1,6 @@
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react'
 
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import type { Customer } from '@/types/customer'
 import { cartSubtotal, cartTax, cartTotal, lineTotal, type CartLine } from '@/pages/pos/types'
 

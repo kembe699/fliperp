@@ -2,7 +2,8 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchSupplierStatement } from '@/api/procurement'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import type { SupplierStatementTransaction } from '@/types/procurement'
 
 import { PageHeader } from '@/components/layout/PageHeader'

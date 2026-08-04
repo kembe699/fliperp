@@ -33,11 +33,12 @@ export function RolesSettingsPage() {
 
   const columns: DataTableColumn<Role>[] = [
     { key: 'name', header: 'Name', accessor: (row) => row.name, sortable: true },
+    { key: 'users_count', header: 'Users', render: (row) => row.users_count ?? '—' },
     { key: 'permissions', header: 'Permissions', render: (row) => `${row.permissions.length} granted` },
   ]
 
   const rowActions: (row: Role) => DataTableRowAction<Role>[] = (row) => [
-    ...(can('roles.update') ? [{ label: 'Edit', onClick: (r: Role) => { setEditing(r); setFormOpen(true) } }] : []),
+    ...(can('roles.update') ? [{ label: 'Edit Permissions', onClick: (r: Role) => { setEditing(r); setFormOpen(true) } }] : []),
     ...(can('roles.delete') ? [{ label: 'Delete', destructive: true, onClick: (r: Role) => deleteMutation.mutate(r.id) }] : []),
   ]
 

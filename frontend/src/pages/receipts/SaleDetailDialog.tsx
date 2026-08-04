@@ -5,7 +5,8 @@ import { fetchActiveProducts } from '@/api/products'
 import { fetchCustomers } from '@/api/customers'
 import { fetchUsers } from '@/api/settings'
 import { fetchPaymentTypes } from '@/api/pos'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 

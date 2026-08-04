@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchCashDrawerSessions } from '@/api/pos'
 import { fetchBranches } from '@/api/branches'
 import { fetchUsers } from '@/api/settings'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import type { CashDrawerSession } from '@/types/pos'
 
 import { PageHeader } from '@/components/layout/PageHeader'

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AuthPayload, Company, User } from '@/types/auth'
+import type { AuthPayload, Company, Currency, User } from '@/types/auth'
 
 interface AuthState {
   token: string | null
@@ -8,8 +8,10 @@ interface AuthState {
   company: Company | null
   roles: string[]
   permissions: string[]
+  currencies: Currency[]
   setAuth: (payload: AuthPayload) => void
   setCompany: (company: Company) => void
+  setCurrencies: (currencies: Currency[]) => void
   clearAuth: () => void
 }
 
@@ -21,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       company: null,
       roles: [],
       permissions: [],
+      currencies: [],
       setAuth: (payload) =>
         set({
           // /auth/me does not re-issue a token, so keep the one already stored.
@@ -31,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
           permissions: payload.permissions,
         }),
       setCompany: (company) => set({ company }),
+      setCurrencies: (currencies) => set({ currencies }),
       clearAuth: () =>
         set({
           token: null,
@@ -38,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
           company: null,
           roles: [],
           permissions: [],
+          currencies: [],
         }),
     }),
     { name: 'erp-auth' },

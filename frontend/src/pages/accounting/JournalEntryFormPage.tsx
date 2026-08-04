@@ -8,7 +8,7 @@ import { createJournalEntry } from '@/api/accounting'
 import { fetchChartOfAccounts } from '@/api/reports'
 import { fetchBranches } from '@/api/branches'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'

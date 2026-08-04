@@ -34,6 +34,7 @@ use App\Services\Procurement\PurchaseOrderService;
 use App\Services\Procurement\SupplierPaymentService;
 use App\Services\Sales\CustomerPaymentService;
 use App\Services\Sales\InvoiceService;
+use Database\Seeders\CurrencySeeder;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -43,6 +44,7 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->beforeEach(function () {
         $this->seed(RoleAndPermissionSeeder::class);
+        $this->seed(CurrencySeeder::class);
     })
     ->in('Feature');
 
@@ -98,6 +100,7 @@ function seedChartOfAccounts(Company $company): array
         ['code' => '5100', 'name' => 'Depreciation Expense', 'type' => 'expense'],
         ['code' => '5200', 'name' => 'General Operating Expenses', 'type' => 'expense'],
         ['code' => '5300', 'name' => 'Cost of Goods Sold', 'type' => 'expense'],
+        ['code' => '5400', 'name' => 'Cash Short/Over', 'type' => 'expense'],
     ];
 
     $result = [];

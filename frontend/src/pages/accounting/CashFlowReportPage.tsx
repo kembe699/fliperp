@@ -5,7 +5,8 @@ import { Camera, Download } from 'lucide-react'
 
 import { downloadReport, fetchCashFlow, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency, startOfMonth, toISODate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { startOfMonth, toISODate } from '@/lib/format'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'

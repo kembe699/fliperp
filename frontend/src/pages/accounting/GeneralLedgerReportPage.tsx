@@ -5,7 +5,8 @@ import { Camera, Download } from 'lucide-react'
 
 import { downloadGeneralLedger, fetchChartOfAccounts, fetchGeneralLedger, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency, startOfMonth, toISODate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { startOfMonth, toISODate } from '@/lib/format'
 import { sourceRecordLink } from '@/lib/journal-source-links'
 
 import { PageHeader } from '@/components/layout/PageHeader'

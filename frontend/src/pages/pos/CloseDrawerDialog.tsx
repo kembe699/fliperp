@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 
 import { closeCashDrawer, fetchCurrentCashDrawerSession } from '@/api/pos'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import type { CashDrawerSession } from '@/types/pos'
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'

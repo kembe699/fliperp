@@ -1,9 +1,13 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, XCircle } from 'lucide-react'
 
 import { verifySalePublic } from '@/api/sales'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { fetchCurrencies } from '@/api/settings'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
+import { useAuthStore } from '@/lib/auth-store'
 
 const STATUS_LABEL: Record<string, string> = {
   completed: 'Completed',
@@ -15,6 +19,14 @@ const STATUS_LABEL: Record<string, string> = {
 export function ReceiptVerifyPage() {
   const { id } = useParams<{ id: string }>()
   const saleId = Number(id)
+  const setCurrencies = useAuthStore((state) => state.setCurrencies)
+
+  // No login here, so ProtectedRoute never populates the currencies list
+  // formatCurrency() needs for a proper symbol — fetch it directly. The
+  // endpoint is unauthenticated for exactly this reason.
+  useEffect(() => {
+    fetchCurrencies().then(setCurrencies).catch(() => {})
+  }, [setCurrencies])
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['public-sale-verify', saleId],

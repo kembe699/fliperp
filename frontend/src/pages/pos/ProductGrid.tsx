@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Search } from 'lucide-react'
 
 import { fetchActiveProducts, fetchCategories, fetchStockLevels } from '@/api/products'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 
 import { Input } from '@/components/ui/input'

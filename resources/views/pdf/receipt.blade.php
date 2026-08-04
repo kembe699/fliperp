@@ -223,6 +223,9 @@
         <tr>
             <td colspan="2">Printed : {{ now()->format('n/j/Y') }}</td>
         </tr>
+        <tr>
+            <td colspan="2">Currency : {{ $currencyCode }}</td>
+        </tr>
     </table>
 
     <div class="meta-row" style="margin-top: 4px;">
@@ -262,12 +265,12 @@
     <table class="totals">
         <tr class="grand-total">
             <td>Total :</td>
-            <td class="value">{{ number_format((float) $sale->total_amount, 2) }}</td>
+            <td class="value">{{ $currencyCode }} {{ number_format((float) $sale->total_amount, 2) }}</td>
         </tr>
         @forelse ($sale->payments as $payment)
             <tr>
                 <td>{{ $payment->paymentType?->name ?? 'Payment' }}</td>
-                <td class="value">{{ number_format((float) $payment->amount, 2) }}</td>
+                <td class="value">{{ $currencyCode }} {{ number_format((float) $payment->amount, 2) }}</td>
             </tr>
         @empty
             <tr>

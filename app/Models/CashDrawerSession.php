@@ -18,6 +18,7 @@ class CashDrawerSession extends TenantModel
         'closing_float',
         'expected_closing',
         'variance',
+        'journal_entry_id',
         'opened_at',
         'closed_at',
         'status',
@@ -48,5 +49,10 @@ class CashDrawerSession extends TenantModel
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 }

@@ -13,7 +13,8 @@ import {
 
 import { useAuthStore } from '@/lib/auth-store'
 import { useUiStore } from '@/lib/ui-store'
-import { formatCurrency, formatDate, startOfMonth, startOfLastMonth, endOfLastMonth, startOfYear, daysAgo, toISODate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate, startOfMonth, startOfLastMonth, endOfLastMonth, startOfYear, daysAgo, toISODate } from '@/lib/format'
 import { fetchDashboardSummary } from '@/api/dashboard'
 import { fetchChartOfAccounts, fetchGeneralLedger, downloadReport, QUICK_REPORT_TYPES, quickReportLabel, type QuickReportType } from '@/api/reports'
 

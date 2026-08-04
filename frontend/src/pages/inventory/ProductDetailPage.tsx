@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 
 import { fetchProduct, fetchStockLevels } from '@/api/inventory'
 import { fetchProductStockMovements } from '@/api/inventory'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import { MOVEMENT_TYPE_VARIANT } from '@/components/sales/inventory-status-variants'
 import type { StockMovement } from '@/types/inventory'
 

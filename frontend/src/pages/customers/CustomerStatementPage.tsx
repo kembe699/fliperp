@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { Download } from 'lucide-react'
 
 import { fetchCustomerStatement } from '@/api/customers'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import { downloadPdf } from '@/lib/pdf-download'
 import type { CustomerStatementTransaction } from '@/types/customer'
 

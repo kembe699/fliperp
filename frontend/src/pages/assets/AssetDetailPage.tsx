@@ -14,7 +14,8 @@ import {
   fetchAssetMaintenanceLogs,
 } from '@/api/assets'
 import { fetchEmployees } from '@/api/hr'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { AssetStatus } from '@/types/assets'

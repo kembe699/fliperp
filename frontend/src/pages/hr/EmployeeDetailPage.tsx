@@ -16,7 +16,8 @@ import {
   fetchPositions,
   fetchSalaryStructures,
 } from '@/api/hr'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
+import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { downloadPdf } from '@/lib/pdf-download'
 import { usePermissions } from '@/hooks/use-permissions'
