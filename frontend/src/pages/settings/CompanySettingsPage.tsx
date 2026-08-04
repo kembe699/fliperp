@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 export function CompanySettingsPage() {
   const queryClient = useQueryClient()
   const authCompany = useAuthStore((state) => state.company)
+  const setAuthCompany = useAuthStore((state) => state.setCompany)
   const { can } = usePermissions()
 
   const { data: company, isLoading, isError } = useQuery({
@@ -47,8 +48,9 @@ export function CompanySettingsPage() {
         timezone: timezone || null,
         logo_url: logoUrl || null,
       }),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       toast.success('Company details saved')
+      if (authCompany) setAuthCompany({ ...authCompany, ...updated })
       queryClient.invalidateQueries({ queryKey: ['company', authCompany?.id] })
     },
     onError: (error) => toast.error(getApiErrorInfo(error).message),
@@ -65,6 +67,7 @@ export function CompanySettingsPage() {
       toast.success('Company logo uploaded')
       setLogoUrl(updated.logo_url ?? '')
       setLogoPreview(null)
+      if (authCompany) setAuthCompany({ ...authCompany, ...updated })
       queryClient.invalidateQueries({ queryKey: ['company', authCompany?.id] })
     },
     onError: (error) => {
@@ -78,6 +81,7 @@ export function CompanySettingsPage() {
     onSuccess: (updated) => {
       toast.success('Company logo removed')
       setLogoUrl(updated.logo_url ?? '')
+      if (authCompany) setAuthCompany({ ...authCompany, ...updated })
       queryClient.invalidateQueries({ queryKey: ['company', authCompany?.id] })
     },
     onError: (error) => toast.error(getApiErrorInfo(error).message),

@@ -9,6 +9,7 @@ interface AuthState {
   roles: string[]
   permissions: string[]
   setAuth: (payload: AuthPayload) => void
+  setCompany: (company: Company) => void
   clearAuth: () => void
 }
 
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
           roles: payload.roles,
           permissions: payload.permissions,
         }),
+      setCompany: (company) => set({ company }),
       clearAuth: () =>
         set({
           token: null,

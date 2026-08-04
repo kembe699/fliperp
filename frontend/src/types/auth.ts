@@ -18,8 +18,8 @@ export interface Company {
   name: string
   slug: string
   logo_url: string | null
-  currency_code: string
-  timezone: string
+  currency_code: string | null
+  timezone: string | null
   is_active: boolean
   created_at: string
   updated_at: string
