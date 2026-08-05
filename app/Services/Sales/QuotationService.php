@@ -2,12 +2,15 @@
 
 namespace App\Services\Sales;
 
+use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\PriceListItem;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\TaxRate;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -187,6 +190,20 @@ class QuotationService
 
             return $invoice->fresh('items');
         });
+    }
+
+    public function buildPdf(Quotation $quotation): DomPdf
+    {
+        $quotation->loadMissing(['items.product', 'items.variant', 'customer', 'branch']);
+        $company = Company::find($quotation->company_id);
+
+        return Pdf::loadView('pdf.quotation', [
+            'quotation' => $quotation,
+            'company' => $company,
+            'branch' => $quotation->branch,
+            'customer' => $quotation->customer,
+            'currencyCode' => $company?->currency_code ?? 'USD',
+        ])->setPaper('a4', 'portrait');
     }
 
     protected function assertStatus(Quotation $quotation, string $expected, string $target): void

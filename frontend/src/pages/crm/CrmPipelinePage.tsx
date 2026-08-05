@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   DndContext,
   DragOverlay,
@@ -25,8 +26,9 @@ import { CrmDealFormDialog } from '@/components/crm/CrmDealFormDialog'
 import { LostReasonDialog } from '@/components/crm/LostReasonDialog'
 import { CustomerServiceLogDialog } from '@/components/crm/CustomerServiceLogDialog'
 import { ManagePipelineStagesDialog } from '@/components/crm/ManagePipelineStagesDialog'
+import { CrmCardDrawer } from '@/components/crm/drawer/CrmCardDrawer'
 
-function DealCard({ deal }: { deal: CrmDeal }) {
+function DealCard({ deal, onOpen }: { deal: CrmDeal; onOpen: (dealId: number) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `deal-${deal.id}`,
     data: { deal },
@@ -37,12 +39,13 @@ function DealCard({ deal }: { deal: CrmDeal }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={() => onOpen(deal.id)}
       style={
         transform
           ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.4 : 1 }
           : undefined
       }
-      className="cursor-grab space-y-2 rounded-lg border border-border bg-background p-3 text-sm shadow-sm active:cursor-grabbing"
+      className="cursor-grab space-y-2 rounded-lg border border-background bg-background p-3 text-sm shadow-sm hover:border-primary/40 active:cursor-grabbing"
     >
       <p className="font-medium text-foreground">{deal.title}</p>
       <p className="text-xs text-muted-foreground">{deal.customer?.name ?? deal.lead?.name ?? 'Unlinked'}</p>
@@ -59,7 +62,7 @@ function DealCard({ deal }: { deal: CrmDeal }) {
   )
 }
 
-function KanbanColumn({ column }: { column: CrmKanbanColumn }) {
+function KanbanColumn({ column, onOpenDeal }: { column: CrmKanbanColumn; onOpenDeal: (dealId: number) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: `stage-${column.stage.id}`, data: { stage: column.stage } })
   const totalValue = column.deals.reduce((sum, deal) => sum + deal.value, 0)
 
@@ -80,7 +83,7 @@ function KanbanColumn({ column }: { column: CrmKanbanColumn }) {
       </div>
       <div className="flex min-h-24 flex-1 flex-col gap-2">
         {column.deals.map((deal) => (
-          <DealCard key={deal.id} deal={deal} />
+          <DealCard key={deal.id} deal={deal} onOpen={onOpenDeal} />
         ))}
       </div>
     </div>
@@ -90,12 +93,34 @@ function KanbanColumn({ column }: { column: CrmKanbanColumn }) {
 export function CrmPipelinePage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [activeDeal, setActiveDeal] = useState<CrmDeal | null>(null)
   const [dealFormOpen, setDealFormOpen] = useState(false)
   const [lostReasonTarget, setLostReasonTarget] = useState<{ deal: CrmDeal; stageId: number } | null>(null)
   const [serviceLogDeal, setServiceLogDeal] = useState<CrmDeal | null>(null)
   const [manageStagesOpen, setManageStagesOpen] = useState(false)
+  const [drawerTarget, setDrawerTarget] = useState<{ type: 'lead' | 'deal'; id: number } | null>(null)
+
+  useEffect(() => {
+    const dealParam = searchParams.get('deal')
+    const leadParam = searchParams.get('lead')
+    if (dealParam) setDrawerTarget({ type: 'deal', id: Number(dealParam) })
+    else if (leadParam) setDrawerTarget({ type: 'lead', id: Number(leadParam) })
+    // Only meant to trigger once on load (e.g. from a notification deep link).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const openDealDrawer = (dealId: number) => setDrawerTarget({ type: 'deal', id: dealId })
+
+  const closeDrawer = () => {
+    setDrawerTarget(null)
+    if (searchParams.has('deal') || searchParams.has('lead')) {
+      searchParams.delete('deal')
+      searchParams.delete('lead')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -137,9 +162,10 @@ export function CrmPipelinePage() {
         setServiceLogDeal(result.deal)
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crm-kanban'] })
       queryClient.invalidateQueries({ queryKey: ['crm-report-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['crm-deal-detail', variables.dealId] })
     },
   })
 
@@ -193,10 +219,10 @@ export function CrmPipelinePage() {
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {columns.map((column) => (
-              <KanbanColumn key={column.stage.id} column={column} />
+              <KanbanColumn key={column.stage.id} column={column} onOpenDeal={openDealDrawer} />
             ))}
           </div>
-          <DragOverlay>{activeDeal && <DealCard deal={activeDeal} />}</DragOverlay>
+          <DragOverlay>{activeDeal && <DealCard deal={activeDeal} onOpen={() => {}} />}</DragOverlay>
         </DndContext>
       )}
 
@@ -216,6 +242,13 @@ export function CrmPipelinePage() {
       />
 
       <CustomerServiceLogDialog open={!!serviceLogDeal} onOpenChange={(open) => !open && setServiceLogDeal(null)} deal={serviceLogDeal} />
+
+      <CrmCardDrawer
+        type={drawerTarget?.type ?? null}
+        id={drawerTarget?.id ?? null}
+        open={!!drawerTarget}
+        onOpenChange={(open) => !open && closeDrawer()}
+      />
     </div>
   )
 }

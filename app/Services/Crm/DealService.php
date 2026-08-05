@@ -2,6 +2,11 @@
 
 namespace App\Services\Crm;
 
+use App\Http\Resources\CrmActivityResource;
+use App\Http\Resources\CrmDealResource;
+use App\Http\Resources\CrmEmailResource;
+use App\Http\Resources\CrmMeetingResource;
+use App\Http\Resources\CrmServiceResource;
 use App\Models\CrmDeal;
 use App\Models\CrmDealStageHistory;
 use App\Models\CrmPipelineStage;
@@ -75,7 +80,7 @@ class DealService
 
         $deal->update($data);
 
-        return $deal;
+        return $deal->fresh(['lead', 'customer', 'pipelineStage', 'service', 'assignedTo']);
     }
 
     public function delete(CrmDeal $deal): void
@@ -132,5 +137,40 @@ class DealService
                 'prompt_customer_service_log' => $toStage->is_closed_won,
             ];
         });
+    }
+
+    public function syncServices(CrmDeal $deal, array $serviceIds): CrmDeal
+    {
+        $deal->services()->sync($serviceIds);
+
+        return $deal->fresh('services');
+    }
+
+    public function detail(CrmDeal $deal): array
+    {
+        $deal->load(['lead', 'customer', 'pipelineStage', 'service', 'assignedTo', 'services']);
+
+        return [
+            'deal' => new CrmDealResource($deal),
+            'services' => CrmServiceResource::collection($deal->services),
+            'meetings' => [
+                'upcoming' => CrmMeetingResource::collection(
+                    $deal->meetings()->with(['organizer', 'attendees.user'])->where('scheduled_at', '>=', now())->orderBy('scheduled_at')->get()
+                ),
+                'past' => CrmMeetingResource::collection(
+                    $deal->meetings()->with(['organizer', 'attendees.user'])->where('scheduled_at', '<', now())->orderByDesc('scheduled_at')->get()
+                ),
+            ],
+            'emails' => CrmEmailResource::collection($deal->emails()->with('sentBy')->latest()->limit(20)->get()),
+            'activities' => CrmActivityResource::collection($deal->activities()->with(['loggedBy', 'resolvedBy'])->latest('activity_date')->get()),
+            'quotations' => $deal->quotations()->orderByDesc('quotations.created_at')->get()->map(fn ($quotation) => [
+                'id' => $quotation->id,
+                'reference_number' => $quotation->reference_number,
+                'status' => $quotation->status,
+                'total_amount' => (float) $quotation->total_amount,
+                'valid_until' => $quotation->valid_until?->toDateString(),
+                'created_at' => $quotation->created_at?->toIso8601String(),
+            ]),
+        ];
     }
 }

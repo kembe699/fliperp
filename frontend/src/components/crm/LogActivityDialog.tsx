@@ -19,10 +19,13 @@ const TYPE_OPTIONS: CrmActivityType[] = ['call', 'email', 'meeting', 'note', 'co
 interface LogActivityDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  customerId: number
+  customerId?: number
+  leadId?: number
+  dealId?: number
+  queryKeyToInvalidate: unknown[]
 }
 
-export function LogActivityDialog({ open, onOpenChange, customerId }: LogActivityDialogProps) {
+export function LogActivityDialog({ open, onOpenChange, customerId, leadId, dealId, queryKeyToInvalidate }: LogActivityDialogProps) {
   const queryClient = useQueryClient()
   const [type, setType] = useState<CrmActivityType>('note')
   const [subject, setSubject] = useState('')
@@ -42,7 +45,9 @@ export function LogActivityDialog({ open, onOpenChange, customerId }: LogActivit
   const mutation = useMutation({
     mutationFn: () =>
       createCrmActivity({
-        customer_id: customerId,
+        customer_id: customerId ?? null,
+        lead_id: leadId ?? null,
+        deal_id: dealId ?? null,
         type,
         subject,
         description: description || null,
@@ -50,7 +55,7 @@ export function LogActivityDialog({ open, onOpenChange, customerId }: LogActivit
       }),
     onSuccess: () => {
       toast.success('Activity logged')
-      queryClient.invalidateQueries({ queryKey: ['crm-activities', customerId] })
+      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate })
       onOpenChange(false)
     },
     onError: (err) => setError(getApiErrorInfo(err).message),

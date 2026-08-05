@@ -37,6 +37,14 @@ export function CrmStaffListPage() {
       sortable: true,
       render: (row) => formatCurrency(row.closed_won_value),
     },
+    {
+      key: 'upcoming_meetings_count',
+      header: 'Upcoming Meetings',
+      accessor: (row) => row.upcoming_meetings_count,
+      sortable: true,
+      render: (row) =>
+        row.upcoming_meetings_count > 0 ? <StatusBadge label={String(row.upcoming_meetings_count)} variant="info" /> : '0',
+    },
   ]
 
   const rowActions: (row: CrmStaffReportRow) => DataTableRowAction<CrmStaffReportRow>[] = (row) => [

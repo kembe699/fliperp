@@ -11,8 +11,6 @@ use App\Mail\DocumentMail;
 use App\Models\Company;
 use App\Models\Quotation;
 use App\Services\Sales\QuotationService;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Barryvdh\DomPDF\PDF as DomPdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -109,7 +107,7 @@ class QuotationController extends Controller
     {
         $this->authorize('view', $quotation);
 
-        $pdf = $this->buildPdf($quotation);
+        $pdf = $this->quotationService->buildPdf($quotation);
 
         return $this->pdfResponse($pdf, "quotation-{$quotation->reference_number}.pdf", $request->boolean('download'));
     }
@@ -128,7 +126,7 @@ class QuotationController extends Controller
         }
 
         $company = Company::find($quotation->company_id);
-        $pdf = $this->buildPdf($quotation);
+        $pdf = $this->quotationService->buildPdf($quotation);
 
         Mail::to($customer->email)->send(new DocumentMail(
             documentType: 'Quotation',
@@ -140,19 +138,5 @@ class QuotationController extends Controller
         ));
 
         return $this->success(null, "Quotation emailed to {$customer->email}.");
-    }
-
-    protected function buildPdf(Quotation $quotation): DomPdf
-    {
-        $quotation->loadMissing(['items.product', 'items.variant', 'customer', 'branch']);
-        $company = Company::find($quotation->company_id);
-
-        return Pdf::loadView('pdf.quotation', [
-            'quotation' => $quotation,
-            'company' => $company,
-            'branch' => $quotation->branch,
-            'customer' => $quotation->customer,
-            'currencyCode' => $company?->currency_code ?? 'USD',
-        ])->setPaper('a4', 'portrait');
     }
 }

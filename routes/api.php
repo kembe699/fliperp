@@ -21,8 +21,11 @@ use App\Http\Controllers\Api\CrmActivityController;
 use App\Http\Controllers\Api\CrmCustomerController;
 use App\Http\Controllers\Api\CrmCustomerServiceController;
 use App\Http\Controllers\Api\CrmDealController;
+use App\Http\Controllers\Api\CrmEmailController;
 use App\Http\Controllers\Api\CrmLeadController;
+use App\Http\Controllers\Api\CrmMeetingController;
 use App\Http\Controllers\Api\CrmPipelineStageController;
+use App\Http\Controllers\Api\CrmQuotationController;
 use App\Http\Controllers\Api\CrmReportController;
 use App\Http\Controllers\Api\CrmServiceController;
 use App\Http\Controllers\Api\CurrencyController;
@@ -358,12 +361,20 @@ Route::prefix('v1')->group(function () {
                 ->parameters(['leads' => 'crm_lead']);
             Route::post('leads/{crm_lead}/convert', [CrmLeadController::class, 'convert'])
                 ->middleware('permission:crm-leads.convert');
+            Route::post('leads/{crm_lead}/services', [CrmLeadController::class, 'syncServices']);
+            Route::get('leads/{crm_lead}/detail', [CrmLeadController::class, 'detail']);
+            Route::post('leads/{crm_lead}/quotations', [CrmLeadController::class, 'createQuotation'])
+                ->middleware('permission:quotations.create');
 
             Route::get('deals/kanban', [CrmDealController::class, 'kanban']);
             Route::apiResource('deals', CrmDealController::class)
                 ->parameters(['deals' => 'crm_deal']);
             Route::patch('deals/{crm_deal}/stage', [CrmDealController::class, 'moveStage'])
                 ->middleware('permission:crm-deals.move-stage');
+            Route::post('deals/{crm_deal}/services', [CrmDealController::class, 'syncServices']);
+            Route::get('deals/{crm_deal}/detail', [CrmDealController::class, 'detail']);
+            Route::post('deals/{crm_deal}/quotations', [CrmDealController::class, 'createQuotation'])
+                ->middleware('permission:quotations.create');
 
             Route::get('customers', [CrmCustomerController::class, 'index']);
             Route::get('customers/{customer}', [CrmCustomerController::class, 'show']);
@@ -386,6 +397,18 @@ Route::prefix('v1')->group(function () {
                 Route::get('reports/summary', [CrmReportController::class, 'summary']);
                 Route::get('reports/staff', [CrmReportController::class, 'staff']);
             });
+
+            Route::get('meetings/{crm_meeting}/ics', [CrmMeetingController::class, 'ics']);
+            Route::patch('meetings/{crm_meeting}/status', [CrmMeetingController::class, 'updateStatus']);
+            Route::apiResource('meetings', CrmMeetingController::class)
+                ->parameters(['meetings' => 'crm_meeting']);
+
+            Route::get('emails', [CrmEmailController::class, 'index'])
+                ->middleware('permission:crm-emails.view');
+            Route::post('emails/send', [CrmEmailController::class, 'send'])
+                ->middleware('permission:crm-emails.create');
+
+            Route::post('quotations/{quotation}/send-to-contact', [CrmQuotationController::class, 'sendToContact']);
         });
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])

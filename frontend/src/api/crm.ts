@@ -1,6 +1,7 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
 import type { Customer } from '@/types/customer'
+import type { Quotation } from '@/types/quotation'
 import type {
   CrmAccountAssignment,
   CrmActivity,
@@ -9,9 +10,14 @@ import type {
   CrmCustomerService,
   CrmCustomerServiceStatus,
   CrmDeal,
+  CrmDealDetail,
+  CrmEmail,
   CrmKanbanColumn,
   CrmLead,
+  CrmLeadDetail,
   CrmLeadStatus,
+  CrmMeeting,
+  CrmMeetingStatus,
   CrmPipelineStage,
   CrmReportSummary,
   CrmService,
@@ -317,6 +323,11 @@ export async function fetchCrmCustomers(filters: CrmCustomerFilters = {}): Promi
   return data
 }
 
+export async function fetchCrmCustomer(customerId: number): Promise<Customer> {
+  const { data } = await api.get<ApiResponse<Customer>>(`/crm/customers/${customerId}`)
+  return data.data
+}
+
 // --- Reports ---
 
 export async function fetchCrmReportSummary(params: { from?: string; to?: string; branch_id?: number } = {}): Promise<CrmReportSummary> {
@@ -326,5 +337,146 @@ export async function fetchCrmReportSummary(params: { from?: string; to?: string
 
 export async function fetchCrmStaffReport(): Promise<CrmStaffReportRow[]> {
   const { data } = await api.get<ApiResponse<CrmStaffReportRow[]>>('/crm/reports/staff')
+  return data.data
+}
+
+// --- Lead/Deal service sync + aggregated detail + quotation-from-CRM ---
+
+export async function syncCrmLeadServices(leadId: number, serviceIds: number[]): Promise<CrmService[]> {
+  const { data } = await api.post<ApiResponse<CrmService[]>>(`/crm/leads/${leadId}/services`, { service_ids: serviceIds })
+  return data.data
+}
+
+export async function syncCrmDealServices(dealId: number, serviceIds: number[]): Promise<CrmService[]> {
+  const { data } = await api.post<ApiResponse<CrmService[]>>(`/crm/deals/${dealId}/services`, { service_ids: serviceIds })
+  return data.data
+}
+
+export async function fetchCrmLeadDetail(leadId: number): Promise<CrmLeadDetail> {
+  const { data } = await api.get<ApiResponse<CrmLeadDetail>>(`/crm/leads/${leadId}/detail`)
+  return data.data
+}
+
+export async function fetchCrmDealDetail(dealId: number): Promise<CrmDealDetail> {
+  const { data } = await api.get<ApiResponse<CrmDealDetail>>(`/crm/deals/${dealId}/detail`)
+  return data.data
+}
+
+export interface CrmQuotationLineInput {
+  crm_service_id: number
+  quantity?: number
+  unit_price?: number
+}
+
+export interface CreateCrmQuotationInput {
+  branch_id?: number | null
+  price_list_id?: number | null
+  valid_until?: string
+  notes?: string | null
+  items?: CrmQuotationLineInput[]
+}
+
+export async function createCrmLeadQuotation(leadId: number, values: CreateCrmQuotationInput = {}): Promise<Quotation> {
+  const { data } = await api.post<ApiResponse<Quotation>>(`/crm/leads/${leadId}/quotations`, values)
+  return data.data
+}
+
+export async function createCrmDealQuotation(dealId: number, values: CreateCrmQuotationInput = {}): Promise<Quotation> {
+  const { data } = await api.post<ApiResponse<Quotation>>(`/crm/deals/${dealId}/quotations`, values)
+  return data.data
+}
+
+export interface SendQuotationToContactInput {
+  to_email?: string
+  to_name?: string
+  subject?: string
+  body?: string
+  lead_id?: number
+  deal_id?: number
+  customer_id?: number
+}
+
+export async function sendQuotationToContact(quotationId: number, values: SendQuotationToContactInput = {}): Promise<CrmEmail> {
+  const { data } = await api.post<ApiResponse<CrmEmail>>(`/crm/quotations/${quotationId}/send-to-contact`, values)
+  return data.data
+}
+
+// --- Meetings ---
+
+export interface CrmMeetingFilters {
+  page?: number
+  per_page?: number
+  lead_id?: number
+  deal_id?: number
+  customer_id?: number
+  organizer_id?: number
+  status?: CrmMeetingStatus
+  from?: string
+  to?: string
+}
+
+export async function fetchCrmMeetings(filters: CrmMeetingFilters = {}): Promise<PaginatedResponse<CrmMeeting>> {
+  const { data } = await api.get<PaginatedResponse<CrmMeeting>>('/crm/meetings', { params: filters })
+  return data
+}
+
+export interface CrmMeetingAttendeeInput {
+  user_id?: number
+  external_name?: string
+  external_email?: string
+}
+
+export interface CrmMeetingInput {
+  lead_id?: number | null
+  deal_id?: number | null
+  customer_id?: number | null
+  title: string
+  description?: string | null
+  scheduled_at: string
+  duration_minutes?: number
+  location?: string | null
+  meeting_link?: string | null
+  organizer_id?: number
+  attendees?: CrmMeetingAttendeeInput[]
+}
+
+export async function createCrmMeeting(values: CrmMeetingInput): Promise<CrmMeeting> {
+  const { data } = await api.post<ApiResponse<CrmMeeting>>('/crm/meetings', values)
+  return data.data
+}
+
+export async function updateCrmMeetingStatus(meetingId: number, status: CrmMeetingStatus): Promise<CrmMeeting> {
+  const { data } = await api.patch<ApiResponse<CrmMeeting>>(`/crm/meetings/${meetingId}/status`, { status })
+  return data.data
+}
+
+// --- CRM direct emails ---
+
+export interface CrmEmailFilters {
+  page?: number
+  per_page?: number
+  lead_id?: number
+  deal_id?: number
+  customer_id?: number
+  sent_by?: number
+}
+
+export async function fetchCrmEmails(filters: CrmEmailFilters = {}): Promise<PaginatedResponse<CrmEmail>> {
+  const { data } = await api.get<PaginatedResponse<CrmEmail>>('/crm/emails', { params: filters })
+  return data
+}
+
+export interface CrmEmailInput {
+  lead_id?: number | null
+  deal_id?: number | null
+  customer_id?: number | null
+  to_email: string
+  to_name?: string | null
+  subject: string
+  body: string
+}
+
+export async function sendCrmEmail(values: CrmEmailInput): Promise<CrmEmail> {
+  const { data } = await api.post<ApiResponse<CrmEmail>>('/crm/emails/send', values)
   return data.data
 }

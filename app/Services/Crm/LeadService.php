@@ -2,6 +2,11 @@
 
 namespace App\Services\Crm;
 
+use App\Http\Resources\CrmActivityResource;
+use App\Http\Resources\CrmEmailResource;
+use App\Http\Resources\CrmLeadResource;
+use App\Http\Resources\CrmMeetingResource;
+use App\Http\Resources\CrmServiceResource;
 use App\Models\Customer;
 use App\Models\CrmLead;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -45,7 +50,7 @@ class LeadService
 
         $lead->update($data);
 
-        return $lead;
+        return $lead->fresh(['assignedTo', 'branch']);
     }
 
     public function delete(CrmLead $lead): void
@@ -92,5 +97,40 @@ class LeadService
 
             return $lead->fresh(['convertedCustomer', 'deals']);
         });
+    }
+
+    public function syncServices(CrmLead $lead, array $serviceIds): CrmLead
+    {
+        $lead->services()->sync($serviceIds);
+
+        return $lead->fresh('services');
+    }
+
+    public function detail(CrmLead $lead): array
+    {
+        $lead->load(['assignedTo', 'branch', 'services']);
+
+        return [
+            'lead' => new CrmLeadResource($lead),
+            'services' => CrmServiceResource::collection($lead->services),
+            'meetings' => [
+                'upcoming' => CrmMeetingResource::collection(
+                    $lead->meetings()->with(['organizer', 'attendees.user'])->where('scheduled_at', '>=', now())->orderBy('scheduled_at')->get()
+                ),
+                'past' => CrmMeetingResource::collection(
+                    $lead->meetings()->with(['organizer', 'attendees.user'])->where('scheduled_at', '<', now())->orderByDesc('scheduled_at')->get()
+                ),
+            ],
+            'emails' => CrmEmailResource::collection($lead->emails()->with('sentBy')->latest()->limit(20)->get()),
+            'activities' => CrmActivityResource::collection($lead->activities()->with(['loggedBy', 'resolvedBy'])->latest('activity_date')->get()),
+            'quotations' => $lead->quotations()->orderByDesc('quotations.created_at')->get()->map(fn ($quotation) => [
+                'id' => $quotation->id,
+                'reference_number' => $quotation->reference_number,
+                'status' => $quotation->status,
+                'total_amount' => (float) $quotation->total_amount,
+                'valid_until' => $quotation->valid_until?->toDateString(),
+                'created_at' => $quotation->created_at?->toIso8601String(),
+            ]),
+        ];
     }
 }

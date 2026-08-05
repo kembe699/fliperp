@@ -3,18 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Crm\StoreCrmQuotationFromCrmRequest;
+use App\Http\Requests\Crm\SyncCrmServicesRequest;
 use App\Http\Requests\CrmLead\ConvertCrmLeadRequest;
 use App\Http\Requests\CrmLead\StoreCrmLeadRequest;
 use App\Http\Requests\CrmLead\UpdateCrmLeadRequest;
 use App\Http\Resources\CrmLeadResource;
+use App\Http\Resources\CrmServiceResource;
+use App\Http\Resources\QuotationResource;
 use App\Models\CrmLead;
+use App\Models\Quotation;
+use App\Services\Crm\CrmQuotationLinkService;
 use App\Services\Crm\LeadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CrmLeadController extends Controller
 {
-    public function __construct(protected LeadService $leadService) {}
+    public function __construct(
+        protected LeadService $leadService,
+        protected CrmQuotationLinkService $crmQuotationLinkService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -69,5 +78,31 @@ class CrmLeadController extends Controller
         $lead = $this->leadService->convert($crmLead, $request->validated());
 
         return $this->success(new CrmLeadResource($lead), 'Lead converted to customer successfully.');
+    }
+
+    public function syncServices(SyncCrmServicesRequest $request, CrmLead $crmLead): JsonResponse
+    {
+        $this->authorize('update', $crmLead);
+
+        $lead = $this->leadService->syncServices($crmLead, $request->validated('service_ids'));
+
+        return $this->success(CrmServiceResource::collection($lead->services), 'Interested services updated successfully.');
+    }
+
+    public function detail(CrmLead $crmLead): JsonResponse
+    {
+        $this->authorize('view', $crmLead);
+
+        return $this->success($this->leadService->detail($crmLead));
+    }
+
+    public function createQuotation(StoreCrmQuotationFromCrmRequest $request, CrmLead $crmLead): JsonResponse
+    {
+        $this->authorize('view', $crmLead);
+        $this->authorize('create', Quotation::class);
+
+        $quotation = $this->crmQuotationLinkService->createForLead($crmLead, $request->validated());
+
+        return $this->success(new QuotationResource($quotation), 'Quotation created successfully.', 201);
     }
 }

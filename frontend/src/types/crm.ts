@@ -193,4 +193,92 @@ export interface CrmStaffReportRow {
   open_complaints_count: number
   deals: CrmStaffDeal[]
   closed_won_value: number
+  upcoming_meetings_count: number
+}
+
+// --- Meetings ---
+
+export type CrmMeetingStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+
+export interface CrmMeetingAttendee {
+  id: number
+  user: CrmRef | null
+  external_name: string | null
+  external_email: string | null
+}
+
+export interface CrmMeeting {
+  id: number
+  company_id: number
+  lead_id: number | null
+  deal_id: number | null
+  customer_id: number | null
+  title: string
+  description: string | null
+  scheduled_at: string
+  duration_minutes: number
+  location: string | null
+  meeting_link: string | null
+  organizer: CrmRef | null
+  status: CrmMeetingStatus
+  attendees: CrmMeetingAttendee[]
+  created_at: string
+  updated_at: string
+}
+
+// --- Emails ---
+
+export type CrmEmailStatus = 'queued' | 'sent' | 'failed'
+
+export interface CrmEmail {
+  id: number
+  company_id: number
+  lead_id: number | null
+  deal_id: number | null
+  customer_id: number | null
+  quotation_id: number | null
+  to_email: string
+  to_name: string | null
+  subject: string
+  body: string
+  sent_by: CrmRef | null
+  status: CrmEmailStatus
+  sent_at: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
+}
+
+// --- Aggregated lead/deal detail (drawer payload) ---
+
+export interface CrmQuotationSummary {
+  id: number
+  reference_number: string
+  status: string
+  total_amount: number
+  valid_until: string | null
+  created_at: string
+}
+
+export interface CrmDetailMeetings {
+  upcoming: CrmMeeting[]
+  past: CrmMeeting[]
+}
+
+export interface CrmLeadDetail {
+  lead: CrmLead
+  services: CrmService[]
+  meetings: CrmDetailMeetings
+  emails: CrmEmail[]
+  activities: CrmActivity[]
+  quotations: CrmQuotationSummary[]
+}
+
+export interface CrmDealDetail {
+  deal: CrmDeal
+  services: CrmService[]
+  meetings: CrmDetailMeetings
+  emails: CrmEmail[]
+  activities: CrmActivity[]
+  quotations: CrmQuotationSummary[]
 }

@@ -3,19 +3,28 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Crm\StoreCrmQuotationFromCrmRequest;
+use App\Http\Requests\Crm\SyncCrmServicesRequest;
 use App\Http\Requests\CrmDeal\MoveCrmDealStageRequest;
 use App\Http\Requests\CrmDeal\StoreCrmDealRequest;
 use App\Http\Requests\CrmDeal\UpdateCrmDealRequest;
 use App\Http\Resources\CrmDealResource;
 use App\Http\Resources\CrmPipelineStageResource;
+use App\Http\Resources\CrmServiceResource;
+use App\Http\Resources\QuotationResource;
 use App\Models\CrmDeal;
+use App\Models\Quotation;
+use App\Services\Crm\CrmQuotationLinkService;
 use App\Services\Crm\DealService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CrmDealController extends Controller
 {
-    public function __construct(protected DealService $dealService) {}
+    public function __construct(
+        protected DealService $dealService,
+        protected CrmQuotationLinkService $crmQuotationLinkService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -96,5 +105,31 @@ class CrmDealController extends Controller
                 'prompt_customer_service_log' => $result['prompt_customer_service_log'],
             ],
         ]);
+    }
+
+    public function syncServices(SyncCrmServicesRequest $request, CrmDeal $crmDeal): JsonResponse
+    {
+        $this->authorize('update', $crmDeal);
+
+        $deal = $this->dealService->syncServices($crmDeal, $request->validated('service_ids'));
+
+        return $this->success(CrmServiceResource::collection($deal->services), 'Attached services updated successfully.');
+    }
+
+    public function detail(CrmDeal $crmDeal): JsonResponse
+    {
+        $this->authorize('view', $crmDeal);
+
+        return $this->success($this->dealService->detail($crmDeal));
+    }
+
+    public function createQuotation(StoreCrmQuotationFromCrmRequest $request, CrmDeal $crmDeal): JsonResponse
+    {
+        $this->authorize('view', $crmDeal);
+        $this->authorize('create', Quotation::class);
+
+        $quotation = $this->crmQuotationLinkService->createForDeal($crmDeal, $request->validated());
+
+        return $this->success(new QuotationResource($quotation), 'Quotation created successfully.', 201);
     }
 }

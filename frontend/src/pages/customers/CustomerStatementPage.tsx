@@ -332,7 +332,12 @@ export function CustomerStatementPage() {
 
       <CrmCustomerServiceFormDialog open={serviceFormOpen} onOpenChange={setServiceFormOpen} customerId={customerId} />
       <AssignStaffDialog open={assignStaffOpen} onOpenChange={setAssignStaffOpen} customerId={customerId} />
-      <LogActivityDialog open={logActivityOpen} onOpenChange={setLogActivityOpen} customerId={customerId} />
+      <LogActivityDialog
+        open={logActivityOpen}
+        onOpenChange={setLogActivityOpen}
+        customerId={customerId}
+        queryKeyToInvalidate={['crm-activities', customerId]}
+      />
     </div>
   )
 }

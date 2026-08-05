@@ -7,6 +7,7 @@ use App\Models\CrmAccountAssignment;
 use App\Models\CrmCustomerService;
 use App\Models\CrmDeal;
 use App\Models\CrmLead;
+use App\Models\CrmMeeting;
 use App\Models\CrmPipelineStage;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -128,6 +129,7 @@ class CrmReportService
      *   open_activities_count: int, open_complaints_count: int,
      *   deals: array<int, array{deal_id: int, title: string, stage_name: string, value: float}>,
      *   closed_won_value: float,
+     *   upcoming_meetings_count: int,
      * }>
      */
     public function staff(int $companyId): array
@@ -137,6 +139,7 @@ class CrmReportService
             ->merge(CrmDeal::query()->where('company_id', $companyId)->whereNotNull('assigned_to')->pluck('assigned_to'))
             ->merge(CrmAccountAssignment::query()->where('company_id', $companyId)->active()->pluck('user_id'))
             ->merge(CrmActivity::query()->where('company_id', $companyId)->pluck('logged_by'))
+            ->merge(CrmMeeting::query()->where('company_id', $companyId)->pluck('organizer_id'))
             ->unique()
             ->values();
 
@@ -177,6 +180,12 @@ class CrmReportService
                     'value' => (float) $deal->value,
                 ])->all(),
                 'closed_won_value' => round((float) $closedWonDeals->sum('value'), 2),
+                'upcoming_meetings_count' => CrmMeeting::query()
+                    ->where('company_id', $companyId)
+                    ->where('organizer_id', $userId)
+                    ->where('status', 'scheduled')
+                    ->where('scheduled_at', '>=', now())
+                    ->count(),
             ];
         })->values()->all();
     }

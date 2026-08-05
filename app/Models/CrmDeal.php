@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -72,5 +73,25 @@ class CrmDeal extends TenantModel
     public function activities(): HasMany
     {
         return $this->hasMany(CrmActivity::class, 'deal_id');
+    }
+
+    public function services(): BelongsToMany
+    {
+        return $this->belongsToMany(CrmService::class, 'crm_deal_services', 'deal_id', 'crm_service_id')->withTimestamps();
+    }
+
+    public function meetings(): HasMany
+    {
+        return $this->hasMany(CrmMeeting::class, 'deal_id');
+    }
+
+    public function emails(): HasMany
+    {
+        return $this->hasMany(CrmEmail::class, 'deal_id');
+    }
+
+    public function quotations(): BelongsToMany
+    {
+        return $this->belongsToMany(Quotation::class, 'crm_deal_quotations', 'deal_id', 'quotation_id')->withTimestamps();
     }
 }

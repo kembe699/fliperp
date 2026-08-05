@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CrmLeadFormDialog } from '@/components/crm/CrmLeadFormDialog'
 import { ConvertLeadDialog } from '@/components/crm/ConvertLeadDialog'
+import { CrmCardDrawer } from '@/components/crm/drawer/CrmCardDrawer'
 
 const STATUS_VARIANT: Record<CrmLeadStatus, 'info' | 'success' | 'neutral'> = {
   open: 'info',
@@ -42,6 +43,7 @@ export function CrmLeadsListPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingLead, setEditingLead] = useState<CrmLead | null>(null)
   const [convertingLead, setConvertingLead] = useState<CrmLead | null>(null)
+  const [drawerLeadId, setDrawerLeadId] = useState<number | null>(null)
 
   const { data: users } = useQuery({ queryKey: ['settings-users-all'], queryFn: () => fetchUsers({ per_page: 100 }) })
 
@@ -87,6 +89,7 @@ export function CrmLeadsListPage() {
   ]
 
   const rowActions: (row: CrmLead) => DataTableRowAction<CrmLead>[] = (row) => [
+    { label: 'View Details', onClick: (l: CrmLead) => setDrawerLeadId(l.id) },
     ...(row.status === 'open' && can('crm-leads.update')
       ? [{ label: 'Edit', onClick: (l: CrmLead) => { setEditingLead(l); setFormOpen(true) } }]
       : []),
@@ -196,6 +199,7 @@ export function CrmLeadsListPage() {
 
       <CrmLeadFormDialog open={formOpen} onOpenChange={setFormOpen} lead={editingLead} />
       <ConvertLeadDialog open={!!convertingLead} onOpenChange={(open) => !open && setConvertingLead(null)} lead={convertingLead} />
+      <CrmCardDrawer type="lead" id={drawerLeadId} open={!!drawerLeadId} onOpenChange={(open) => !open && setDrawerLeadId(null)} />
     </div>
   )
 }
