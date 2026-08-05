@@ -17,6 +17,14 @@ import { ComingSoonPage } from '@/pages/ComingSoonPage'
 
 import { CustomersListPage } from '@/pages/customers/CustomersListPage'
 import { CustomerStatementPage } from '@/pages/customers/CustomerStatementPage'
+import { CrmDashboardPage } from '@/pages/crm/CrmDashboardPage'
+import { CrmLeadsListPage } from '@/pages/crm/CrmLeadsListPage'
+import { CrmPipelinePage } from '@/pages/crm/CrmPipelinePage'
+import { CrmCustomersListPage } from '@/pages/crm/CrmCustomersListPage'
+import { CrmServicesListPage } from '@/pages/crm/CrmServicesListPage'
+import { CrmStaffListPage } from '@/pages/crm/CrmStaffListPage'
+import { CrmStaffDetailPage } from '@/pages/crm/CrmStaffDetailPage'
+import { CrmReportsPage } from '@/pages/crm/CrmReportsPage'
 import { PosTerminalPage } from '@/pages/pos/PosTerminalPage'
 import { ReceiptsListPage } from '@/pages/receipts/ReceiptsListPage'
 import { InvoicesListPage } from '@/pages/invoices/InvoicesListPage'
@@ -99,6 +107,13 @@ interface PlaceholderRoute {
 // auto-generated "coming soon" placeholder list below.
 const IMPLEMENTED_PATHS = new Set([
   '/dashboard',
+  '/crm',
+  '/crm/leads',
+  '/crm/pipeline',
+  '/crm/customers',
+  '/crm/services',
+  '/crm/staff',
+  '/crm/reports',
   '/customers',
   '/pos',
   '/receipts',
@@ -181,6 +196,15 @@ function App() {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+
+          <Route path="/crm" element={<CrmDashboardPage />} />
+          <Route path="/crm/leads" element={<CrmLeadsListPage />} />
+          <Route path="/crm/pipeline" element={<CrmPipelinePage />} />
+          <Route path="/crm/customers" element={<CrmCustomersListPage />} />
+          <Route path="/crm/services" element={<CrmServicesListPage />} />
+          <Route path="/crm/staff" element={<CrmStaffListPage />} />
+          <Route path="/crm/staff/:id" element={<CrmStaffDetailPage />} />
+          <Route path="/crm/reports" element={<CrmReportsPage />} />
 
           <Route path="/customers" element={<CustomersListPage />} />
           <Route path="/customers/:id/statement" element={<CustomerStatementPage />} />

@@ -103,6 +103,12 @@ class RoleAndPermissionSeeder extends Seeder
         'crm-account-assignments' => ['view', 'assign', 'unassign'],
         'crm-activities' => ['view', 'create', 'update', 'delete', 'resolve'],
         'crm-reports' => ['view'],
+        // Whether a user sees every company customer's CRM data (leads,
+        // services, activities, statements) or only the ones they're
+        // actively assigned to via crm_account_assignments — see
+        // CustomerVisibilityService. Manager-tier roles get this; a
+        // support/sales staffer only sees their own book of customers.
+        'crm-customers' => ['view-all'],
     ];
 
     /**
@@ -187,6 +193,7 @@ class RoleAndPermissionSeeder extends Seeder
             'crm-account-assignments' => ['view', 'assign', 'unassign'],
             'crm-activities' => ['view', 'create', 'update', 'delete', 'resolve'],
             'crm-reports' => ['view'],
+            'crm-customers' => ['view-all'],
         ],
         'branch_manager' => [
             'branches' => ['view'],
@@ -234,6 +241,7 @@ class RoleAndPermissionSeeder extends Seeder
             'crm-account-assignments' => ['view', 'assign', 'unassign'],
             'crm-activities' => ['view', 'create', 'update', 'resolve'],
             'crm-reports' => ['view'],
+            'crm-customers' => ['view-all'],
         ],
         'cashier' => [
             'branches' => ['view'],

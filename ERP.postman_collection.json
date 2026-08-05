@@ -10867,6 +10867,56 @@
       ]
     },
     {
+      "name": "CRM - Customers",
+      "item": [
+        {
+          "name": "List CRM Customers (staff-scoped)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customers?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customers"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Show CRM Customer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customers/{{customer_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customers",
+                "{{customer_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "CRM - Reports",
       "item": [
         {

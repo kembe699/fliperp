@@ -21,7 +21,7 @@ class CrmLeadController extends Controller
         $this->authorize('viewAny', CrmLead::class);
 
         $leads = $this->leadService->paginate(
-            $request->only('status', 'source', 'assigned_to', 'branch_id'),
+            $request->only('status', 'source', 'assigned_to', 'branch_id', 'search'),
             $request->integer('per_page', 15),
         );
 

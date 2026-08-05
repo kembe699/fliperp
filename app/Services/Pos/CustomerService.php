@@ -9,7 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerService
 {
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    /**
+     * $additionalScope lets callers layer on extra query constraints (e.g.
+     * the CRM staff-visibility restriction) without duplicating these
+     * filters — it's applied last, after the standard filters below.
+     */
+    public function paginate(array $filters = [], int $perPage = 15, ?\Closure $additionalScope = null): LengthAwarePaginator
     {
         return Customer::query()
             ->when($filters['customer_type'] ?? null, fn (Builder $query, $type) => $query->where('customer_type', $type))
@@ -21,6 +26,7 @@ class CustomerService
                     ->orWhere('phone', 'ilike', "%{$search}%")
                     ->orWhere('email', 'ilike', "%{$search}%")
             ))
+            ->when($additionalScope, fn (Builder $query) => $additionalScope($query))
             ->latest()
             ->paginate($perPage);
     }

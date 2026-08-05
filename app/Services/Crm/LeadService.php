@@ -5,6 +5,7 @@ namespace App\Services\Crm;
 use App\Models\Customer;
 use App\Models\CrmLead;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +19,13 @@ class LeadService
             ->when($filters['source'] ?? null, fn ($query, $source) => $query->where('source', $source))
             ->when($filters['assigned_to'] ?? null, fn ($query, $userId) => $query->where('assigned_to', $userId))
             ->when($filters['branch_id'] ?? null, fn ($query, $id) => $query->where('branch_id', $id))
+            ->when($filters['search'] ?? null, fn (Builder $query, $search) => $query->where(
+                fn (Builder $inner) => $inner
+                    ->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('company_name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%")
+            ))
             ->latest()
             ->paginate($perPage);
     }

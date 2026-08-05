@@ -10,6 +10,7 @@ import {
   BarChart3,
   Calculator,
   Settings,
+  Contact,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -98,6 +99,20 @@ export const navConfig: NavItem[] = [
     children: [
       { label: 'Vehicles', path: '/vehicles', requiredPermission: 'vehicles.view' },
       { label: 'Dispatches', path: '/dispatches', requiredPermission: 'dispatches.view' },
+    ],
+  },
+  {
+    label: 'CRM',
+    path: '/crm',
+    icon: Contact,
+    children: [
+      { label: 'Dashboard', path: '/crm', requiredPermission: 'crm-reports.view' },
+      { label: 'Leads', path: '/crm/leads', requiredPermission: 'crm-leads.view' },
+      { label: 'Pipeline', path: '/crm/pipeline', requiredPermission: 'crm-deals.view' },
+      { label: 'Customers', path: '/crm/customers', requiredPermission: 'crm-customer-services.view' },
+      { label: 'Services', path: '/crm/services', requiredPermission: 'crm-services.view' },
+      { label: 'Staff', path: '/crm/staff', requiredPermission: 'crm-reports.view' },
+      { label: 'Reports', path: '/crm/reports', requiredPermission: 'crm-reports.view' },
     ],
   },
   { label: 'Budgeting', path: '/budget-periods', icon: PiggyBank, requiredPermission: 'budget-periods.view' },

@@ -8,16 +8,28 @@ use App\Http\Requests\CrmActivity\UpdateCrmActivityRequest;
 use App\Http\Resources\CrmActivityResource;
 use App\Models\CrmActivity;
 use App\Services\Crm\ActivityService;
+use App\Services\Crm\CustomerVisibilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CrmActivityController extends Controller
 {
-    public function __construct(protected ActivityService $activityService) {}
+    public function __construct(
+        protected ActivityService $activityService,
+        protected CustomerVisibilityService $customerVisibilityService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', CrmActivity::class);
+
+        if ($customerId = $request->integer('customer_id')) {
+            abort_unless(
+                $this->customerVisibilityService->canAccessCustomer($request->user(), $customerId),
+                403,
+                'You do not have access to this customer.',
+            );
+        }
 
         $activities = $this->activityService->paginate(
             $request->only('customer_id', 'lead_id', 'deal_id', 'type', 'status'),

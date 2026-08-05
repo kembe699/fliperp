@@ -64,7 +64,7 @@ class CrmCustomerServiceController extends Controller
 
     public function serviceStatement(Customer $customer): JsonResponse
     {
-        $this->authorize('viewAny', CrmCustomerService::class);
+        $this->authorize('viewInCrm', $customer);
 
         return $this->success($this->customerServiceRecordService->statement($customer));
     }

@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CrmAccountAssignmentController;
 use App\Http\Controllers\Api\CrmActivityController;
+use App\Http\Controllers\Api\CrmCustomerController;
 use App\Http\Controllers\Api\CrmCustomerServiceController;
 use App\Http\Controllers\Api\CrmDealController;
 use App\Http\Controllers\Api\CrmLeadController;
@@ -364,6 +365,8 @@ Route::prefix('v1')->group(function () {
             Route::patch('deals/{crm_deal}/stage', [CrmDealController::class, 'moveStage'])
                 ->middleware('permission:crm-deals.move-stage');
 
+            Route::get('customers', [CrmCustomerController::class, 'index']);
+            Route::get('customers/{customer}', [CrmCustomerController::class, 'show']);
             Route::get('customers/{customer}/service-statement', [CrmCustomerServiceController::class, 'serviceStatement']);
             Route::apiResource('customer-services', CrmCustomerServiceController::class)
                 ->parameters(['customer-services' => 'crm_customer_service']);
