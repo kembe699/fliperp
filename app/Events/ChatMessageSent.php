@@ -6,16 +6,21 @@ use App\Http\Resources\ChatMessageResource;
 use App\Models\ChatMessage;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Delivers a message to anyone with the conversation open right now. Not
- * queued — same reasoning as App\Notifications\AppNotification: this app's
- * dev setup has no queue worker running.
+ * ShouldBroadcastNow, not ShouldBroadcast — Laravel's dispatcher pushes
+ * every ShouldBroadcast event through the actual queue connection
+ * regardless of whether it implements ShouldQueue (that interface only
+ * matters for queueing the *listener*, not the broadcast itself). With no
+ * queue worker running, that meant every chat message silently sat in the
+ * `jobs` table until something else (a refetch, a page revisit) happened
+ * to surface it. ShouldBroadcastNow bypasses the queue entirely and
+ * broadcasts synchronously within the same request.
  */
-class ChatMessageSent implements ShouldBroadcast
+class ChatMessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

@@ -6,7 +6,7 @@ use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
@@ -17,8 +17,12 @@ use Illuminate\Support\Str;
  * conversation open (see ChatService::sendMessage()), so the widget can
  * bump a count without needing the full message payload ChatMessageSent
  * carries on the conversation channel.
+ *
+ * ShouldBroadcastNow, not ShouldBroadcast — see ChatMessageSent for why:
+ * ShouldBroadcast alone still goes through the queue connection, which
+ * silently never runs without a worker process.
  */
-class ChatUnreadBumped implements ShouldBroadcast
+class ChatUnreadBumped implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
