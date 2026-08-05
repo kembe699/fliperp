@@ -212,6 +212,8 @@ class RoleAndPermissionSeeder extends Seeder
         'cashier' => [
             'branches' => ['view'],
             'products' => ['view'],
+            'categories' => ['view'],
+            'warehouses' => ['view'],
             'stock-levels' => ['view'],
             'tax-rates' => ['view'],
             'payment-types' => ['view'],
