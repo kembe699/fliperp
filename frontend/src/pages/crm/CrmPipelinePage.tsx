@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus, User } from 'lucide-react'
+import { ListTree, Plus, User } from 'lucide-react'
 
 import { fetchCrmKanban, fetchCrmPipelineStages, moveCrmDealStage } from '@/api/crm'
 import { formatCurrency } from '@/lib/currency'
@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { CrmDealFormDialog } from '@/components/crm/CrmDealFormDialog'
 import { LostReasonDialog } from '@/components/crm/LostReasonDialog'
 import { CustomerServiceLogDialog } from '@/components/crm/CustomerServiceLogDialog'
+import { ManagePipelineStagesDialog } from '@/components/crm/ManagePipelineStagesDialog'
 
 function DealCard({ deal }: { deal: CrmDeal }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -94,6 +95,7 @@ export function CrmPipelinePage() {
   const [dealFormOpen, setDealFormOpen] = useState(false)
   const [lostReasonTarget, setLostReasonTarget] = useState<{ deal: CrmDeal; stageId: number } | null>(null)
   const [serviceLogDeal, setServiceLogDeal] = useState<CrmDeal | null>(null)
+  const [manageStagesOpen, setManageStagesOpen] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -168,12 +170,20 @@ export function CrmPipelinePage() {
         parent="CRM"
         title="Pipeline"
         action={
-          can('crm-deals.create') && (
-            <Button onClick={() => setDealFormOpen(true)}>
-              <Plus className="h-4 w-4" />
-              New Deal
-            </Button>
-          )
+          <div className="flex gap-2">
+            {can('crm-pipeline-stages.view') && (
+              <Button variant="outline" onClick={() => setManageStagesOpen(true)}>
+                <ListTree className="h-4 w-4" />
+                Manage Stages
+              </Button>
+            )}
+            {can('crm-deals.create') && (
+              <Button onClick={() => setDealFormOpen(true)}>
+                <Plus className="h-4 w-4" />
+                New Deal
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -191,6 +201,8 @@ export function CrmPipelinePage() {
       )}
 
       <CrmDealFormDialog open={dealFormOpen} onOpenChange={setDealFormOpen} stages={stages ?? []} />
+
+      <ManagePipelineStagesDialog open={manageStagesOpen} onOpenChange={setManageStagesOpen} />
 
       <LostReasonDialog
         open={!!lostReasonTarget}
