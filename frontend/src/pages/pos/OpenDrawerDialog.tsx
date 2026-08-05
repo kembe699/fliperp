@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Lock } from 'lucide-react'
@@ -13,6 +14,7 @@ import { Label } from '@/components/ui/label'
 
 export function OpenDrawerDialog({ branchId }: { branchId?: number }) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [openingFloat, setOpeningFloat] = useState('')
 
   const mutation = useMutation({
@@ -57,6 +59,15 @@ export function OpenDrawerDialog({ branchId }: { branchId?: number }) {
           </div>
           <Button type="submit" className="w-full" disabled={mutation.isPending}>
             {mutation.isPending ? 'Opening…' : 'Open Drawer'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={mutation.isPending}
+            onClick={() => navigate(-1)}
+          >
+            Cancel
           </Button>
         </form>
       </DialogContent>
