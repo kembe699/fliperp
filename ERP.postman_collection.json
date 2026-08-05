@@ -281,6 +281,34 @@
     {
       "key": "report_snapshot_id",
       "value": ""
+    },
+    {
+      "key": "crm_service_id",
+      "value": ""
+    },
+    {
+      "key": "crm_pipeline_stage_id",
+      "value": ""
+    },
+    {
+      "key": "crm_lead_id",
+      "value": ""
+    },
+    {
+      "key": "crm_deal_id",
+      "value": ""
+    },
+    {
+      "key": "crm_customer_service_id",
+      "value": ""
+    },
+    {
+      "key": "crm_account_assignment_id",
+      "value": ""
+    },
+    {
+      "key": "crm_activity_id",
+      "value": ""
     }
   ],
   "auth": {
@@ -9517,6 +9545,1372 @@
                   "key": "to",
                   "value": "2026-01-31"
                 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Services",
+      "item": [
+        {
+          "name": "List Services",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/services?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "services"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "services"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Website Design\",\n    \"category\": \"Design\",\n    \"description\": \"Custom marketing website design.\",\n    \"default_price\": 1500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_service_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/services/{{crm_service_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "services",
+                "{{crm_service_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/services/{{crm_service_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "services",
+                "{{crm_service_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"default_price\": 1600\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/services/{{crm_service_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "services",
+                "{{crm_service_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Pipeline Stages",
+      "item": [
+        {
+          "name": "List Pipeline Stages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/pipeline-stages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "pipeline-stages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Pipeline Stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/pipeline-stages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "pipeline-stages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"New Lead\",\n    \"position\": 1,\n    \"color\": \"#94a3b8\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_pipeline_stage_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Pipeline Stage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/pipeline-stages/{{crm_pipeline_stage_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "pipeline-stages",
+                "{{crm_pipeline_stage_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Pipeline Stage",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/pipeline-stages/{{crm_pipeline_stage_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "pipeline-stages",
+                "{{crm_pipeline_stage_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"New Lead (Updated)\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reorder Pipeline Stages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/pipeline-stages/reorder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "pipeline-stages",
+                "reorder"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"stage_ids\": [\n        \"{{crm_pipeline_stage_id}}\"\n    ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Pipeline Stage",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/pipeline-stages/{{crm_pipeline_stage_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "pipeline-stages",
+                "{{crm_pipeline_stage_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Leads",
+      "item": [
+        {
+          "name": "List Leads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/leads?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "leads"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/leads",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "leads"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"branch_id\": \"{{branch_id}}\",\n    \"name\": \"Alice Wanjiru\",\n    \"company_name\": \"Wanjiru Enterprises\",\n    \"email\": \"alice@example.test\",\n    \"phone\": \"+254711000111\",\n    \"source\": \"referral\",\n    \"assigned_to\": \"{{user_id}}\",\n    \"notes\": \"Met at the trade fair.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_lead_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Lead",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/leads/{{crm_lead_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "leads",
+                "{{crm_lead_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Lead",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/leads/{{crm_lead_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "leads",
+                "{{crm_lead_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"notes\": \"Follow up next week\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Convert Lead to Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/leads/{{crm_lead_id}}/convert",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "leads",
+                "{{crm_lead_id}}",
+                "convert"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_type\": \"regular\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.converted_customer_id) { pm.collectionVariables.set('customer_id', data.converted_customer_id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Lead",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/leads/{{crm_lead_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "leads",
+                "{{crm_lead_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Deals",
+      "item": [
+        {
+          "name": "List Deals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Kanban Board",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals/kanban",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals",
+                "kanban"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Deal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": \"{{customer_id}}\",\n    \"pipeline_stage_id\": \"{{crm_pipeline_stage_id}}\",\n    \"crm_service_id\": \"{{crm_service_id}}\",\n    \"title\": \"New website project\",\n    \"value\": 1500,\n    \"expected_close_date\": \"2026-09-01\",\n    \"assigned_to\": \"{{user_id}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_deal_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Deal",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals/{{crm_deal_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals",
+                "{{crm_deal_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Deal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals/{{crm_deal_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals",
+                "{{crm_deal_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"value\": 1750\n}"
+            }
+          }
+        },
+        {
+          "name": "Move Deal Stage",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals/{{crm_deal_id}}/stage",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals",
+                "{{crm_deal_id}}",
+                "stage"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pipeline_stage_id\": \"{{crm_pipeline_stage_id}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Deal",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/deals/{{crm_deal_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "deals",
+                "{{crm_deal_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Customer Services",
+      "item": [
+        {
+          "name": "List Customer Services",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customer-services?customer_id={{customer_id}}&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customer-services"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Log Customer Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customer-services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customer-services"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": \"{{customer_id}}\",\n    \"crm_service_id\": \"{{crm_service_id}}\",\n    \"deal_id\": \"{{crm_deal_id}}\",\n    \"price_charged\": 1500,\n    \"start_date\": \"2026-08-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_customer_service_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Customer Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customer-services/{{crm_customer_service_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customer-services",
+                "{{crm_customer_service_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Customer Service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customer-services/{{crm_customer_service_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customer-services",
+                "{{crm_customer_service_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"completed\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer Service Statement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customers/{{customer_id}}/service-statement",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customers",
+                "{{customer_id}}",
+                "service-statement"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Customer Service",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/customer-services/{{crm_customer_service_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "customer-services",
+                "{{crm_customer_service_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Account Assignments",
+      "item": [
+        {
+          "name": "List Account Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments?customer_id={{customer_id}}&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Current Assignments for Customer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments/current?customer_id={{customer_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments",
+                "current"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Assign Staff to Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": \"{{customer_id}}\",\n    \"user_id\": \"{{user_id}}\",\n    \"role\": \"primary\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_account_assignment_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Account Assignment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments/{{crm_account_assignment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments",
+                "{{crm_account_assignment_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Account Assignment Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments/{{crm_account_assignment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments",
+                "{{crm_account_assignment_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"role\": \"support\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Unassign Staff Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments/{{crm_account_assignment_id}}/unassign",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments",
+                "{{crm_account_assignment_id}}",
+                "unassign"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Account Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/account-assignments/{{crm_account_assignment_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "account-assignments",
+                "{{crm_account_assignment_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Activities",
+      "item": [
+        {
+          "name": "List Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities?customer_id={{customer_id}}&per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Log Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": \"{{customer_id}}\",\n    \"type\": \"call\",\n    \"subject\": \"Quarterly check-in call\",\n    \"description\": \"Walked through renewal options.\",\n    \"activity_date\": \"2026-08-05\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json().data;",
+                  "    if (data && data.id) { pm.collectionVariables.set('crm_activity_id', data.id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log a Complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"customer_id\": \"{{customer_id}}\",\n    \"type\": \"complaint\",\n    \"subject\": \"Site was slow for two days\",\n    \"description\": \"Customer reported degraded performance.\",\n    \"activity_date\": \"2026-08-05\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Show Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities/{{crm_activity_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities",
+                "{{crm_activity_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Activity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities/{{crm_activity_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities",
+                "{{crm_activity_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"description\": \"Updated notes\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Filter Open Complaints",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities?type=complaint&status=open",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolve Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities/{{crm_activity_id}}/resolve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities",
+                "{{crm_activity_id}}",
+                "resolve"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Activity",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/activities/{{crm_activity_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "activities",
+                "{{crm_activity_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CRM - Reports",
+      "item": [
+        {
+          "name": "CRM Summary Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/reports/summary?from=2026-01-01&to=2026-12-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "reports",
+                "summary"
+              ]
+            }
+          }
+        },
+        {
+          "name": "CRM Staff Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/crm/reports/staff",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "crm",
+                "reports",
+                "staff"
               ]
             }
           }

@@ -4,6 +4,8 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CrmPipelineStage;
+use App\Models\CrmService;
 use App\Models\Customer;
 use App\Models\CustomerPayment;
 use App\Models\Department;
@@ -271,6 +273,25 @@ function createPromotion(Company $company, array $overrides = []): Promotion
         'applies_to' => 'all_products',
         'start_date' => now()->subDay()->toDateString(),
         'end_date' => now()->addDay()->toDateString(),
+        'is_active' => true,
+    ], $overrides));
+}
+
+function createCrmPipelineStage(Company $company, array $overrides = []): CrmPipelineStage
+{
+    return CrmPipelineStage::create(array_merge([
+        'company_id' => $company->id,
+        'name' => 'Test Stage',
+        'position' => 1,
+    ], $overrides));
+}
+
+function createCrmService(Company $company, array $overrides = []): CrmService
+{
+    return CrmService::create(array_merge([
+        'company_id' => $company->id,
+        'name' => 'Test Service',
+        'default_price' => 100,
         'is_active' => true,
     ], $overrides));
 }

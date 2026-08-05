@@ -7,6 +7,7 @@ use App\Models\Scopes\CompanyScope;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -72,6 +73,26 @@ class User extends Authenticatable
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    public function assignedCrmLeads(): HasMany
+    {
+        return $this->hasMany(CrmLead::class, 'assigned_to');
+    }
+
+    public function assignedCrmDeals(): HasMany
+    {
+        return $this->hasMany(CrmDeal::class, 'assigned_to');
+    }
+
+    public function crmAccountAssignments(): HasMany
+    {
+        return $this->hasMany(CrmAccountAssignment::class, 'user_id');
+    }
+
+    public function loggedCrmActivities(): HasMany
+    {
+        return $this->hasMany(CrmActivity::class, 'logged_by');
     }
 
     /**

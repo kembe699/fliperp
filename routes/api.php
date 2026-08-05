@@ -16,6 +16,14 @@ use App\Http\Controllers\Api\ChartOfAccountController;
 use App\Http\Controllers\Api\ChatAttachmentController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\CrmAccountAssignmentController;
+use App\Http\Controllers\Api\CrmActivityController;
+use App\Http\Controllers\Api\CrmCustomerServiceController;
+use App\Http\Controllers\Api\CrmDealController;
+use App\Http\Controllers\Api\CrmLeadController;
+use App\Http\Controllers\Api\CrmPipelineStageController;
+use App\Http\Controllers\Api\CrmReportController;
+use App\Http\Controllers\Api\CrmServiceController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerPaymentController;
@@ -334,6 +342,48 @@ Route::prefix('v1')->group(function () {
         });
         Route::post('reports/{type}/snapshot', [ReportController::class, 'snapshot'])
             ->middleware('permission:reports.snapshot');
+
+        // CRM
+        Route::prefix('crm')->group(function () {
+            Route::apiResource('services', CrmServiceController::class)
+                ->parameters(['services' => 'crm_service']);
+
+            Route::post('pipeline-stages/reorder', [CrmPipelineStageController::class, 'reorder'])
+                ->middleware('permission:crm-pipeline-stages.reorder');
+            Route::apiResource('pipeline-stages', CrmPipelineStageController::class)
+                ->parameters(['pipeline-stages' => 'crm_pipeline_stage']);
+
+            Route::apiResource('leads', CrmLeadController::class)
+                ->parameters(['leads' => 'crm_lead']);
+            Route::post('leads/{crm_lead}/convert', [CrmLeadController::class, 'convert'])
+                ->middleware('permission:crm-leads.convert');
+
+            Route::get('deals/kanban', [CrmDealController::class, 'kanban']);
+            Route::apiResource('deals', CrmDealController::class)
+                ->parameters(['deals' => 'crm_deal']);
+            Route::patch('deals/{crm_deal}/stage', [CrmDealController::class, 'moveStage'])
+                ->middleware('permission:crm-deals.move-stage');
+
+            Route::get('customers/{customer}/service-statement', [CrmCustomerServiceController::class, 'serviceStatement']);
+            Route::apiResource('customer-services', CrmCustomerServiceController::class)
+                ->parameters(['customer-services' => 'crm_customer_service']);
+
+            Route::get('account-assignments/current', [CrmAccountAssignmentController::class, 'current']);
+            Route::apiResource('account-assignments', CrmAccountAssignmentController::class)
+                ->parameters(['account-assignments' => 'crm_account_assignment']);
+            Route::post('account-assignments/{crm_account_assignment}/unassign', [CrmAccountAssignmentController::class, 'unassign'])
+                ->middleware('permission:crm-account-assignments.unassign');
+
+            Route::apiResource('activities', CrmActivityController::class)
+                ->parameters(['activities' => 'crm_activity']);
+            Route::post('activities/{crm_activity}/resolve', [CrmActivityController::class, 'resolve'])
+                ->middleware('permission:crm-activities.resolve');
+
+            Route::middleware('permission:crm-reports.view')->group(function () {
+                Route::get('reports/summary', [CrmReportController::class, 'summary']);
+                Route::get('reports/staff', [CrmReportController::class, 'staff']);
+            });
+        });
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');

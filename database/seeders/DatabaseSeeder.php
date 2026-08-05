@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ProcurementDemoSeeder::class,
             PosDemoSeeder::class,
             SalesDemoSeeder::class,
+            CrmDemoSeeder::class,
         ]);
     }
 }

@@ -93,6 +93,16 @@ class RoleAndPermissionSeeder extends Seeder
         'accounting-periods' => ['view', 'create', 'update', 'delete', 'close'],
         'reports' => ['view', 'snapshot'],
         'dashboard' => ['view'],
+
+        // CRM
+        'crm-services' => ['view', 'create', 'update', 'delete'],
+        'crm-pipeline-stages' => ['view', 'create', 'update', 'delete', 'reorder'],
+        'crm-leads' => ['view', 'create', 'update', 'delete', 'convert'],
+        'crm-deals' => ['view', 'create', 'update', 'delete', 'move-stage'],
+        'crm-customer-services' => ['view', 'create', 'update', 'delete'],
+        'crm-account-assignments' => ['view', 'assign', 'unassign'],
+        'crm-activities' => ['view', 'create', 'update', 'delete', 'resolve'],
+        'crm-reports' => ['view'],
     ];
 
     /**
@@ -169,6 +179,14 @@ class RoleAndPermissionSeeder extends Seeder
             'accounting-periods' => ['view', 'create', 'update', 'delete', 'close'],
             'reports' => ['view', 'snapshot'],
             'dashboard' => ['view'],
+            'crm-services' => ['view', 'create', 'update', 'delete'],
+            'crm-pipeline-stages' => ['view', 'create', 'update', 'delete', 'reorder'],
+            'crm-leads' => ['view', 'create', 'update', 'delete', 'convert'],
+            'crm-deals' => ['view', 'create', 'update', 'delete', 'move-stage'],
+            'crm-customer-services' => ['view', 'create', 'update', 'delete'],
+            'crm-account-assignments' => ['view', 'assign', 'unassign'],
+            'crm-activities' => ['view', 'create', 'update', 'delete', 'resolve'],
+            'crm-reports' => ['view'],
         ],
         'branch_manager' => [
             'branches' => ['view'],
@@ -208,6 +226,14 @@ class RoleAndPermissionSeeder extends Seeder
             'invoices' => ['view', 'create', 'update', 'send'],
             'customer-payments' => ['view', 'create'],
             'dashboard' => ['view'],
+            'crm-services' => ['view'],
+            'crm-pipeline-stages' => ['view'],
+            'crm-leads' => ['view', 'create', 'update', 'convert'],
+            'crm-deals' => ['view', 'create', 'update', 'move-stage'],
+            'crm-customer-services' => ['view', 'create', 'update'],
+            'crm-account-assignments' => ['view', 'assign', 'unassign'],
+            'crm-activities' => ['view', 'create', 'update', 'resolve'],
+            'crm-reports' => ['view'],
         ],
         'cashier' => [
             'branches' => ['view'],
@@ -261,6 +287,7 @@ class RoleAndPermissionSeeder extends Seeder
             'accounting-periods' => ['view', 'create', 'update', 'delete', 'close'],
             'reports' => ['view', 'snapshot'],
             'dashboard' => ['view'],
+            'crm-reports' => ['view'],
         ],
         'procurement_officer' => [
             'branches' => ['view'],

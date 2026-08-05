@@ -52,4 +52,29 @@ class Customer extends TenantModel
     {
         return $this->hasMany(Invoice::class);
     }
+
+    public function crmLeads(): HasMany
+    {
+        return $this->hasMany(CrmLead::class, 'converted_customer_id');
+    }
+
+    public function crmDeals(): HasMany
+    {
+        return $this->hasMany(CrmDeal::class);
+    }
+
+    public function crmServices(): HasMany
+    {
+        return $this->hasMany(CrmCustomerService::class);
+    }
+
+    public function crmAccountAssignments(): HasMany
+    {
+        return $this->hasMany(CrmAccountAssignment::class);
+    }
+
+    public function crmActivities(): HasMany
+    {
+        return $this->hasMany(CrmActivity::class);
+    }
 }
