@@ -105,6 +105,17 @@ class StockAdjustmentService
         }
 
         return DB::transaction(function () use ($adjustment) {
+            $adjustment = StockAdjustment::query()->lockForUpdate()->with('items')->findOrFail($adjustment->id);
+
+            // Re-check after the lock: guards against two concurrent approve
+            // requests both passing the pre-transaction check and each
+            // applying every item's variance a second time.
+            if ($adjustment->status !== 'draft') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only draft adjustments can be approved.'],
+                ]);
+            }
+
             foreach ($adjustment->items as $item) {
                 $variance = (float) $item->variance;
 

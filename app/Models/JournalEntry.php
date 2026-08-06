@@ -19,6 +19,7 @@ class JournalEntry extends TenantModel
         'source_module',
         'source_id',
         'posted_by',
+        'created_by',
         'status',
     ];
 
@@ -37,6 +38,11 @@ class JournalEntry extends TenantModel
     public function postedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function lines(): HasMany

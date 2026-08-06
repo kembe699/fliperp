@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\PurchaseOrder;
 use App\Models\User;
+use App\Support\MakerChecker;
 
 class PurchaseOrderPolicy
 {
@@ -39,7 +40,9 @@ class PurchaseOrderPolicy
 
     public function approve(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return $user->can('purchase-orders.approve') && $purchaseOrder->company_id === $user->company_id;
+        return $user->can('purchase-orders.approve')
+            && $purchaseOrder->company_id === $user->company_id
+            && ! MakerChecker::blocksSelfApproval($user, $purchaseOrder->created_by, 'purchase-orders.approve');
     }
 
     public function cancel(User $user, PurchaseOrder $purchaseOrder): bool

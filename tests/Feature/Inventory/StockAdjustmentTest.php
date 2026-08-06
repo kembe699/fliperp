@@ -79,6 +79,56 @@ it('rejects approving an already approved adjustment', function () {
         ->assertJsonPath('success', false);
 });
 
+it('locks the adjustment row on approve so a concurrent double-approve cannot double-apply the variance', function () {
+    // StockAdjustmentService::approve() locks the StockAdjustment row with
+    // lockForUpdate() and re-checks status inside the transaction before
+    // applying any item's variance. Pest runs single-threaded so this can't
+    // fork real concurrent processes (verified separately via parallel OS
+    // processes during the audit that found this gap), but it does prove the
+    // outcome the lock protects: the adjustment converges to exactly one
+    // stock_movement per item, never two, regardless of how many times
+    // approve() is invoked against the same already-approved row.
+    $adjustmentId = $this->postJson('/api/v1/stock-adjustments', [
+        'warehouse_id' => $this->warehouse->id,
+        'reference_number' => 'ADJ-LOCK-001',
+        'items' => [
+            ['product_id' => $this->productShort->id, 'counted_quantity' => 44],
+        ],
+    ])->json('data.id');
+
+    $this->postJson("/api/v1/stock-adjustments/{$adjustmentId}/approve")->assertOk();
+    $this->postJson("/api/v1/stock-adjustments/{$adjustmentId}/approve")->assertStatus(422);
+
+    expect(
+        \App\Models\StockMovement::where('reference_type', StockAdjustment::class)
+            ->where('reference_id', $adjustmentId)
+            ->count()
+    )->toBe(1);
+    $this->assertDatabaseHas('stock_levels', ['product_id' => $this->productShort->id, 'quantity_on_hand' => 44]);
+});
+
+it('blocks a user from approving their own adjustment when another eligible approver exists', function () {
+    $secondAdmin = createUserWithRole('company_admin', $this->company, $this->branch);
+
+    $adjustmentId = $this->postJson('/api/v1/stock-adjustments', [
+        'warehouse_id' => $this->warehouse->id,
+        'reference_number' => 'ADJ-SOD-001',
+        'items' => [
+            ['product_id' => $this->productShort->id, 'counted_quantity' => 40],
+        ],
+    ])->json('data.id'); // created as $this->admin
+
+    // $this->admin created it and also has stock-adjustments.approve, but
+    // $secondAdmin — another user in the same company who also holds that
+    // permission — exists, so self-approval is blocked (maker-checker).
+    $this->postJson("/api/v1/stock-adjustments/{$adjustmentId}/approve")->assertStatus(403);
+
+    Sanctum::actingAs($secondAdmin, ['*']);
+    $this->postJson("/api/v1/stock-adjustments/{$adjustmentId}/approve")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'approved');
+});
+
 it('denies approval to roles without the stock-adjustments.approve permission', function () {
     $adjustmentId = $this->postJson('/api/v1/stock-adjustments', [
         'warehouse_id' => $this->warehouse->id,

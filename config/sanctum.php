@@ -50,7 +50,10 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Tokens previously never expired (a leaked bearer token was a permanent
+    // credential). 24 hours bounds that risk to roughly a shift's length
+    // without a refresh flow existing to renew shorter-lived tokens.
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 1440),
 
     /*
     |--------------------------------------------------------------------------

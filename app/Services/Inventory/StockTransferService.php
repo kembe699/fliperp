@@ -93,6 +93,17 @@ class StockTransferService
         }
 
         return DB::transaction(function () use ($transfer, $allowNegativeStock) {
+            $transfer = StockTransfer::query()->lockForUpdate()->with('items')->findOrFail($transfer->id);
+
+            // Re-check after the lock: guards against two concurrent complete
+            // requests both passing the pre-transaction check and each
+            // moving every item's quantity a second time.
+            if (! in_array($transfer->status, ['pending', 'in_transit'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Only pending or in-transit transfers can be completed.'],
+                ]);
+            }
+
             foreach ($transfer->items as $item) {
                 $this->stockMovementService->record([
                     'product_id' => $item->product_id,

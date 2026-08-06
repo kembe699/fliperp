@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\JournalEntry;
 use App\Models\User;
+use App\Support\MakerChecker;
 
 class JournalEntryPolicy
 {
@@ -34,7 +35,9 @@ class JournalEntryPolicy
 
     public function post(User $user, JournalEntry $entry): bool
     {
-        return $user->can('journal-entries.post') && $entry->company_id === $user->company_id;
+        return $user->can('journal-entries.post')
+            && $entry->company_id === $user->company_id
+            && ! MakerChecker::blocksSelfApproval($user, $entry->created_by, 'journal-entries.post');
     }
 
     public function reverse(User $user, JournalEntry $entry): bool

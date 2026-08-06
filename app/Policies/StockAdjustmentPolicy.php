@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\StockAdjustment;
 use App\Models\User;
+use App\Support\MakerChecker;
 
 class StockAdjustmentPolicy
 {
@@ -34,6 +35,8 @@ class StockAdjustmentPolicy
 
     public function approve(User $user, StockAdjustment $stockAdjustment): bool
     {
-        return $user->can('stock-adjustments.approve') && $stockAdjustment->company_id === $user->company_id;
+        return $user->can('stock-adjustments.approve')
+            && $stockAdjustment->company_id === $user->company_id
+            && ! MakerChecker::blocksSelfApproval($user, $stockAdjustment->adjusted_by, 'stock-adjustments.approve');
     }
 }

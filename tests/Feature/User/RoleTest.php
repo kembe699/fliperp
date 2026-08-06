@@ -81,3 +81,44 @@ it('rejects creating a role with a duplicate name', function () {
         ->assertStatus(422)
         ->assertJsonPath('success', false);
 });
+
+it('scopes a company-created custom role away from other companies entirely', function () {
+    $roleId = $this->postJson('/api/v1/roles', ['name' => 'warehouse_supervisor'])->json('data.id');
+
+    [$otherCompany, $otherBranch] = createCompanyWithMainBranch();
+    $otherAdmin = createUserWithRole('company_admin', $otherCompany, $otherBranch);
+    Sanctum::actingAs($otherAdmin, ['*']);
+
+    // Not visible in the other company's role list.
+    $this->getJson('/api/v1/roles')->assertOk()->assertJsonMissing(['name' => 'warehouse_supervisor']);
+
+    // Not viewable, editable, or deletable directly by id either.
+    $this->getJson("/api/v1/roles/{$roleId}")->assertStatus(422);
+    $this->putJson("/api/v1/roles/{$roleId}", ['name' => 'hijacked'])->assertStatus(422);
+    $this->deleteJson("/api/v1/roles/{$roleId}")->assertStatus(422);
+    $this->assertDatabaseHas('roles', ['id' => $roleId, 'name' => 'warehouse_supervisor']);
+});
+
+it('rejects assigning a role that belongs to a different company', function () {
+    $roleId = $this->postJson('/api/v1/roles', ['name' => 'warehouse_supervisor_2'])->json('data.id');
+    $roleName = \App\Models\Role::find($roleId)->name;
+
+    [$otherCompany, $otherBranch] = createCompanyWithMainBranch();
+    $otherAdmin = createUserWithRole('company_admin', $otherCompany, $otherBranch);
+    Sanctum::actingAs($otherAdmin, ['*']);
+
+    $this->postJson('/api/v1/users', [
+        'name' => 'Someone',
+        'email' => 'someone@other-company.test',
+        'password' => 'password123',
+        'roles' => [$roleName],
+    ])->assertStatus(422);
+});
+
+it('blocks a company_admin from renaming or deleting a shared system role', function () {
+    $cashierRole = \App\Models\Role::where('name', 'cashier')->firstOrFail();
+
+    $this->putJson("/api/v1/roles/{$cashierRole->id}", ['name' => 'renamed_cashier'])->assertStatus(422);
+    $this->deleteJson("/api/v1/roles/{$cashierRole->id}")->assertStatus(422);
+    $this->assertDatabaseHas('roles', ['id' => $cashierRole->id, 'name' => 'cashier']);
+});

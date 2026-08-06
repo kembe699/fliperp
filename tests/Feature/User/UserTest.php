@@ -10,7 +10,7 @@ it('performs CRUD on users scoped to company with role and branch assignment', f
     $create = $this->postJson('/api/v1/users', [
         'name' => 'New Cashier',
         'email' => 'cashier.new@demo.test',
-        'password' => 'password123',
+        'password' => 'Password123',
         'branch_id' => $mainBranch->id,
         'roles' => ['cashier'],
     ]);

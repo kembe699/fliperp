@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovement extends TenantModel
 {
+    // Deliberately not using the Auditable trait here: every write path
+    // already goes through StockMovementService, which either logs a
+    // precise 'manual_stock_adjustment' audit entry itself (see manual())
+    // or is invoked by a parent document (Sale, StockAdjustment,
+    // StockTransfer, GRN) that's already comprehensively audited on its own
+    // lifecycle. A blanket 'created' hook here would just duplicate that
+    // with a less informative raw attribute dump on every single movement.
+    // who/when is still captured via performed_by/moved_at below.
+
     protected $fillable = [
         'company_id',
         'product_id',

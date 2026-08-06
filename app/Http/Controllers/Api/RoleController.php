@@ -9,7 +9,7 @@ use App\Http\Resources\RoleResource;
 use App\Services\Role\RoleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 class RoleController extends Controller
 {
@@ -31,7 +31,7 @@ class RoleController extends Controller
 
     public function show(Role $role): JsonResponse
     {
-        return $this->success(new RoleResource($role->load('permissions')));
+        return $this->success(new RoleResource($this->roleService->find($role)));
     }
 
     public function update(UpdateRoleRequest $request, Role $role): JsonResponse

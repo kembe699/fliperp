@@ -30,6 +30,7 @@ class Customer extends TenantModel
         return [
             'credit_limit' => 'decimal:2',
             'is_active' => 'boolean',
+            'tax_id' => 'encrypted',
         ];
     }
 

@@ -45,6 +45,23 @@ it('enforces the draft -> submitted -> approved status transition order', functi
         ->assertJsonPath('data.status', 'approved');
 });
 
+it('blocks a user from approving their own purchase order when another eligible approver exists', function () {
+    $secondAdmin = createUserWithRole('company_admin', $this->company, $this->branch);
+
+    $poId = ($this->createDraftPo)('PO-SOD-001'); // created as $this->admin
+    $this->postJson("/api/v1/purchase-orders/{$poId}/submit")->assertOk();
+
+    // $this->admin created and submitted it and also has purchase-orders.approve,
+    // but $secondAdmin — another user in the same company who also holds that
+    // permission — exists, so self-approval is blocked (maker-checker).
+    $this->postJson("/api/v1/purchase-orders/{$poId}/approve")->assertStatus(403);
+
+    Sanctum::actingAs($secondAdmin, ['*']);
+    $this->postJson("/api/v1/purchase-orders/{$poId}/approve")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'approved');
+});
+
 it('blocks editing a purchase order once it has been submitted', function () {
     $poId = ($this->createDraftPo)();
 

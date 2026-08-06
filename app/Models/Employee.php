@@ -38,6 +38,8 @@ class Employee extends TenantModel
         return [
             'hire_date' => 'date',
             'termination_date' => 'date',
+            'national_id' => 'encrypted',
+            'bank_account_number' => 'encrypted',
         ];
     }
 

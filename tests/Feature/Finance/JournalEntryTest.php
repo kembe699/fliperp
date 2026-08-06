@@ -62,6 +62,29 @@ it('posts a draft journal entry', function () {
     $this->assertDatabaseHas('journal_entries', ['id' => $entryId, 'status' => 'posted']);
 });
 
+it('blocks a user from posting their own draft journal entry when another eligible poster exists', function () {
+    $secondAdmin = createUserWithRole('company_admin', $this->company, $this->branch);
+
+    $entryId = $this->postJson('/api/v1/journal-entries', [
+        'reference_number' => 'JE-SOD-001',
+        'entry_date' => now()->toDateString(),
+        'lines' => [
+            ['account_id' => $this->accounts['1000']->id, 'debit' => 150, 'credit' => 0],
+            ['account_id' => $this->accounts['4000']->id, 'debit' => 0, 'credit' => 150],
+        ],
+    ])->json('data.id'); // created as $this->admin
+
+    // $this->admin created it and also has journal-entries.post, but
+    // $secondAdmin — another user in the same company who also holds that
+    // permission — exists, so self-posting is blocked (maker-checker).
+    $this->postJson("/api/v1/journal-entries/{$entryId}/post")->assertStatus(403);
+
+    Sanctum::actingAs($secondAdmin, ['*']);
+    $this->postJson("/api/v1/journal-entries/{$entryId}/post")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'posted');
+});
+
 it('reverses a posted journal entry with swapped debit and credit lines', function () {
     $entryId = $this->postJson('/api/v1/journal-entries', [
         'reference_number' => 'JE-004',

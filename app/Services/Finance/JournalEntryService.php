@@ -33,6 +33,7 @@ class JournalEntryService
                 'source_module' => $data['source_module'] ?? 'manual',
                 'source_id' => $data['source_id'] ?? null,
                 'status' => 'draft',
+                'created_by' => Auth::id(),
             ]);
 
             $entry->lines()->createMany($this->normalizeLines($data['lines']));

@@ -34,6 +34,19 @@ it('fails to log in with invalid credentials', function () {
         ->assertJsonPath('success', false);
 });
 
+it('throttles repeated login attempts from the same client', function () {
+    [$company, $branch] = createCompanyWithMainBranch();
+    $user = createUserWithRole('company_admin', $company, $branch);
+
+    for ($i = 0; $i < 10; $i++) {
+        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong-password'])
+            ->assertStatus(422);
+    }
+
+    $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong-password'])
+        ->assertStatus(429);
+});
+
 it('logs out and revokes the token', function () {
     [$company, $branch] = createCompanyWithMainBranch();
     $user = createUserWithRole('company_admin', $company, $branch);
@@ -74,8 +87,8 @@ it('registers a company with a main branch and admin user in one transaction', f
         'company_name' => 'Acme Corp',
         'admin_name' => 'Acme Admin',
         'admin_email' => 'admin@acme.test',
-        'admin_password' => 'password123',
-        'admin_password_confirmation' => 'password123',
+        'admin_password' => 'Password123',
+        'admin_password_confirmation' => 'Password123',
     ]);
 
     $response->assertCreated()->assertJsonPath('success', true);
@@ -94,7 +107,7 @@ it('rolls back the whole transaction when register-company fails partway through
         'company_name' => 'Broken Corp',
         'admin_name' => 'Broken Admin',
         'admin_email' => 'broken@corp.test',
-        'admin_password' => 'password123',
+        'admin_password' => 'Password123',
     ]))->toThrow(RoleDoesNotExist::class);
 
     expect(Company::count())->toBe($companiesBefore);

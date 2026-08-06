@@ -94,7 +94,13 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            // 'prefer' only opportunistically uses TLS and silently falls
+            // back to plaintext if the server doesn't offer it. Local dev
+            // Postgres commonly has no TLS configured at all, so the default
+            // stays 'prefer' here — set DB_SSLMODE=require (or verify-full,
+            // with DB_SSLROOTCERT pointed at the CA) in production.
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslrootcert' => env('DB_SSLROOTCERT'),
         ],
 
         'sqlsrv' => [
