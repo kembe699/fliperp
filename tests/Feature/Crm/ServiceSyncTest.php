@@ -20,8 +20,28 @@ beforeEach(function () {
         'customer_id' => $this->customer->id,
         'pipeline_stage_id' => $this->stage->id,
         'title' => 'Test Deal',
-        'value' => 500,
     ])->json('data');
+});
+
+it('starts a deal at value 0 and recalculates it as the sum of attached services, never manually', function () {
+    expect((float) $this->deal['value'])->toBe(0.0);
+
+    $this->postJson("/api/v1/crm/deals/{$this->deal['id']}/services", [
+        'service_ids' => [$this->serviceA->id, $this->serviceB->id],
+    ])->assertOk();
+    $deal = $this->getJson("/api/v1/crm/deals/{$this->deal['id']}")->json('data');
+    expect((float) $deal['value'])->toBe(200.0); // serviceA (100) + serviceB (100)
+
+    // A manual value on update is silently ignored — no such field is accepted.
+    $this->putJson("/api/v1/crm/deals/{$this->deal['id']}", ['value' => 99999])->assertOk();
+    $deal = $this->getJson("/api/v1/crm/deals/{$this->deal['id']}")->json('data');
+    expect((float) $deal['value'])->toBe(200.0);
+
+    $this->postJson("/api/v1/crm/deals/{$this->deal['id']}/services", [
+        'service_ids' => [$this->serviceC->id],
+    ])->assertOk();
+    $deal = $this->getJson("/api/v1/crm/deals/{$this->deal['id']}")->json('data');
+    expect((float) $deal['value'])->toBe(100.0); // resync replaces, not adds
 });
 
 it('attaches interested services to a lead', function () {

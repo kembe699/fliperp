@@ -8,7 +8,7 @@
         .contract-body {
             font-size: 10pt;
             line-height: 1.6;
-            color: #1A1A1A;
+            color: #000000;
         }
 
         .contract-body p {
@@ -40,10 +40,10 @@
         }
 
         .signature-line {
-            border-top: 1px solid #1A1A1A;
+            border-top: 1px solid #000000;
             padding-top: 4px;
             font-size: 8.5pt;
-            color: #6B7280;
+            color: #000000;
         }
 
         .signature-placeholder {
@@ -53,7 +53,7 @@
         .signature-name {
             font-size: 10pt;
             font-weight: bold;
-            color: #1A1A1A;
+            color: #000000;
             margin: 0 0 2px 0;
         }
     </style>

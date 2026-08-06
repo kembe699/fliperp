@@ -176,7 +176,9 @@ export interface CrmDealInput {
   pipeline_stage_id: number
   crm_service_id?: number | null
   title: string
-  value: number
+  // Never sent by the frontend — the backend computes it from attached
+  // services and ignores this field entirely (see DealService::syncServices()).
+  value?: number
   expected_close_date?: string | null
   assigned_to?: number | null
 }

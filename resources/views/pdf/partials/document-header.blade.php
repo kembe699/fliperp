@@ -2,37 +2,40 @@
 @php($referenceLabel = $referenceLabel ?? 'Reference')
 @php($logoPath = ($company ?? null)?->logoFilePath())
 <div class="header">
-    <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="width: 55%; vertical-align: top;">
-                @if ($logoPath)
-                    <img src="{{ $logoPath }}" alt="{{ $companyName }}" class="company-logo">
-                @else
-                    <p class="company-name">{{ $companyName }}</p>
-                @endif
-                <div class="company-meta">
-                    @if (!empty($branchName))
-                        {{ $branchName }}<br>
+    <div class="header-band"></div>
+    <div class="header-inner">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 55%; vertical-align: top;">
+                    @if ($logoPath)
+                        <img src="{{ $logoPath }}" alt="{{ $companyName }}" class="company-logo">
+                    @else
+                        <p class="company-name">{{ $companyName }}</p>
                     @endif
-                    @if (!empty($branchAddress))
-                        {{ $branchAddress }}<br>
-                    @endif
-                    @if (!empty($branchPhone))
-                        {{ $branchPhone }}
-                    @endif
-                </div>
-            </td>
-            <td style="width: 45%; vertical-align: top;">
-                <p class="doc-title">{{ $documentType }}</p>
-                <div class="doc-meta-row">
-                    <span class="doc-meta-label">{{ $referenceLabel }}</span> {{ $referenceNumber }}<br>
-                    <span class="doc-meta-label">Date</span> {{ $documentDate }}
-                    @foreach ($metaRows ?? [] as $label => $value)
-                        <br><span class="doc-meta-label">{{ $label }}</span> {{ $value }}
-                    @endforeach
-                </div>
-            </td>
-        </tr>
-    </table>
+                    <div class="company-meta">
+                        @if (!empty($branchName))
+                            {{ $branchName }}<br>
+                        @endif
+                        @if (!empty($branchAddress))
+                            {{ $branchAddress }}<br>
+                        @endif
+                        @if (!empty($branchPhone))
+                            {{ $branchPhone }}
+                        @endif
+                    </div>
+                </td>
+                <td style="width: 45%; vertical-align: top;">
+                    <p class="doc-title">{{ $documentType }}</p>
+                    <div class="doc-meta-row">
+                        <span class="doc-meta-label">{{ $referenceLabel }}</span> {{ $referenceNumber }}<br>
+                        <span class="doc-meta-label">Date</span> {{ $documentDate }}
+                        @foreach ($metaRows ?? [] as $label => $value)
+                            <br><span class="doc-meta-label">{{ $label }}</span> {{ $value }}
+                        @endforeach
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
     <hr class="rule">
 </div>

@@ -30,7 +30,6 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
   const [pipelineStageId, setPipelineStageId] = useState<string>('')
   const [serviceId, setServiceId] = useState<string>('')
   const [title, setTitle] = useState('')
-  const [value, setValue] = useState('')
   const [expectedCloseDate, setExpectedCloseDate] = useState('')
   const [assignedTo, setAssignedTo] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
@@ -60,7 +59,6 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
     setPipelineStageId(defaultStageId ? String(defaultStageId) : stages[0] ? String(stages[0].id) : '')
     setServiceId('')
     setTitle('')
-    setValue('')
     setExpectedCloseDate('')
     setAssignedTo('')
     setError(null)
@@ -74,7 +72,6 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
         pipeline_stage_id: Number(pipelineStageId),
         crm_service_id: serviceId ? Number(serviceId) : null,
         title,
-        value: Number(value),
         expected_close_date: expectedCloseDate || null,
         assigned_to: assignedTo ? Number(assignedTo) : null,
       }),
@@ -92,7 +89,6 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
 
   const canSubmit =
     title.trim() &&
-    value.trim() &&
     pipelineStageId &&
     ((targetType === 'lead' && leadId) || (targetType === 'customer' && customerId))
 
@@ -148,11 +144,11 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
             <Input id="deal-title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
 
+          <p className="text-xs text-muted-foreground">
+            Deal value isn't set here — it's calculated automatically once you attach services on the deal's Overview tab.
+          </p>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="deal-value">Value</Label>
-              <Input id="deal-value" type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} />
-            </div>
             <div className="space-y-1.5">
               <Label>Pipeline Stage</Label>
               <Select value={pipelineStageId} onValueChange={setPipelineStageId}>
@@ -167,6 +163,10 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="expected-close">Expected Close</Label>
+              <Input id="expected-close" type="date" value={expectedCloseDate} onChange={(e) => setExpectedCloseDate(e.target.value)} />
             </div>
           </div>
 
@@ -187,25 +187,20 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="expected-close">Expected Close</Label>
-              <Input id="expected-close" type="date" value={expectedCloseDate} onChange={(e) => setExpectedCloseDate(e.target.value)} />
+              <Label>Assigned To</Label>
+              <Select value={assignedTo} onValueChange={setAssignedTo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users?.data.map((u) => (
+                    <SelectItem key={u.id} value={String(u.id)}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Assigned To</Label>
-            <Select value={assignedTo} onValueChange={setAssignedTo}>
-              <SelectTrigger>
-                <SelectValue placeholder="Unassigned" />
-              </SelectTrigger>
-              <SelectContent>
-                {users?.data.map((u) => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    {u.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {error && <p className="text-xs text-destructive">{error}</p>}

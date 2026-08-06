@@ -21,7 +21,8 @@ class UpdateCrmDealRequest extends FormRequest
             'customer_id' => ['nullable', Rule::exists('customers', 'id')->where('company_id', $companyId)],
             'crm_service_id' => ['nullable', Rule::exists('crm_services', 'id')->where('company_id', $companyId)],
             'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'value' => ['sometimes', 'required', 'numeric', 'min:0'],
+            // Deliberately no 'value' rule — it's never manually editable,
+            // only recalculated from attached services. See syncServices().
             'expected_close_date' => ['nullable', 'date'],
             'assigned_to' => ['nullable', Rule::exists('users', 'id')->where('company_id', $companyId)],
         ];

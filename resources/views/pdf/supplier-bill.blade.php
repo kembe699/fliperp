@@ -20,7 +20,7 @@
 
     @include('pdf.partials.footer-script', ['companyName' => $company->name])
 
-    <div>
+    <div class="bill-to-box">
         <p class="section-label">Supplier</p>
         <p class="bill-to-name">{{ $supplier?->name ?? 'Supplier #' . $bill->supplier_id }}</p>
         <div class="bill-to-meta">

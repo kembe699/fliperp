@@ -7,7 +7,9 @@ use Laravel\Sanctum\Sanctum;
  *
  * Leads: 3 total — 1 open, 1 converted, 1 disqualified (conversion rate 33.33%).
  *
- * Deals (all on the same customer, one crm_service):
+ * Deals (all on the same customer, one crm_service) — value is never set
+ * manually, it's the sum of each deal's attached services, so each deal
+ * gets one dedicated service priced at the exact value the scenario needs:
  *   - deal1: New stage,       value 500,  assigned to admin
  *   - deal2: Contacted stage, value 800,  assigned to staffA
  *   - deal3: Closed Won,      value 1200, assigned to admin
@@ -25,6 +27,10 @@ beforeEach(function () {
     $this->staffA = createUserWithRole('branch_manager', $this->company, $this->branch);
     $this->customer = createCustomer($this->company);
     $this->service = createCrmService($this->company);
+    $this->service500 = createCrmService($this->company, ['name' => 'Value 500', 'default_price' => 500]);
+    $this->service800 = createCrmService($this->company, ['name' => 'Value 800', 'default_price' => 800]);
+    $this->service1200 = createCrmService($this->company, ['name' => 'Value 1200', 'default_price' => 1200]);
+    $this->service300 = createCrmService($this->company, ['name' => 'Value 300', 'default_price' => 300]);
 
     $this->newStage = createCrmPipelineStage($this->company, ['name' => 'New', 'position' => 1]);
     $this->contactedStage = createCrmPipelineStage($this->company, ['name' => 'Contacted', 'position' => 2]);
@@ -42,32 +48,36 @@ beforeEach(function () {
     $toDisqualify = $this->postJson('/api/v1/crm/leads', ['name' => 'Disqualify Me'])->json('data');
     $this->putJson("/api/v1/crm/leads/{$toDisqualify['id']}", ['status' => 'disqualified'])->assertOk();
 
-    // Deals.
-    $this->postJson('/api/v1/crm/deals', [
+    // Deals — value comes from each deal's attached service, not a manual field.
+    $deal1 = $this->postJson('/api/v1/crm/deals', [
         'customer_id' => $this->customer->id,
         'pipeline_stage_id' => $this->newStage->id,
         'crm_service_id' => $this->service->id,
-        'title' => 'Deal 1', 'value' => 500, 'assigned_to' => $this->admin->id,
-    ])->assertCreated();
+        'title' => 'Deal 1', 'assigned_to' => $this->admin->id,
+    ])->json('data');
+    $this->postJson("/api/v1/crm/deals/{$deal1['id']}/services", ['service_ids' => [$this->service500->id]])->assertOk();
 
-    $this->postJson('/api/v1/crm/deals', [
+    $deal2 = $this->postJson('/api/v1/crm/deals', [
         'customer_id' => $this->customer->id,
         'pipeline_stage_id' => $this->contactedStage->id,
-        'title' => 'Deal 2', 'value' => 800, 'assigned_to' => $this->staffA->id,
-    ])->assertCreated();
+        'title' => 'Deal 2', 'assigned_to' => $this->staffA->id,
+    ])->json('data');
+    $this->postJson("/api/v1/crm/deals/{$deal2['id']}/services", ['service_ids' => [$this->service800->id]])->assertOk();
 
     $deal3 = $this->postJson('/api/v1/crm/deals', [
         'customer_id' => $this->customer->id,
         'pipeline_stage_id' => $this->newStage->id,
-        'title' => 'Deal 3', 'value' => 1200, 'assigned_to' => $this->admin->id,
+        'title' => 'Deal 3', 'assigned_to' => $this->admin->id,
     ])->json('data');
+    $this->postJson("/api/v1/crm/deals/{$deal3['id']}/services", ['service_ids' => [$this->service1200->id]])->assertOk();
     $this->patchJson("/api/v1/crm/deals/{$deal3['id']}/stage", ['pipeline_stage_id' => $this->wonStage->id])->assertOk();
 
     $deal4 = $this->postJson('/api/v1/crm/deals', [
         'customer_id' => $this->customer->id,
         'pipeline_stage_id' => $this->newStage->id,
-        'title' => 'Deal 4', 'value' => 300, 'assigned_to' => $this->staffA->id,
+        'title' => 'Deal 4', 'assigned_to' => $this->staffA->id,
     ])->json('data');
+    $this->postJson("/api/v1/crm/deals/{$deal4['id']}/services", ['service_ids' => [$this->service300->id]])->assertOk();
     $this->patchJson("/api/v1/crm/deals/{$deal4['id']}/stage", [
         'pipeline_stage_id' => $this->lostStage->id,
         'lost_reason' => 'Budget',

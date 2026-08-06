@@ -31,7 +31,7 @@
 
     @include('pdf.partials.footer-script', ['companyName' => $company->name])
 
-    <div>
+    <div class="bill-to-box">
         <p class="section-label">Account</p>
         <p class="bill-to-name">{{ $statement['customer_name'] }}</p>
         <div class="bill-to-meta">
@@ -73,7 +73,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="text-align: center; color: #6B7280;">No transactions on record.</td>
+                    <td colspan="6" style="text-align: center; color: #000000;">No transactions on record.</td>
                 </tr>
             @endforelse
         </tbody>

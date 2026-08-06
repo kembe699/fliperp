@@ -56,7 +56,9 @@ class DealService
     public function create(array $data): CrmDeal
     {
         return DB::transaction(function () use ($data) {
-            $deal = CrmDeal::create($data);
+            // Value isn't manually set — it starts at 0 and becomes the sum
+            // of attached services the moment any are synced.
+            $deal = CrmDeal::create([...$data, 'value' => 0]);
 
             CrmDealStageHistory::create([
                 'deal_id' => $deal->id,
@@ -139,9 +141,15 @@ class DealService
         });
     }
 
+    /**
+     * Deal value is never entered manually — every sync recomputes it as the
+     * sum of the deal's currently attached services' default_price, so it's
+     * always an accurate reflection of what's actually attached.
+     */
     public function syncServices(CrmDeal $deal, array $serviceIds): CrmDeal
     {
         $deal->services()->sync($serviceIds);
+        $deal->update(['value' => (float) $deal->services()->sum('default_price')]);
 
         return $deal->fresh('services');
     }

@@ -22,7 +22,7 @@
 
     @include('pdf.partials.footer-script', ['companyName' => $company->name])
 
-    <div>
+    <div class="bill-to-box">
         <p class="section-label">Bill To</p>
         <p class="bill-to-name">{{ $customer?->name ?? 'Walk-in Customer' }}</p>
         <div class="bill-to-meta">
@@ -60,7 +60,7 @@
                     <td>
                         {{ $item->product?->name ?? 'Product #' . $item->product_id }}
                         @if ($item->variant)
-                            <br><span style="color:#6B7280; font-size:8.5pt;">{{ $item->variant->name }}</span>
+                            <br><span style="color:#000000; font-size:8.5pt;">{{ $item->variant->name }}</span>
                         @endif
                     </td>
                     <td class="num">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
