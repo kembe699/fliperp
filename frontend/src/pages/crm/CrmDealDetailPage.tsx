@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Activity, Calendar, FileText, Handshake, Mail } from 'lucide-react'
 
 import { fetchCrmDealDetail } from '@/api/crm'
 import { formatCurrency } from '@/lib/currency'
@@ -8,6 +7,7 @@ import { formatCurrency } from '@/lib/currency'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CrmDrawerOverviewTab } from '@/components/crm/drawer/CrmDrawerOverviewTab'
 import { CrmDrawerMeetingsTab } from '@/components/crm/drawer/CrmDrawerMeetingsTab'
 import { CrmDrawerEmailsTab } from '@/components/crm/drawer/CrmDrawerEmailsTab'
@@ -50,54 +50,44 @@ export function CrmDealDetailPage() {
         <StatCard label="Quotations" value={detail.quotations.length} />
       </div>
 
-      <div className="mt-6">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Handshake className="h-4 w-4" />
-          Overview
-        </div>
-        <CrmDrawerOverviewTab type="deal" detail={detail} />
-      </div>
+      <Tabs defaultValue="overview" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="meetings">Meetings</TabsTrigger>
+          <TabsTrigger value="quotations">Quotations</TabsTrigger>
+          <TabsTrigger value="emails">Emails</TabsTrigger>
+          <TabsTrigger value="activities">Activities</TabsTrigger>
+        </TabsList>
 
-      <div className="mt-6">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Calendar className="h-4 w-4" />
-          Meetings
-        </div>
-        <CrmDrawerMeetingsTab
-          dealId={dealId}
-          customerId={deal.customer_id}
-          defaultContactName={contactName}
-          defaultTitle={meetingTitle}
-          defaultDescription={meetingDescription}
-          upcoming={meetings.upcoming}
-          past={meetings.past}
-          queryKeyToInvalidate={queryKey}
-        />
-      </div>
+        <TabsContent value="overview">
+          <CrmDrawerOverviewTab type="deal" detail={detail} />
+        </TabsContent>
 
-      <div className="mt-6">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <FileText className="h-4 w-4" />
-          Quotations
-        </div>
-        <CrmDrawerQuotationTab type="deal" detail={detail} queryKeyToInvalidate={queryKey} />
-      </div>
+        <TabsContent value="meetings">
+          <CrmDrawerMeetingsTab
+            dealId={dealId}
+            customerId={deal.customer_id}
+            defaultContactName={contactName}
+            defaultTitle={meetingTitle}
+            defaultDescription={meetingDescription}
+            upcoming={meetings.upcoming}
+            past={meetings.past}
+            queryKeyToInvalidate={queryKey}
+          />
+        </TabsContent>
 
-      <div className="mt-6">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Mail className="h-4 w-4" />
-          Emails
-        </div>
-        <CrmDrawerEmailsTab emails={emails} />
-      </div>
+        <TabsContent value="quotations">
+          <CrmDrawerQuotationTab type="deal" detail={detail} queryKeyToInvalidate={queryKey} />
+        </TabsContent>
 
-      <div className="mt-6">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Activity className="h-4 w-4" />
-          Activities
-        </div>
-        <CrmDrawerActivitiesTab dealId={dealId} activities={activities} queryKeyToInvalidate={queryKey} />
-      </div>
+        <TabsContent value="emails">
+          <CrmDrawerEmailsTab emails={emails} />
+        </TabsContent>
+
+        <TabsContent value="activities">
+          <CrmDrawerActivitiesTab dealId={dealId} activities={activities} queryKeyToInvalidate={queryKey} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

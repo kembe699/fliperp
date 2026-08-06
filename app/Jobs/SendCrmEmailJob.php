@@ -11,21 +11,24 @@ use App\Models\Quotation;
 use App\Services\Crm\MeetingService;
 use App\Services\Sales\QuotationService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 /**
- * Actually delivers a queued CrmEmail row and reflects the outcome back onto
- * it (sent/failed) — a queued Mailable alone gives no hook to update our own
- * status column, so the send happens here instead.
+ * Deliberately does NOT implement ShouldQueue. This deployment's backend
+ * service (see railway.json) only runs `php artisan serve` — no
+ * `queue:work` process exists — so with QUEUE_CONNECTION=database a queued
+ * job just sits in the jobs table forever. Same root cause and same fix as
+ * the chat broadcast delay: dispatch() with no ShouldQueue interface runs
+ * handle() synchronously, in-process, right here. Still updates the
+ * CrmEmail row's status (sent/failed) itself since a plain Mailable send
+ * gives no hook for that.
  */
-class SendCrmEmailJob implements ShouldQueue
+class SendCrmEmailJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, Queueable, SerializesModels;
 
     public function __construct(public int $crmEmailId) {}
 
