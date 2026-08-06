@@ -39,8 +39,8 @@ export function CrmStaffDetailPage() {
   })
 
   const goToMeetingContext = (meeting: CrmMeeting) => {
-    if (meeting.deal_id) navigate(`/crm/pipeline?deal=${meeting.deal_id}`)
-    else if (meeting.lead_id) navigate(`/crm/pipeline?lead=${meeting.lead_id}`)
+    if (meeting.deal_id) navigate(`/crm/deals/${meeting.deal_id}`)
+    else if (meeting.lead_id) navigate(`/crm/leads/${meeting.lead_id}`)
     else if (meeting.customer_id) navigate(`/customers/${meeting.customer_id}/statement`)
   }
 

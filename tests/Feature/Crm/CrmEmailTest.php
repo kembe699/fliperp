@@ -73,7 +73,10 @@ it('marks the email failed and records the error when delivery blows up', functi
     $pendingMail->shouldReceive('send')->once()->andThrow(new \RuntimeException('Connection could not be established with host smtp.example.test'));
     Mail::shouldReceive('to')->once()->andReturn($pendingMail);
 
-    (new SendCrmEmailJob($email->id))->handle(app(\App\Services\Sales\QuotationService::class));
+    (new SendCrmEmailJob($email->id))->handle(
+        app(\App\Services\Sales\QuotationService::class),
+        app(\App\Services\Crm\MeetingService::class),
+    );
 
     $email->refresh();
     expect($email->status)->toBe('failed');

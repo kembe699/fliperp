@@ -2,6 +2,7 @@
 
 namespace App\Services\Crm;
 
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\CrmDeal;
 use App\Models\CrmLead;
@@ -97,12 +98,38 @@ class CrmQuotationLinkService
     protected function createQuotation(Customer $customer, array $items, array $data): Quotation
     {
         return $this->quotationService->create([
-            'branch_id' => $data['branch_id'] ?? $customer->branch_id,
+            'branch_id' => $this->resolveBranchId($customer, $data),
             'customer_id' => $customer->id,
             'price_list_id' => $data['price_list_id'] ?? null,
             'valid_until' => $data['valid_until'] ?? now()->addDays(14)->toDateString(),
             'notes' => $data['notes'] ?? null,
             'items' => $items,
         ]);
+    }
+
+    /**
+     * quotations.branch_id is NOT NULL, but plenty of customers (walk-ins,
+     * older records, ones created outside a branch-scoped flow) have no
+     * branch_id of their own — falling through to a database constraint
+     * violation there produced a 500 instead of a clean error. Falls back
+     * to the company's main branch before giving up.
+     */
+    protected function resolveBranchId(Customer $customer, array $data): int
+    {
+        $branchId = $data['branch_id'] ?? $customer->branch_id;
+
+        if ($branchId) {
+            return $branchId;
+        }
+
+        $mainBranch = Branch::query()->where('company_id', $customer->company_id)->where('is_main', true)->first();
+
+        if (! $mainBranch) {
+            throw ValidationException::withMessages([
+                'branch_id' => ['This customer has no branch on file and no main branch exists to fall back to — set a branch on the customer first.'],
+            ]);
+        }
+
+        return $mainBranch->id;
     }
 }

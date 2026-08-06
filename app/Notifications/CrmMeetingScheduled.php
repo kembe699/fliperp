@@ -16,8 +16,8 @@ class CrmMeetingScheduled extends AppNotification
             ?? 'a CRM contact';
 
         $link = match (true) {
-            (bool) $this->meeting->deal_id => "/crm/pipeline?deal={$this->meeting->deal_id}",
-            (bool) $this->meeting->lead_id => "/crm/pipeline?lead={$this->meeting->lead_id}",
+            (bool) $this->meeting->deal_id => "/crm/deals/{$this->meeting->deal_id}",
+            (bool) $this->meeting->lead_id => "/crm/leads/{$this->meeting->lead_id}",
             (bool) $this->meeting->customer_id => "/customers/{$this->meeting->customer_id}/statement",
             default => '/crm/pipeline',
         };

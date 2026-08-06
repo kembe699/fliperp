@@ -1,6 +1,9 @@
 <?php
 
+use App\Mail\CrmMeetingConfirmation;
+use App\Models\CrmEmail;
 use App\Models\CrmMeetingAttendee;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 
@@ -165,6 +168,42 @@ it('counts a staff member upcoming scheduled meetings in the CRM staff report', 
     $response->assertOk();
     $row = collect($response->json('data'))->firstWhere('user_id', $this->staff->id);
     expect($row['upcoming_meetings_count'])->toBe(1);
+});
+
+it('automatically emails the external contact meeting details, no manual send step', function () {
+    Mail::fake();
+
+    $response = $this->postJson('/api/v1/crm/meetings', [
+        'lead_id' => $this->lead['id'],
+        'title' => 'Discovery call',
+        'scheduled_at' => now()->addDay()->toDateTimeString(),
+        'organizer_id' => $this->admin->id,
+    ]);
+    $response->assertCreated();
+    $meetingId = $response->json('data.id');
+
+    $crmEmail = CrmEmail::where('meeting_id', $meetingId)->first();
+    expect($crmEmail)->not->toBeNull();
+    expect($crmEmail->to_email)->toBe('jane@example.test');
+    expect($crmEmail->status)->toBe('sent');
+
+    Mail::assertSent(CrmMeetingConfirmation::class, fn ($mail) => $mail->meeting->id === $meetingId);
+});
+
+it('skips the automatic email when no attendee has an external email on file', function () {
+    Mail::fake();
+
+    $response = $this->postJson('/api/v1/crm/meetings', [
+        'lead_id' => $this->lead['id'],
+        'title' => 'Internal sync',
+        'scheduled_at' => now()->addDay()->toDateTimeString(),
+        'organizer_id' => $this->admin->id,
+        'attendees' => [['user_id' => $this->admin->id]],
+    ]);
+    $response->assertCreated();
+
+    expect(CrmEmail::where('meeting_id', $response->json('data.id'))->exists())->toBeFalse();
+    Mail::assertNotSent(CrmMeetingConfirmation::class);
 });
 
 it('returns 404 for a meeting belonging to another company', function () {

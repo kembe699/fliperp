@@ -16,6 +16,7 @@ class CrmEmailResource extends JsonResource
             'deal_id' => $this->deal_id,
             'customer_id' => $this->customer_id,
             'quotation_id' => $this->quotation_id,
+            'meeting_id' => $this->meeting_id,
             'to_email' => $this->to_email,
             'to_name' => $this->to_name,
             'subject' => $this->subject,

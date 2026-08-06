@@ -26,6 +26,8 @@ interface ScheduleMeetingDialogProps {
   customerId?: number | null
   defaultContactName?: string | null
   defaultContactEmail?: string | null
+  defaultTitle?: string
+  defaultDescription?: string
   queryKeyToInvalidate: unknown[]
 }
 
@@ -37,6 +39,8 @@ export function ScheduleMeetingDialog({
   customerId,
   defaultContactName,
   defaultContactEmail,
+  defaultTitle,
+  defaultDescription,
   queryKeyToInvalidate,
 }: ScheduleMeetingDialogProps) {
   const queryClient = useQueryClient()
@@ -58,8 +62,8 @@ export function ScheduleMeetingDialog({
 
   useEffect(() => {
     if (!open) return
-    setTitle('')
-    setDescription('')
+    setTitle(defaultTitle ?? '')
+    setDescription(defaultDescription ?? '')
     setScheduledAt('')
     setDuration('30')
     setLocation('')
@@ -68,7 +72,7 @@ export function ScheduleMeetingDialog({
     setContactName(defaultContactName ?? '')
     setContactEmail(defaultContactEmail ?? '')
     setError(null)
-  }, [open, currentUser, defaultContactName, defaultContactEmail])
+  }, [open, currentUser, defaultContactName, defaultContactEmail, defaultTitle, defaultDescription])
 
   const mutation = useMutation({
     mutationFn: () => {

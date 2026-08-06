@@ -12,6 +12,7 @@ class CrmEmail extends TenantModel
         'deal_id',
         'customer_id',
         'quotation_id',
+        'meeting_id',
         'to_email',
         'to_name',
         'subject',
@@ -47,6 +48,11 @@ class CrmEmail extends TenantModel
     public function quotation(): BelongsTo
     {
         return $this->belongsTo(Quotation::class);
+    }
+
+    public function meeting(): BelongsTo
+    {
+        return $this->belongsTo(CrmMeeting::class, 'meeting_id');
     }
 
     public function sentBy(): BelongsTo

@@ -237,6 +237,7 @@ export interface CrmEmail {
   deal_id: number | null
   customer_id: number | null
   quotation_id: number | null
+  meeting_id: number | null
   to_email: string
   to_name: string | null
   subject: string

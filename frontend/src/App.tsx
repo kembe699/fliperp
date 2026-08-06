@@ -19,7 +19,9 @@ import { CustomersListPage } from '@/pages/customers/CustomersListPage'
 import { CustomerStatementPage } from '@/pages/customers/CustomerStatementPage'
 import { CrmDashboardPage } from '@/pages/crm/CrmDashboardPage'
 import { CrmLeadsListPage } from '@/pages/crm/CrmLeadsListPage'
+import { CrmLeadDetailPage } from '@/pages/crm/CrmLeadDetailPage'
 import { CrmPipelinePage } from '@/pages/crm/CrmPipelinePage'
+import { CrmDealDetailPage } from '@/pages/crm/CrmDealDetailPage'
 import { CrmCustomersListPage } from '@/pages/crm/CrmCustomersListPage'
 import { CrmServicesListPage } from '@/pages/crm/CrmServicesListPage'
 import { CrmStaffListPage } from '@/pages/crm/CrmStaffListPage'
@@ -199,7 +201,9 @@ function App() {
 
           <Route path="/crm" element={<CrmDashboardPage />} />
           <Route path="/crm/leads" element={<CrmLeadsListPage />} />
+          <Route path="/crm/leads/:id" element={<CrmLeadDetailPage />} />
           <Route path="/crm/pipeline" element={<CrmPipelinePage />} />
+          <Route path="/crm/deals/:id" element={<CrmDealDetailPage />} />
           <Route path="/crm/customers" element={<CrmCustomersListPage />} />
           <Route path="/crm/services" element={<CrmServicesListPage />} />
           <Route path="/crm/staff" element={<CrmStaffListPage />} />

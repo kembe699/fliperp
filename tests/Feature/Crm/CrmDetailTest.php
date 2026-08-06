@@ -43,7 +43,11 @@ it('returns a complete aggregated detail payload for a lead', function () {
     expect($response->json('data.meetings.upcoming'))->toHaveCount(1);
     expect($response->json('data.meetings.past'))->toHaveCount(0);
     expect($response->json('data.activities'))->toHaveCount(1);
-    expect($response->json('data.emails'))->toHaveCount(0);
+    // Scheduling the meeting above auto-emails the lead's own contact
+    // (jane@example.test, the default external attendee) — see MeetingTest
+    // for dedicated coverage of that behavior.
+    expect($response->json('data.emails'))->toHaveCount(1);
+    expect($response->json('data.emails.0.meeting_id'))->not->toBeNull();
     expect($response->json('data.quotations'))->toHaveCount(0);
 });
 

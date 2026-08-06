@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
@@ -18,7 +19,6 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CrmLeadFormDialog } from '@/components/crm/CrmLeadFormDialog'
 import { ConvertLeadDialog } from '@/components/crm/ConvertLeadDialog'
-import { CrmCardDrawer } from '@/components/crm/drawer/CrmCardDrawer'
 
 const STATUS_VARIANT: Record<CrmLeadStatus, 'info' | 'success' | 'neutral'> = {
   open: 'info',
@@ -31,6 +31,7 @@ const SOURCE_OPTIONS = ['referral', 'website', 'cold_call', 'social_media', 'eve
 const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 export function CrmLeadsListPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermissions()
 
@@ -43,7 +44,6 @@ export function CrmLeadsListPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingLead, setEditingLead] = useState<CrmLead | null>(null)
   const [convertingLead, setConvertingLead] = useState<CrmLead | null>(null)
-  const [drawerLeadId, setDrawerLeadId] = useState<number | null>(null)
 
   const { data: users } = useQuery({ queryKey: ['settings-users-all'], queryFn: () => fetchUsers({ per_page: 100 }) })
 
@@ -89,7 +89,7 @@ export function CrmLeadsListPage() {
   ]
 
   const rowActions: (row: CrmLead) => DataTableRowAction<CrmLead>[] = (row) => [
-    { label: 'View Details', onClick: (l: CrmLead) => setDrawerLeadId(l.id) },
+    { label: 'View Details', onClick: (l: CrmLead) => navigate(`/crm/leads/${l.id}`) },
     ...(row.status === 'open' && can('crm-leads.update')
       ? [{ label: 'Edit', onClick: (l: CrmLead) => { setEditingLead(l); setFormOpen(true) } }]
       : []),
@@ -199,7 +199,6 @@ export function CrmLeadsListPage() {
 
       <CrmLeadFormDialog open={formOpen} onOpenChange={setFormOpen} lead={editingLead} />
       <ConvertLeadDialog open={!!convertingLead} onOpenChange={(open) => !open && setConvertingLead(null)} lead={convertingLead} />
-      <CrmCardDrawer type="lead" id={drawerLeadId} open={!!drawerLeadId} onOpenChange={(open) => !open && setDrawerLeadId(null)} />
     </div>
   )
 }

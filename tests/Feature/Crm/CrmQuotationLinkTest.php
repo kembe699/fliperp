@@ -55,6 +55,22 @@ it('creates a quotation from a deal using its attached services with correct lin
     expect($deal['id'])->not->toBeNull();
 });
 
+it('falls back to the company main branch when the customer has no branch_id, instead of a 500', function () {
+    $branchlessCustomer = createCustomer($this->company, ['name' => 'No Branch Ltd', 'branch_id' => null]);
+    $deal = $this->postJson('/api/v1/crm/deals', [
+        'customer_id' => $branchlessCustomer->id,
+        'pipeline_stage_id' => $this->stage->id,
+        'title' => 'Branchless deal',
+        'value' => 250,
+    ])->json('data');
+    $this->postJson("/api/v1/crm/deals/{$deal['id']}/services", ['service_ids' => [$this->serviceA->id]])->assertOk();
+
+    $response = $this->postJson("/api/v1/crm/deals/{$deal['id']}/quotations", []);
+
+    $response->assertCreated();
+    expect($response->json('data.branch_id'))->toBe($this->branch->id);
+});
+
 it('requires the deal to have a linked customer before quoting', function () {
     $lead = $this->postJson('/api/v1/crm/leads', ['name' => 'Orphan Lead'])->json('data');
     $deal = $this->postJson('/api/v1/crm/deals', [

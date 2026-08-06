@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   DndContext,
   DragOverlay,
@@ -17,6 +17,7 @@ import { ListTree, Plus, User } from 'lucide-react'
 
 import { fetchCrmKanban, fetchCrmPipelineStages, moveCrmDealStage } from '@/api/crm'
 import { formatCurrency } from '@/lib/currency'
+import { cn } from '@/lib/utils'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { CrmDeal, CrmKanbanColumn } from '@/types/crm'
 
@@ -26,7 +27,17 @@ import { CrmDealFormDialog } from '@/components/crm/CrmDealFormDialog'
 import { LostReasonDialog } from '@/components/crm/LostReasonDialog'
 import { CustomerServiceLogDialog } from '@/components/crm/CustomerServiceLogDialog'
 import { ManagePipelineStagesDialog } from '@/components/crm/ManagePipelineStagesDialog'
-import { CrmCardDrawer } from '@/components/crm/drawer/CrmCardDrawer'
+
+// Cycled by stage position so every column gets a distinct, consistent tint
+// out of the box — no per-stage configuration required.
+const COLUMN_PALETTE = [
+  'border-blue-200 bg-blue-50/70 dark:border-blue-900 dark:bg-blue-950/20',
+  'border-violet-200 bg-violet-50/70 dark:border-violet-900 dark:bg-violet-950/20',
+  'border-amber-200 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/20',
+  'border-teal-200 bg-teal-50/70 dark:border-teal-900 dark:bg-teal-950/20',
+  'border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/20',
+  'border-indigo-200 bg-indigo-50/70 dark:border-indigo-900 dark:bg-indigo-950/20',
+]
 
 function DealCard({ deal, onOpen }: { deal: CrmDeal; onOpen: (dealId: number) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -45,7 +56,7 @@ function DealCard({ deal, onOpen }: { deal: CrmDeal; onOpen: (dealId: number) =>
           ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.4 : 1 }
           : undefined
       }
-      className="cursor-grab space-y-2 rounded-lg border border-background bg-background p-3 text-sm shadow-sm hover:border-primary/40 active:cursor-grabbing"
+      className="cursor-grab space-y-2 rounded-lg border border-border bg-card p-3 text-sm shadow-sm hover:border-primary/40 active:cursor-grabbing"
     >
       <p className="font-medium text-foreground">{deal.title}</p>
       <p className="text-xs text-muted-foreground">{deal.customer?.name ?? deal.lead?.name ?? 'Unlinked'}</p>
@@ -62,16 +73,20 @@ function DealCard({ deal, onOpen }: { deal: CrmDeal; onOpen: (dealId: number) =>
   )
 }
 
-function KanbanColumn({ column, onOpenDeal }: { column: CrmKanbanColumn; onOpenDeal: (dealId: number) => void }) {
+function KanbanColumn({ column, index, onOpenDeal }: { column: CrmKanbanColumn; index: number; onOpenDeal: (dealId: number) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: `stage-${column.stage.id}`, data: { stage: column.stage } })
   const totalValue = column.deals.reduce((sum, deal) => sum + deal.value, 0)
+  const palette = COLUMN_PALETTE[index % COLUMN_PALETTE.length]
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-72 shrink-0 flex-col rounded-xl border p-3 transition-colors ${
-        isOver ? 'border-primary bg-accent/40' : 'border-border bg-card'
-      } ${column.stage.is_closed_won ? 'ring-1 ring-success/40' : ''} ${column.stage.is_closed_lost ? 'ring-1 ring-danger/40' : ''}`}
+      className={cn(
+        'flex min-h-[640px] w-72 shrink-0 flex-col rounded-xl border p-3 transition-colors',
+        isOver ? 'border-primary bg-accent/40' : palette,
+        column.stage.is_closed_won && 'ring-1 ring-success/40',
+        column.stage.is_closed_lost && 'ring-1 ring-danger/40',
+      )}
     >
       <div className="mb-3 flex items-center justify-between">
         <div>
@@ -81,7 +96,7 @@ function KanbanColumn({ column, onOpenDeal }: { column: CrmKanbanColumn; onOpenD
           </p>
         </div>
       </div>
-      <div className="flex min-h-24 flex-1 flex-col gap-2">
+      <div className="flex flex-1 flex-col gap-2">
         {column.deals.map((deal) => (
           <DealCard key={deal.id} deal={deal} onOpen={onOpenDeal} />
         ))}
@@ -91,36 +106,15 @@ function KanbanColumn({ column, onOpenDeal }: { column: CrmKanbanColumn; onOpenD
 }
 
 export function CrmPipelinePage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermissions()
-  const [searchParams, setSearchParams] = useSearchParams()
 
   const [activeDeal, setActiveDeal] = useState<CrmDeal | null>(null)
   const [dealFormOpen, setDealFormOpen] = useState(false)
   const [lostReasonTarget, setLostReasonTarget] = useState<{ deal: CrmDeal; stageId: number } | null>(null)
   const [serviceLogDeal, setServiceLogDeal] = useState<CrmDeal | null>(null)
   const [manageStagesOpen, setManageStagesOpen] = useState(false)
-  const [drawerTarget, setDrawerTarget] = useState<{ type: 'lead' | 'deal'; id: number } | null>(null)
-
-  useEffect(() => {
-    const dealParam = searchParams.get('deal')
-    const leadParam = searchParams.get('lead')
-    if (dealParam) setDrawerTarget({ type: 'deal', id: Number(dealParam) })
-    else if (leadParam) setDrawerTarget({ type: 'lead', id: Number(leadParam) })
-    // Only meant to trigger once on load (e.g. from a notification deep link).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const openDealDrawer = (dealId: number) => setDrawerTarget({ type: 'deal', id: dealId })
-
-  const closeDrawer = () => {
-    setDrawerTarget(null)
-    if (searchParams.has('deal') || searchParams.has('lead')) {
-      searchParams.delete('deal')
-      searchParams.delete('lead')
-      setSearchParams(searchParams, { replace: true })
-    }
-  }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -217,9 +211,14 @@ export function CrmPipelinePage() {
         <p className="text-sm text-muted-foreground">Loading pipeline…</p>
       ) : (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {columns.map((column) => (
-              <KanbanColumn key={column.stage.id} column={column} onOpenDeal={openDealDrawer} />
+          <div className="flex items-start gap-4 overflow-x-auto pb-4">
+            {columns.map((column, index) => (
+              <KanbanColumn
+                key={column.stage.id}
+                column={column}
+                index={index}
+                onOpenDeal={(dealId) => navigate(`/crm/deals/${dealId}`)}
+              />
             ))}
           </div>
           <DragOverlay>{activeDeal && <DealCard deal={activeDeal} onOpen={() => {}} />}</DragOverlay>
@@ -242,13 +241,6 @@ export function CrmPipelinePage() {
       />
 
       <CustomerServiceLogDialog open={!!serviceLogDeal} onOpenChange={(open) => !open && setServiceLogDeal(null)} deal={serviceLogDeal} />
-
-      <CrmCardDrawer
-        type={drawerTarget?.type ?? null}
-        id={drawerTarget?.id ?? null}
-        open={!!drawerTarget}
-        onOpenChange={(open) => !open && closeDrawer()}
-      />
     </div>
   )
 }

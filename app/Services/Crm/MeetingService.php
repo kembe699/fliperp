@@ -17,6 +17,8 @@ class MeetingService
 {
     protected array $withRelations = ['lead', 'deal', 'customer', 'organizer', 'createdBy', 'attendees.user'];
 
+    public function __construct(protected CrmEmailService $crmEmailService) {}
+
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return CrmMeeting::query()
@@ -40,7 +42,7 @@ class MeetingService
             ]);
         }
 
-        return DB::transaction(function () use ($data) {
+        $meeting = DB::transaction(function () use ($data) {
             $meeting = CrmMeeting::create([
                 'lead_id' => $data['lead_id'] ?? null,
                 'deal_id' => $data['deal_id'] ?? null,
@@ -58,17 +60,22 @@ class MeetingService
 
             $this->createAttendeeRows($meeting, $data['attendees'] ?? []);
 
-            $meeting->load($this->withRelations);
-
-            foreach ($meeting->attendees as $attendee) {
-                $attendee->user?->notify(new CrmMeetingScheduled($meeting));
-            }
-            if (! $meeting->attendees->contains('user_id', $meeting->organizer_id)) {
-                $meeting->organizer?->notify(new CrmMeetingScheduled($meeting));
-            }
-
-            return $meeting;
+            return $meeting->load($this->withRelations);
         });
+
+        // Dispatched after the transaction commits — a queued job (real
+        // queue driver, not the sync one used in tests) would otherwise
+        // risk running before the meeting/attendee rows are visible.
+        foreach ($meeting->attendees as $attendee) {
+            $attendee->user?->notify(new CrmMeetingScheduled($meeting));
+        }
+        if (! $meeting->attendees->contains('user_id', $meeting->organizer_id)) {
+            $meeting->organizer?->notify(new CrmMeetingScheduled($meeting));
+        }
+
+        $this->crmEmailService->sendMeetingConfirmation($meeting);
+
+        return $meeting;
     }
 
     public function updateStatus(CrmMeeting $meeting, string $status): CrmMeeting

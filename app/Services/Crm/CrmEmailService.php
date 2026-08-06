@@ -5,6 +5,7 @@ namespace App\Services\Crm;
 use App\Jobs\SendCrmEmailJob;
 use App\Models\Company;
 use App\Models\CrmEmail;
+use App\Models\CrmMeeting;
 use App\Models\Quotation;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -80,5 +81,37 @@ class CrmEmailService
         SendCrmEmailJob::dispatch($email->id);
 
         return $email->fresh(['lead', 'deal', 'customer', 'quotation', 'sentBy']);
+    }
+
+    /**
+     * Fired automatically the moment a meeting is scheduled — no manual send
+     * step. Resolves the external contact from the meeting's attendees and
+     * skips silently if none has an email on file (an internal-only meeting).
+     */
+    public function sendMeetingConfirmation(CrmMeeting $meeting): ?CrmEmail
+    {
+        $meeting->loadMissing('attendees');
+        $contact = $meeting->attendees->first(fn ($attendee) => (bool) $attendee->external_email);
+
+        if (! $contact) {
+            return null;
+        }
+
+        $email = CrmEmail::create([
+            'lead_id' => $meeting->lead_id,
+            'deal_id' => $meeting->deal_id,
+            'customer_id' => $meeting->customer_id,
+            'meeting_id' => $meeting->id,
+            'to_email' => $contact->external_email,
+            'to_name' => $contact->external_name,
+            'subject' => "Meeting confirmed: {$meeting->title}",
+            'body' => "Meeting \"{$meeting->title}\" scheduled for {$meeting->scheduled_at->format('M j, Y g:i A')} ({$meeting->duration_minutes} minutes).",
+            'sent_by' => Auth::id() ?? $meeting->created_by,
+            'status' => 'queued',
+        ]);
+
+        SendCrmEmailJob::dispatch($email->id);
+
+        return $email->fresh(['lead', 'deal', 'customer', 'meeting', 'sentBy']);
     }
 }

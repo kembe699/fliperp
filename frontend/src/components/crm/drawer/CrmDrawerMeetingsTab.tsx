@@ -112,6 +112,8 @@ interface CrmDrawerMeetingsTabProps {
   customerId?: number | null
   defaultContactName?: string | null
   defaultContactEmail?: string | null
+  defaultTitle?: string
+  defaultDescription?: string
   upcoming: CrmMeeting[]
   past: CrmMeeting[]
   queryKeyToInvalidate: unknown[]
@@ -123,6 +125,8 @@ export function CrmDrawerMeetingsTab({
   customerId,
   defaultContactName,
   defaultContactEmail,
+  defaultTitle,
+  defaultDescription,
   upcoming,
   past,
   queryKeyToInvalidate,
@@ -175,6 +179,8 @@ export function CrmDrawerMeetingsTab({
         customerId={customerId}
         defaultContactName={defaultContactName}
         defaultContactEmail={defaultContactEmail}
+        defaultTitle={defaultTitle}
+        defaultDescription={defaultDescription}
         queryKeyToInvalidate={queryKeyToInvalidate}
       />
     </div>
