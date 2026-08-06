@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -9,10 +9,13 @@ import { usePermissions } from '@/hooks/use-permissions'
 import type { Employee, EmployeeStatus } from '@/types/hr'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmployeeFormDialog } from '@/components/hr/EmployeeFormDialog'
 import { EmployeeAvatar } from '@/components/hr/EmployeeAvatar'
 
@@ -21,18 +24,34 @@ const STATUS_VARIANT: Record<EmployeeStatus, 'success' | 'warning' | 'neutral'> 
   on_leave: 'warning',
   terminated: 'neutral',
 }
+const STATUSES: EmployeeStatus[] = ['active', 'on_leave', 'terminated']
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 export function EmployeesListPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
+  const [status, setStatus] = useState('all')
+  const [departmentId, setDepartmentId] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Employee | null>(null)
 
-  const { data, isLoading, isError } = useQuery({ queryKey: ['employees', page], queryFn: () => fetchEmployees({ page, per_page: 15 }) })
+  const { data, isLoading, isError } = useQuery({ queryKey: ['employees', 'all'], queryFn: () => fetchEmployees({ per_page: 2000 }) })
   const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments })
   const { data: positions } = useQuery({ queryKey: ['positions'], queryFn: fetchPositions })
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => departmentId === 'all' || row.department_id === Number(departmentId))
+      .filter(
+        (row) =>
+          !search ||
+          `${row.first_name} ${row.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
+          row.employee_code.toLowerCase().includes(search.toLowerCase()),
+      )
+  }, [data, status, departmentId, search])
 
   const departmentName = (id: number) => departments?.find((d) => d.id === id)?.name ?? `#${id}`
   const positionTitle = (id: number) => positions?.find((p) => p.id === id)?.title ?? `#${id}`
@@ -64,12 +83,7 @@ export function EmployeesListPage() {
         title="Employees"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchEmployees({ per_page: 10000 })
-                exportToCsv('employees.csv', csvColumnsFromDataTable(columns), all.data)
-              }}
-            />
+            <ExportCsvButton onExport={async () => exportToCsv('employees.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('employees.create') && (
               <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
                 <Plus className="h-4 w-4" />
@@ -80,21 +94,59 @@ export function EmployeesListPage() {
         }
       />
 
+      <FilterBar>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s.replace('_', ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={departmentId} onValueChange={setDepartmentId}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All departments</SelectItem>
+            {departments?.map((department) => (
+              <SelectItem key={department.id} value={String(department.id)}>
+                {department.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'name', label: 'Name' },
+            { value: 'employee_code', label: 'Code' },
+          ]}
+          placeholder="Search employees…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load employees. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}
           emptyTitle="No employees found"
           emptySubtext="Add an employee to start tracking HR and payroll."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
 

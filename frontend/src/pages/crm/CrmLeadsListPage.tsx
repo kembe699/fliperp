@@ -7,12 +7,14 @@ import { Plus } from 'lucide-react'
 import { fetchCrmLeads, deleteCrmLead } from '@/api/crm'
 import { fetchUsers } from '@/api/settings'
 import { formatDate } from '@/lib/format'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { CrmLead, CrmLeadStatus } from '@/types/crm'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -107,17 +109,31 @@ export function CrmLeadsListPage() {
         parent="CRM"
         title="Leads"
         action={
-          can('crm-leads.create') && (
-            <Button
-              onClick={() => {
-                setEditingLead(null)
-                setFormOpen(true)
+          <div className="flex gap-2">
+            <ExportCsvButton
+              onExport={async () => {
+                const all = await fetchCrmLeads({
+                  per_page: 10000,
+                  status: status === 'all' ? undefined : (status as CrmLeadStatus),
+                  source: source === 'all' ? undefined : source,
+                  assigned_to: assignedTo === 'all' ? undefined : Number(assignedTo),
+                  search: search || undefined,
+                })
+                exportToCsv('crm-leads.csv', csvColumnsFromDataTable(columns), all.data)
               }}
-            >
-              <Plus className="h-4 w-4" />
-              New Lead
-            </Button>
-          )
+            />
+            {can('crm-leads.create') && (
+              <Button
+                onClick={() => {
+                  setEditingLead(null)
+                  setFormOpen(true)
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                New Lead
+              </Button>
+            )}
+          </div>
         }
       />
 

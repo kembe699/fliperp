@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -12,6 +12,7 @@ import type { JournalEntry, JournalEntryStatus } from '@/types/accounting'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -30,13 +31,19 @@ export function JournalEntriesListPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
   const [status, setStatus] = useState('all')
+  const [search, setSearch] = useState('')
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['journal-entries', page, status],
-    queryFn: () => fetchJournalEntries({ page, per_page: 15, status: status === 'all' ? undefined : (status as JournalEntryStatus) }),
+    queryKey: ['journal-entries', 'all'],
+    queryFn: () => fetchJournalEntries({ per_page: 2000 }),
   })
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => !search || row.reference_number.toLowerCase().includes(search.toLowerCase()) || (row.description ?? '').toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, search])
 
   const columns: DataTableColumn<JournalEntry>[] = [
     { key: 'reference_number', header: 'Reference', accessor: (row) => row.reference_number, sortable: true },
@@ -58,12 +65,7 @@ export function JournalEntriesListPage() {
         title="Journal Entries"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchJournalEntries({ per_page: 10000, status: status === 'all' ? undefined : (status as JournalEntryStatus) })
-                exportToCsv('journal-entries.csv', csvColumnsFromDataTable(columns), all.data)
-              }}
-            />
+            <ExportCsvButton onExport={async () => exportToCsv('journal-entries.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('journal-entries.create') && (
               <Button onClick={() => navigate('/journal-entries/new')}>
                 <Plus className="h-4 w-4" />
@@ -75,7 +77,7 @@ export function JournalEntriesListPage() {
       />
 
       <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -90,21 +92,29 @@ export function JournalEntriesListPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'reference_number', label: 'Reference' },
+            { value: 'description', label: 'Description' },
+          ]}
+          placeholder="Search journal entries…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load journal entries. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={() => [{ label: 'View', onClick: (row: JournalEntry) => navigate(`/journal-entries/${row.id}`) }]}
           emptyTitle="No journal entries found"
           emptySubtext="Create a journal entry to record a manual accounting transaction."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
     </div>

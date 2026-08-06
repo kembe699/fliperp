@@ -63,7 +63,7 @@ export function UserFormDialog({
     },
     onSuccess: () => {
       toast.success(user ? 'User updated' : 'User created')
-      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['users', 'all'] })
       onOpenChange(false)
     },
     onError: (error) => toast.error(getApiErrorInfo(error).message),

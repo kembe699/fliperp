@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -12,6 +12,7 @@ import type { StockTransfer, StockTransferStatus } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -26,27 +27,28 @@ export function StockTransfersListPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
   const [status, setStatus] = useState('all')
   const [fromWarehouseId, setFromWarehouseId] = useState('all')
   const [toWarehouseId, setToWarehouseId] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
 
   const { data: warehouses } = useQuery({ queryKey: ['warehouses'], queryFn: fetchWarehouses })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['stock-transfers', page, status, fromWarehouseId, toWarehouseId],
-    queryFn: () =>
-      fetchStockTransfers({
-        page,
-        per_page: 15,
-        status: status === 'all' ? undefined : (status as StockTransferStatus),
-        from_warehouse_id: fromWarehouseId === 'all' ? undefined : Number(fromWarehouseId),
-        to_warehouse_id: toWarehouseId === 'all' ? undefined : Number(toWarehouseId),
-      }),
+    queryKey: ['stock-transfers', 'all'],
+    queryFn: () => fetchStockTransfers({ per_page: 2000 }),
   })
 
   const warehouseName = (id: number) => warehouses?.find((w) => w.id === id)?.name ?? `#${id}`
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => fromWarehouseId === 'all' || row.from_warehouse_id === Number(fromWarehouseId))
+      .filter((row) => toWarehouseId === 'all' || row.to_warehouse_id === Number(toWarehouseId))
+      .filter((row) => !search || row.reference_number.toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, fromWarehouseId, toWarehouseId, search])
 
   const columns: DataTableColumn<StockTransfer>[] = [
     { key: 'reference_number', header: 'Reference', accessor: (row) => row.reference_number, sortable: true },
@@ -63,17 +65,7 @@ export function StockTransfersListPage() {
         title="Stock Transfers"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchStockTransfers({
-                  per_page: 10000,
-                  status: status === 'all' ? undefined : (status as StockTransferStatus),
-                  from_warehouse_id: fromWarehouseId === 'all' ? undefined : Number(fromWarehouseId),
-                  to_warehouse_id: toWarehouseId === 'all' ? undefined : Number(toWarehouseId),
-                })
-                exportToCsv('stock-transfers.csv', csvColumnsFromDataTable(columns), all.data)
-              }}
-            />
+            <ExportCsvButton onExport={async () => exportToCsv('stock-transfers.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('stock-transfers.create') && (
               <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -85,7 +77,7 @@ export function StockTransfersListPage() {
       />
 
       <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -99,7 +91,7 @@ export function StockTransfersListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={fromWarehouseId} onValueChange={(value) => { setFromWarehouseId(value); setPage(1) }}>
+        <Select value={fromWarehouseId} onValueChange={setFromWarehouseId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="From Warehouse" />
           </SelectTrigger>
@@ -113,7 +105,7 @@ export function StockTransfersListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={toWarehouseId} onValueChange={(value) => { setToWarehouseId(value); setPage(1) }}>
+        <Select value={toWarehouseId} onValueChange={setToWarehouseId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="To Warehouse" />
           </SelectTrigger>
@@ -128,21 +120,26 @@ export function StockTransfersListPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'reference_number', label: 'Reference' }]}
+          placeholder="Search stock transfers…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load stock transfers. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={() => [{ label: 'View', onClick: (row: StockTransfer) => navigate(`/stock-transfers/${row.id}`) }]}
           emptyTitle="No stock transfers found"
           emptySubtext="Create a transfer to move stock between warehouses."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
 

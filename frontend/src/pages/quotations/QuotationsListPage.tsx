@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -15,6 +15,7 @@ import type { Quotation, QuotationStatus } from '@/types/quotation'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -28,27 +29,28 @@ export function QuotationsListPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
   const [status, setStatus] = useState('all')
   const [branchId, setBranchId] = useState('all')
   const [customerId, setCustomerId] = useState('all')
+  const [search, setSearch] = useState('')
 
   const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
   const { data: customersPage } = useQuery({ queryKey: ['customers-all'], queryFn: () => fetchCustomers({ per_page: 100 }) })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['quotations', page, status, branchId, customerId],
-    queryFn: () =>
-      fetchQuotations({
-        page,
-        per_page: 15,
-        status: status === 'all' ? undefined : (status as QuotationStatus),
-        branch_id: branchId === 'all' ? undefined : Number(branchId),
-        customer_id: customerId === 'all' ? undefined : Number(customerId),
-      }),
+    queryKey: ['quotations', 'all'],
+    queryFn: () => fetchQuotations({ per_page: 2000 }),
   })
 
   const customerName = (id: number) => customersPage?.data.find((customer) => customer.id === id)?.name ?? `#${id}`
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => branchId === 'all' || row.branch_id === Number(branchId))
+      .filter((row) => customerId === 'all' || row.customer_id === Number(customerId))
+      .filter((row) => !search || row.reference_number.toLowerCase().includes(search.toLowerCase()) || customerName(row.customer_id).toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, branchId, customerId, search, customersPage])
 
   const columns: DataTableColumn<Quotation>[] = [
     { key: 'reference_number', header: 'Reference', accessor: (row) => row.reference_number, sortable: true },
@@ -77,17 +79,7 @@ export function QuotationsListPage() {
         title="Quotations"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchQuotations({
-                  per_page: 10000,
-                  status: status === 'all' ? undefined : (status as QuotationStatus),
-                  branch_id: branchId === 'all' ? undefined : Number(branchId),
-                  customer_id: customerId === 'all' ? undefined : Number(customerId),
-                })
-                exportToCsv('quotations.csv', csvColumnsFromDataTable(columns), all.data)
-              }}
-            />
+            <ExportCsvButton onExport={async () => exportToCsv('quotations.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('quotations.create') && (
               <Button onClick={() => navigate('/quotations/new')}>
                 <Plus className="h-4 w-4" />
@@ -99,7 +91,7 @@ export function QuotationsListPage() {
       />
 
       <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -113,7 +105,7 @@ export function QuotationsListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
+        <Select value={branchId} onValueChange={setBranchId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Branch" />
           </SelectTrigger>
@@ -127,7 +119,7 @@ export function QuotationsListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={customerId} onValueChange={(value) => { setCustomerId(value); setPage(1) }}>
+        <Select value={customerId} onValueChange={setCustomerId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Customer" />
           </SelectTrigger>
@@ -142,21 +134,29 @@ export function QuotationsListPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'reference_number', label: 'Reference' },
+            { value: 'customer', label: 'Customer' },
+          ]}
+          placeholder="Search quotations…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load quotations. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}
           emptyTitle="No quotations found"
           emptySubtext="Try adjusting your filters, or create a new quotation."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -14,6 +14,7 @@ import type { PurchaseOrder, PurchaseOrderStatus } from '@/types/procurement'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -27,28 +28,29 @@ export function PurchaseOrdersListPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
   const [status, setStatus] = useState('all')
   const [supplierId, setSupplierId] = useState('all')
   const [branchId, setBranchId] = useState('all')
+  const [search, setSearch] = useState('')
 
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => fetchSuppliers({ per_page: 100 }) })
   const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['purchase-orders', page, status, supplierId, branchId],
-    queryFn: () =>
-      fetchPurchaseOrders({
-        page,
-        per_page: 15,
-        status: status === 'all' ? undefined : (status as PurchaseOrderStatus),
-        supplier_id: supplierId === 'all' ? undefined : Number(supplierId),
-        branch_id: branchId === 'all' ? undefined : Number(branchId),
-      }),
+    queryKey: ['purchase-orders', 'all'],
+    queryFn: () => fetchPurchaseOrders({ per_page: 2000 }),
   })
 
   const supplierName = (id: number) => suppliers?.data.find((s) => s.id === id)?.name ?? `#${id}`
   const total = (po: PurchaseOrder) => po.items.reduce((sum, item) => sum + Number(item.quantity_ordered) * Number(item.unit_cost), 0)
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => supplierId === 'all' || row.supplier_id === Number(supplierId))
+      .filter((row) => branchId === 'all' || row.branch_id === Number(branchId))
+      .filter((row) => !search || row.reference_number.toLowerCase().includes(search.toLowerCase()) || supplierName(row.supplier_id).toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, supplierId, branchId, search, suppliers])
 
   const columns: DataTableColumn<PurchaseOrder>[] = [
     { key: 'reference_number', header: 'Reference', accessor: (row) => row.reference_number, sortable: true },
@@ -65,17 +67,7 @@ export function PurchaseOrdersListPage() {
         title="Purchase Orders"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchPurchaseOrders({
-                  per_page: 10000,
-                  status: status === 'all' ? undefined : (status as PurchaseOrderStatus),
-                  supplier_id: supplierId === 'all' ? undefined : Number(supplierId),
-                  branch_id: branchId === 'all' ? undefined : Number(branchId),
-                })
-                exportToCsv('purchase-orders.csv', csvColumnsFromDataTable(columns), all.data)
-              }}
-            />
+            <ExportCsvButton onExport={async () => exportToCsv('purchase-orders.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('purchase-orders.create') && (
               <Button onClick={() => navigate('/purchase-orders/new')}>
                 <Plus className="h-4 w-4" />
@@ -87,7 +79,7 @@ export function PurchaseOrdersListPage() {
       />
 
       <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -101,7 +93,7 @@ export function PurchaseOrdersListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={supplierId} onValueChange={(value) => { setSupplierId(value); setPage(1) }}>
+        <Select value={supplierId} onValueChange={setSupplierId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Supplier" />
           </SelectTrigger>
@@ -115,7 +107,7 @@ export function PurchaseOrdersListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
+        <Select value={branchId} onValueChange={setBranchId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Branch" />
           </SelectTrigger>
@@ -130,21 +122,29 @@ export function PurchaseOrdersListPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'reference_number', label: 'Reference' },
+            { value: 'supplier', label: 'Supplier' },
+          ]}
+          placeholder="Search purchase orders…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load purchase orders. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={() => [{ label: 'View', onClick: (row: PurchaseOrder) => navigate(`/purchase-orders/${row.id}`) }]}
           emptyTitle="No purchase orders found"
           emptySubtext="Create a purchase order to start procuring stock."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
     </div>

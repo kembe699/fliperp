@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { createPaymentType, deletePaymentType, updatePaymentType } from '@/api/settings'
 import { fetchPaymentTypes } from '@/api/pos'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { PaymentType, PaymentTypeKind } from '@/types/pos'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -19,6 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const KINDS: PaymentTypeKind[] = ['cash', 'card', 'mobile_money', 'bank_transfer', 'credit']
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 export function PaymentTypesSettingsPage() {
   const queryClient = useQueryClient()
@@ -26,10 +31,18 @@ export function PaymentTypesSettingsPage() {
 
   const { data: paymentTypes, isLoading, isError } = useQuery({ queryKey: ['payment-types'], queryFn: fetchPaymentTypes })
 
+  const [kindFilter, setKindFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<PaymentType | null>(null)
   const [name, setName] = useState('')
   const [kind, setKind] = useState<PaymentTypeKind>('cash')
+
+  const filtered = useMemo(() => {
+    return (paymentTypes ?? [])
+      .filter((row) => kindFilter === 'all' || row.type === kindFilter)
+      .filter((row) => !search || row.name.toLowerCase().includes(search.toLowerCase()))
+  }, [paymentTypes, kindFilter, search])
 
   useEffect(() => {
     if (!formOpen) return
@@ -76,21 +89,49 @@ export function PaymentTypesSettingsPage() {
         parent="Settings"
         title="Payment Types"
         action={
-          can('payment-types.create') && (
-            <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              New Payment Type
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('payment-types.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('payment-types.create') && (
+              <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                New Payment Type
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <FilterBar>
+        <Select value={kindFilter} onValueChange={setKindFilter}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Kind" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All kinds</SelectItem>
+            {KINDS.map((k) => (
+              <SelectItem key={k} value={k}>
+                {k.replace('_', ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'name', label: 'Name' }]}
+          placeholder="Search payment types…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load payment types. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={paymentTypes ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}

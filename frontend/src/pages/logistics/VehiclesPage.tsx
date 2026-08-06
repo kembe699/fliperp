@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
@@ -6,10 +6,14 @@ import { Plus } from 'lucide-react'
 import { createVehicle, deleteVehicle, fetchVehicles, updateVehicle } from '@/api/logistics'
 import { fetchBranches } from '@/api/branches'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Vehicle, VehicleStatus } from '@/types/logistics'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +28,7 @@ const STATUS_VARIANT: Record<VehicleStatus, 'success' | 'warning' | 'neutral'> =
   in_transit: 'warning',
   maintenance: 'neutral',
 }
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 export function VehiclesPage() {
   const queryClient = useQueryClient()
@@ -31,6 +36,15 @@ export function VehiclesPage() {
 
   const { data: vehicles, isLoading, isError } = useQuery({ queryKey: ['vehicles'], queryFn: fetchVehicles })
   const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
+
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    return (vehicles ?? [])
+      .filter((row) => statusFilter === 'all' || row.status === statusFilter)
+      .filter((row) => !search || row.registration_number.toLowerCase().includes(search.toLowerCase()))
+  }, [vehicles, statusFilter, search])
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Vehicle | null>(null)
@@ -92,21 +106,49 @@ export function VehiclesPage() {
         parent="Logistics"
         title="Vehicles"
         action={
-          can('vehicles.create') && (
-            <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              New Vehicle
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('vehicles.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('vehicles.create') && (
+              <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                New Vehicle
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <FilterBar>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s.replace('_', ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'registration_number', label: 'Registration' }]}
+          placeholder="Search vehicles…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load vehicles. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={vehicles ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -12,6 +12,7 @@ import type { StockAdjustment, StockAdjustmentStatus } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -26,25 +27,26 @@ export function StockAdjustmentsListPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
   const [status, setStatus] = useState('all')
   const [warehouseId, setWarehouseId] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
 
   const { data: warehouses } = useQuery({ queryKey: ['warehouses'], queryFn: fetchWarehouses })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['stock-adjustments', page, status, warehouseId],
-    queryFn: () =>
-      fetchStockAdjustments({
-        page,
-        per_page: 15,
-        status: status === 'all' ? undefined : (status as StockAdjustmentStatus),
-        warehouse_id: warehouseId === 'all' ? undefined : Number(warehouseId),
-      }),
+    queryKey: ['stock-adjustments', 'all'],
+    queryFn: () => fetchStockAdjustments({ per_page: 2000 }),
   })
 
   const warehouseName = (id: number) => warehouses?.find((w) => w.id === id)?.name ?? `#${id}`
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => warehouseId === 'all' || row.warehouse_id === Number(warehouseId))
+      .filter((row) => !search || row.reference_number.toLowerCase().includes(search.toLowerCase()) || (row.reason ?? '').toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, warehouseId, search])
 
   const columns: DataTableColumn<StockAdjustment>[] = [
     { key: 'reference_number', header: 'Reference', accessor: (row) => row.reference_number, sortable: true },
@@ -61,16 +63,7 @@ export function StockAdjustmentsListPage() {
         title="Stock Adjustments"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchStockAdjustments({
-                  per_page: 10000,
-                  status: status === 'all' ? undefined : (status as StockAdjustmentStatus),
-                  warehouse_id: warehouseId === 'all' ? undefined : Number(warehouseId),
-                })
-                exportToCsv('stock-adjustments.csv', csvColumnsFromDataTable(columns), all.data)
-              }}
-            />
+            <ExportCsvButton onExport={async () => exportToCsv('stock-adjustments.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('stock-adjustments.create') && (
               <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -82,7 +75,7 @@ export function StockAdjustmentsListPage() {
       />
 
       <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -96,7 +89,7 @@ export function StockAdjustmentsListPage() {
           </SelectContent>
         </Select>
 
-        <Select value={warehouseId} onValueChange={(value) => { setWarehouseId(value); setPage(1) }}>
+        <Select value={warehouseId} onValueChange={setWarehouseId}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Warehouse" />
           </SelectTrigger>
@@ -111,21 +104,29 @@ export function StockAdjustmentsListPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'reference_number', label: 'Reference' },
+            { value: 'reason', label: 'Reason' },
+          ]}
+          placeholder="Search stock adjustments…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load stock adjustments. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={() => [{ label: 'View', onClick: (row: StockAdjustment) => navigate(`/stock-adjustments/${row.id}`) }]}
           emptyTitle="No stock adjustments found"
           emptySubtext="Create an adjustment to reconcile counted stock against system quantities."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
 

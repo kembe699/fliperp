@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { createAssetCategory, deleteAssetCategory, fetchAssetCategories, updateAssetCategory } from '@/api/assets'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { AssetCategory, DepreciationMethod } from '@/types/assets'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -17,12 +21,22 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const METHODS: DepreciationMethod[] = ['straight_line', 'reducing_balance']
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 export function AssetCategoriesPage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
 
   const { data: categories, isLoading, isError } = useQuery({ queryKey: ['asset-categories'], queryFn: fetchAssetCategories })
+
+  const [methodFilter, setMethodFilter] = useState<string>('all')
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(() => {
+    return (categories ?? [])
+      .filter((row) => methodFilter === 'all' || row.depreciation_method === methodFilter)
+      .filter((row) => !search || row.name.toLowerCase().includes(search.toLowerCase()))
+  }, [categories, methodFilter, search])
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<AssetCategory | null>(null)
@@ -76,21 +90,49 @@ export function AssetCategoriesPage() {
         parent="Assets"
         title="Asset Categories"
         action={
-          can('asset-categories.create') && (
-            <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              New Category
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('asset-categories.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('asset-categories.create') && (
+              <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                New Category
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <FilterBar>
+        <Select value={methodFilter} onValueChange={setMethodFilter}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Depreciation Method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All methods</SelectItem>
+            {METHODS.map((m) => (
+              <SelectItem key={m} value={m}>
+                {m.replace('_', ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'name', label: 'Name' }]}
+          placeholder="Search asset categories…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load asset categories. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={categories ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}

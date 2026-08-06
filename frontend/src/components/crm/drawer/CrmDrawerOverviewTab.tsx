@@ -136,57 +136,59 @@ export function CrmDrawerOverviewTab({ type, detail }: CrmDrawerOverviewTabProps
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 gap-4">
-            <InlineTextField label="Title" value={deal.title} disabled={!canEdit} onSave={(v) => patchDealMutation.mutateAsync({ title: v })} />
-            <InlineTextField
-              label="Expected Close Date"
-              type="date"
-              value={deal.expected_close_date}
-              disabled={!canEdit}
-              onSave={(v) => patchDealMutation.mutateAsync({ expected_close_date: v || null })}
-            />
-            <div className="space-y-1.5">
-              <Label>Assigned Handler</Label>
-              <Select
-                value={deal.assigned_to ? String(deal.assigned_to.id) : undefined}
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <InlineTextField label="Title" value={deal.title} disabled={!canEdit} onSave={(v) => patchDealMutation.mutateAsync({ title: v })} />
+              <InlineTextField
+                label="Expected Close Date"
+                type="date"
+                value={deal.expected_close_date}
                 disabled={!canEdit}
-                onValueChange={(value) => assignHandler(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users?.data.map((u) => (
-                    <SelectItem key={u.id} value={String(u.id)}>
-                      {u.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onSave={(v) => patchDealMutation.mutateAsync({ expected_close_date: v || null })}
+              />
+              <div className="col-span-2 space-y-1.5">
+                <Label>Assigned Handler</Label>
+                <Select
+                  value={deal.assigned_to ? String(deal.assigned_to.id) : undefined}
+                  disabled={!canEdit}
+                  onValueChange={(value) => assignHandler(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users?.data.map((u) => (
+                      <SelectItem key={u.id} value={String(u.id)}>
+                        {u.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="grid grid-cols-3 gap-4 p-4 text-sm">
-          <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Customer</p>
-            <p className="mt-1 text-foreground">{deal.customer?.name ?? '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Original Lead</p>
-            <p className="mt-1 text-foreground">{deal.lead?.name ?? '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Deal Value</p>
-            <p className="mt-1 font-semibold text-foreground">{formatCurrency(deal.value)}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Calculated from attached services</p>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardContent className="grid grid-cols-2 gap-4 p-4 text-sm">
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Customer</p>
+              <p className="mt-1 text-foreground">{deal.customer?.name ?? '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Original Lead</p>
+              <p className="mt-1 text-foreground">{deal.lead?.name ?? '—'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Deal Value</p>
+              <p className="mt-1 font-semibold text-foreground">{formatCurrency(deal.value)}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Calculated from attached services</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardContent className="p-4">

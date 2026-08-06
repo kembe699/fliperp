@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { approveLeaveRequest, fetchEmployees, fetchLeaveRequests, fetchLeaveTypes, rejectLeaveRequest } from '@/api/hr'
 import { formatDate } from '@/lib/format'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { LeaveRequest, LeaveRequestStatus } from '@/types/hr'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -29,13 +32,13 @@ export function LeaveRequestsPage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
 
-  const [page, setPage] = useState(1)
   const [status, setStatus] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['leave-requests', page, status],
-    queryFn: () => fetchLeaveRequests({ page, per_page: 15, status: status === 'all' ? undefined : (status as LeaveRequestStatus) }),
+    queryKey: ['leave-requests', 'all'],
+    queryFn: () => fetchLeaveRequests({ per_page: 2000 }),
   })
   const { data: employees } = useQuery({ queryKey: ['employees-all'], queryFn: () => fetchEmployees({ per_page: 200 }) })
   const { data: leaveTypes } = useQuery({ queryKey: ['leave-types'], queryFn: fetchLeaveTypes })
@@ -45,6 +48,12 @@ export function LeaveRequestsPage() {
     return employee ? `${employee.first_name} ${employee.last_name}` : `#${id}`
   }
   const leaveTypeName = (id: number) => leaveTypes?.find((lt) => lt.id === id)?.name ?? `#${id}`
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? [])
+      .filter((row) => status === 'all' || row.status === status)
+      .filter((row) => !search || employeeName(row.employee_id).toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, search, employees])
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['leave-requests'] })
 
@@ -89,17 +98,20 @@ export function LeaveRequestsPage() {
         parent="HR & Payroll"
         title="Leave Requests"
         action={
-          can('leave-requests.create') && (
-            <Button onClick={() => setFormOpen(true)}>
-              <Plus className="h-4 w-4" />
-              New Leave Request
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('leave-requests.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('leave-requests.create') && (
+              <Button onClick={() => setFormOpen(true)}>
+                <Plus className="h-4 w-4" />
+                New Leave Request
+              </Button>
+            )}
+          </div>
         }
       />
 
       <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+        <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className={pillTrigger}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -114,21 +126,26 @@ export function LeaveRequestsPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'employee', label: 'Employee' }]}
+          placeholder="Search leave requests…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load leave requests. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}
           emptyTitle="No leave requests found"
           emptySubtext="Leave requests submitted by employees will appear here."
-          page={data?.meta.current_page}
-          pageCount={data?.meta.last_page}
-          totalRows={data?.meta.total}
-          onPageChange={setPage}
         />
       )}
 

@@ -4,12 +4,14 @@ import { useQuery } from '@tanstack/react-query'
 
 import { fetchCrmCustomers } from '@/api/crm'
 import { fetchBranches } from '@/api/branches'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Customer, CustomerType } from '@/types/customer'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -73,7 +75,23 @@ export function CrmCustomersListPage() {
 
   return (
     <div>
-      <PageHeader parent="CRM" title="Customers" />
+      <PageHeader
+        parent="CRM"
+        title="Customers"
+        action={
+          <ExportCsvButton
+            onExport={async () => {
+              const all = await fetchCrmCustomers({
+                per_page: 10000,
+                customer_type: customerType === 'all' ? undefined : customerType,
+                branch_id: branchId === 'all' ? undefined : Number(branchId),
+                search: search || undefined,
+              })
+              exportToCsv('crm-customers.csv', csvColumnsFromDataTable(columns), all.data)
+            }}
+          />
+        }
+      />
 
       {!canViewAll && (
         <p className="mb-4 text-sm text-muted-foreground">

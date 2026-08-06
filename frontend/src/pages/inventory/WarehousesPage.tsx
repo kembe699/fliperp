@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } from '@/api/inventory'
 import { fetchBranches } from '@/api/branches'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Warehouse } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +22,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+
 export function WarehousesPage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
@@ -25,12 +31,20 @@ export function WarehousesPage() {
   const { data: warehouses, isLoading, isError } = useQuery({ queryKey: ['warehouses'], queryFn: fetchWarehouses })
   const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
 
+  const [branchFilter, setBranchFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Warehouse | null>(null)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [branchId, setBranchId] = useState('')
   const [isDefault, setIsDefault] = useState(false)
+
+  const filtered = useMemo(() => {
+    return (warehouses ?? [])
+      .filter((row) => branchFilter === 'all' || row.branch_id === Number(branchFilter))
+      .filter((row) => !search || row.name.toLowerCase().includes(search.toLowerCase()) || row.code.toLowerCase().includes(search.toLowerCase()))
+  }, [warehouses, branchFilter, search])
 
   useEffect(() => {
     if (!formOpen) return
@@ -80,21 +94,52 @@ export function WarehousesPage() {
         parent="Inventory"
         title="Warehouses"
         action={
-          can('warehouses.create') && (
-            <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              New Warehouse
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('warehouses.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('warehouses.create') && (
+              <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                New Warehouse
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <FilterBar>
+        <Select value={branchFilter} onValueChange={setBranchFilter}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Branch" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All branches</SelectItem>
+            {branches?.map((branch) => (
+              <SelectItem key={branch.id} value={String(branch.id)}>
+                {branch.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'name', label: 'Name' },
+            { value: 'code', label: 'Code' },
+          ]}
+          placeholder="Search warehouses…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load warehouses. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={warehouses ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}

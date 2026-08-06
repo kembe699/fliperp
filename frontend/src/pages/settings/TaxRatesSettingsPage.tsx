@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { createTaxRate, deleteTaxRate, updateTaxRate } from '@/api/settings'
 import { fetchTaxRates } from '@/api/pos'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { TaxRate } from '@/types/pos'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 export function TaxRatesSettingsPage() {
   const queryClient = useQueryClient()
@@ -23,11 +30,19 @@ export function TaxRatesSettingsPage() {
 
   const { data: taxRates, isLoading, isError } = useQuery({ queryKey: ['tax-rates'], queryFn: fetchTaxRates })
 
+  const [status, setStatus] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<TaxRate | null>(null)
   const [name, setName] = useState('')
   const [rate, setRate] = useState('')
   const [isDefault, setIsDefault] = useState(false)
+
+  const filtered = useMemo(() => {
+    return (taxRates ?? [])
+      .filter((row) => status === 'all' || (status === 'active' ? row.is_active : !row.is_active))
+      .filter((row) => !search || row.name.toLowerCase().includes(search.toLowerCase()))
+  }, [taxRates, status, search])
 
   useEffect(() => {
     if (!formOpen) return
@@ -76,21 +91,46 @@ export function TaxRatesSettingsPage() {
         parent="Settings"
         title="Tax Rates"
         action={
-          can('tax-rates.create') && (
-            <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              New Tax Rate
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('tax-rates.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('tax-rates.create') && (
+              <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                New Tax Rate
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <FilterBar>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'name', label: 'Name' }]}
+          placeholder="Search tax rates…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load tax rates. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={taxRates ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}

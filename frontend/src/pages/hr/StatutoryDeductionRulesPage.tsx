@@ -1,18 +1,25 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { deleteStatutoryDeductionRule, fetchStatutoryDeductionRules } from '@/api/hr'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { StatutoryDeductionRule } from '@/types/hr'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatutoryDeductionRuleFormDialog } from '@/components/hr/StatutoryDeductionRuleFormDialog'
+
+const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
 function summarizeConfig(rule: StatutoryDeductionRule): string {
   if (rule.calculation_type === 'percentage') return `${((rule.config.rate ?? 0) * 100).toFixed(1)}%`
@@ -24,10 +31,18 @@ export function StatutoryDeductionRulesPage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
 
+  const [status, setStatus] = useState('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<StatutoryDeductionRule | null>(null)
 
   const { data, isLoading, isError } = useQuery({ queryKey: ['statutory-deduction-rules'], queryFn: fetchStatutoryDeductionRules })
+
+  const filtered = useMemo(() => {
+    return (data ?? [])
+      .filter((row) => status === 'all' || (status === 'active' ? row.is_active : !row.is_active))
+      .filter((row) => !search || row.name.toLowerCase().includes(search.toLowerCase()))
+  }, [data, status, search])
 
   const deleteMutation = useMutation({
     mutationFn: deleteStatutoryDeductionRule,
@@ -58,21 +73,46 @@ export function StatutoryDeductionRulesPage() {
         parent="HR & Payroll"
         title="Statutory Deduction Rules"
         action={
-          can('statutory-deduction-rules.create') && (
-            <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
-              <Plus className="h-4 w-4" />
-              New Rule
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('statutory-deduction-rules.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('statutory-deduction-rules.create') && (
+              <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="h-4 w-4" />
+                New Rule
+              </Button>
+            )}
+          </div>
         }
       />
+
+      <FilterBar>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className={pillTrigger}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
+      <div className="mb-4">
+        <SearchBar
+          options={[{ value: 'name', label: 'Name' }]}
+          placeholder="Search deduction rules…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load deduction rules. Please try again.</p>
       ) : (
         <DataTable
           columns={columns}
-          data={data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}

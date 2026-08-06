@@ -15,9 +15,12 @@ import { usePermissions } from '@/hooks/use-permissions'
 import { SALE_STATUS_VARIANT } from '@/components/sales/status-variants'
 import type { Sale } from '@/types/sale'
 
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
+
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -118,7 +121,27 @@ export function ReceiptsListPage() {
 
   return (
     <div>
-      <PageHeader parent="Sales" title="Receipts" />
+      <PageHeader
+        parent="Sales"
+        title="Receipts"
+        action={
+          <ExportCsvButton
+            onExport={async () => {
+              const all = await fetchSales({
+                per_page: 10000,
+                status: status === 'all' ? undefined : status,
+                branch_id: branchId === 'all' ? undefined : Number(branchId),
+                served_by: servedBy === 'all' ? undefined : Number(servedBy),
+                payment_type_id: paymentTypeId === 'all' ? undefined : Number(paymentTypeId),
+                from: from || undefined,
+                to: to || undefined,
+                search: search || undefined,
+              })
+              exportToCsv('receipts.csv', csvColumnsFromDataTable(columns), all.data)
+            }}
+          />
+        }
+      />
 
       <FilterBar>
         <Select value={status} onValueChange={(value) => { setStatus(value as Sale['status'] | 'all'); setPage(1) }}>

@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { fetchCrmServices, updateCrmService, deleteCrmService } from '@/api/crm'
 import { formatCurrency } from '@/lib/currency'
+import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { CrmService } from '@/types/crm'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
+import { SearchBar } from '@/components/shared/SearchBar'
+import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +27,7 @@ export function CrmServicesListPage() {
   const { can } = usePermissions()
 
   const [activeStatus, setActiveStatus] = useState<string>('all')
+  const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [editingService, setEditingService] = useState<CrmService | null>(null)
 
@@ -31,6 +35,12 @@ export function CrmServicesListPage() {
     queryKey: ['crm-services', activeStatus],
     queryFn: () => fetchCrmServices({ per_page: 100, is_active: activeStatus === 'all' ? undefined : activeStatus === 'active' }),
   })
+
+  const filtered = useMemo(() => {
+    return (data?.data ?? []).filter(
+      (row) => !search || row.name.toLowerCase().includes(search.toLowerCase()) || (row.category ?? '').toLowerCase().includes(search.toLowerCase()),
+    )
+  }, [data, search])
 
   const toggleActiveMutation = useMutation({
     mutationFn: (service: CrmService) => updateCrmService(service.id, { is_active: !service.is_active }),
@@ -79,17 +89,20 @@ export function CrmServicesListPage() {
         parent="CRM"
         title="Services"
         action={
-          can('crm-services.create') && (
-            <Button
-              onClick={() => {
-                setEditingService(null)
-                setFormOpen(true)
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              New Service
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportCsvButton onExport={async () => exportToCsv('crm-services.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('crm-services.create') && (
+              <Button
+                onClick={() => {
+                  setEditingService(null)
+                  setFormOpen(true)
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                New Service
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -106,6 +119,18 @@ export function CrmServicesListPage() {
         </Select>
       </FilterBar>
 
+      <div className="mb-4">
+        <SearchBar
+          options={[
+            { value: 'name', label: 'Name' },
+            { value: 'category', label: 'Category' },
+          ]}
+          placeholder="Search services…"
+          onSearch={(_by, query) => setSearch(query)}
+          onClear={() => setSearch('')}
+        />
+      </div>
+
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">
           Could not load services. Please try again.
@@ -113,7 +138,7 @@ export function CrmServicesListPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={data?.data ?? []}
+          data={filtered}
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}
