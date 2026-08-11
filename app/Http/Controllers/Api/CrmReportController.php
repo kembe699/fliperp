@@ -33,4 +33,15 @@ class CrmReportController extends Controller
 
         return $this->success($data);
     }
+
+    public function trends(Request $request): JsonResponse
+    {
+        $data = $this->crmReportService->trends(
+            $request->user()->company_id,
+            $request->integer('branch_id') ?: null,
+            $request->integer('months') ?: 6,
+        );
+
+        return $this->success($data);
+    }
 }

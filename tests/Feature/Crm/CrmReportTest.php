@@ -131,6 +131,26 @@ it('computes the CRM summary report correctly against a known scenario', functio
     expect($staffPerformance[$this->admin->id]['total_value'])->toEqual(1200.0);
 });
 
+it('computes the monthly trend series correctly against the same scenario', function () {
+    $trends = $this->getJson('/api/v1/crm/reports/trends?months=3')->assertOk()->json('data');
+
+    expect($trends)->toHaveCount(3);
+    expect(collect($trends)->pluck('period')->last())->toBe(now()->format('Y-m'));
+
+    $currentMonth = collect($trends)->last();
+    // Customers: the 1 explicit createCustomer() plus 1 more auto-created by converting
+    // "Convert Me" (lead conversion creates its own Customer row). All 3 leads and the 1
+    // deal moved to the Won stage in beforeEach() were also created "now".
+    expect($currentMonth['new_customers'])->toBe(2);
+    expect($currentMonth['new_leads'])->toBe(3);
+    expect($currentMonth['deals_won'])->toBe(1);
+
+    $priorMonths = collect($trends)->slice(0, 2);
+    expect($priorMonths->sum('new_customers'))->toBe(0);
+    expect($priorMonths->sum('new_leads'))->toBe(0);
+    expect($priorMonths->sum('deals_won'))->toBe(0);
+});
+
 it('computes the per-staff CRM breakdown correctly against the same scenario', function () {
     $staff = collect($this->getJson('/api/v1/crm/reports/staff')->assertOk()->json('data'))->keyBy('user_id');
 

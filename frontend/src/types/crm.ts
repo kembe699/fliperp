@@ -178,6 +178,13 @@ export interface CrmReportSummary {
   staff_performance: CrmStaffPerformance[]
 }
 
+export interface CrmTrendPoint {
+  period: string
+  new_customers: number
+  new_leads: number
+  deals_won: number
+}
+
 export interface CrmStaffDeal {
   deal_id: number
   title: string

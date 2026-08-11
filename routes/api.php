@@ -402,6 +402,7 @@ Route::prefix('v1')->group(function () {
             Route::middleware('permission:crm-reports.view')->group(function () {
                 Route::get('reports/summary', [CrmReportController::class, 'summary']);
                 Route::get('reports/staff', [CrmReportController::class, 'staff']);
+                Route::get('reports/trends', [CrmReportController::class, 'trends']);
             });
 
             Route::get('meetings/{crm_meeting}/ics', [CrmMeetingController::class, 'ics']);

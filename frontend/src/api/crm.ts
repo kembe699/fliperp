@@ -24,6 +24,7 @@ import type {
   CrmService,
   CrmServiceStatement,
   CrmStaffReportRow,
+  CrmTrendPoint,
 } from '@/types/crm'
 
 // --- Services catalog ---
@@ -349,6 +350,11 @@ export async function fetchCrmReportSummary(params: { from?: string; to?: string
 
 export async function fetchCrmStaffReport(): Promise<CrmStaffReportRow[]> {
   const { data } = await api.get<ApiResponse<CrmStaffReportRow[]>>('/crm/reports/staff')
+  return data.data
+}
+
+export async function fetchCrmTrends(params: { months?: number; branch_id?: number } = {}): Promise<CrmTrendPoint[]> {
+  const { data } = await api.get<ApiResponse<CrmTrendPoint[]>>('/crm/reports/trends', { params })
   return data.data
 }
 

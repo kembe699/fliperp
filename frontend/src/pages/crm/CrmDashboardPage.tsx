@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { Users, Handshake, TrendingUp, PackageCheck, AlertCircle } from 'lucide-react'
+import { Users, Handshake, TrendingUp, PackageCheck, AlertCircle, UserPlus, Target } from 'lucide-react'
 
-import { fetchCrmReportSummary, fetchCrmStaffReport } from '@/api/crm'
+import { fetchCrmReportSummary, fetchCrmStaffReport, fetchCrmTrends } from '@/api/crm'
 import { formatCurrency } from '@/lib/currency'
 import { useAuthStore } from '@/lib/auth-store'
 import { usePermissions } from '@/hooks/use-permissions'
@@ -10,6 +10,8 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Card, CardContent } from '@/components/ui/card'
+import { CrmTrendChart } from '@/components/crm/CrmTrendChart'
+import { CrmPipelineChart } from '@/components/crm/CrmPipelineChart'
 
 export function CrmDashboardPage() {
   const user = useAuthStore((state) => state.user)
@@ -25,6 +27,11 @@ export function CrmDashboardPage() {
     queryKey: ['crm-report-staff'],
     queryFn: fetchCrmStaffReport,
     enabled: !canViewAll,
+  })
+
+  const { data: trends, isLoading: trendsLoading } = useQuery({
+    queryKey: ['crm-report-trends'],
+    queryFn: () => fetchCrmTrends({ months: 6 }),
   })
 
   const myRow = staffReport?.find((row) => row.user_id === user?.id)
@@ -67,6 +74,28 @@ export function CrmDashboardPage() {
           label="Active Customer Services"
           value={isLoading || !summary ? '—' : summary.customers_with_active_services}
         />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <CrmTrendChart
+          title="Customer Trends"
+          icon={UserPlus}
+          data={trends ?? []}
+          dataKey="new_customers"
+          color="hsl(var(--primary))"
+          isLoading={trendsLoading}
+          emptyText="No new customers in the last 6 months."
+        />
+        <CrmTrendChart
+          title="Leads"
+          icon={Target}
+          data={trends ?? []}
+          dataKey="new_leads"
+          color="hsl(var(--info))"
+          isLoading={trendsLoading}
+          emptyText="No new leads in the last 6 months."
+        />
+        <CrmPipelineChart stages={summary?.deals.by_stage ?? []} isLoading={isLoading} />
       </div>
 
       {!canViewAll && (

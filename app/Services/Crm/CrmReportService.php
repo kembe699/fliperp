@@ -9,7 +9,9 @@ use App\Models\CrmDeal;
 use App\Models\CrmLead;
 use App\Models\CrmMeeting;
 use App\Models\CrmPipelineStage;
+use App\Models\Customer;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -113,6 +115,59 @@ class CrmReportService
                     'user_name' => $user?->name ?? 'Unknown',
                     'deals_closed_won' => $userDeals->count(),
                     'total_value' => round((float) $userDeals->sum('value'), 2),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Monthly time series for the dashboard's trend charts — new customers and new leads
+     * created each month, plus deals actually won that month (by closed_at, not created_at,
+     * since a deal can sit open for a while after being created — see DealService::moveStage,
+     * which stamps closed_at the moment a deal enters an is_closed_won/is_closed_lost stage).
+     *
+     * @return array<int, array{period: string, new_customers: int, new_leads: int, deals_won: int}>
+     */
+    public function trends(int $companyId, ?int $branchId, int $months = 6): array
+    {
+        $months = max(1, min($months, 24));
+        $start = now()->startOfMonth()->subMonths($months - 1);
+
+        $customers = Customer::query()
+            ->where('company_id', $companyId)
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->where('created_at', '>=', $start)
+            ->get(['created_at']);
+
+        $leads = CrmLead::query()
+            ->where('company_id', $companyId)
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->where('created_at', '>=', $start)
+            ->get(['created_at']);
+
+        $wonDeals = CrmDeal::query()
+            ->with('pipelineStage')
+            ->where('company_id', $companyId)
+            ->when($branchId, fn ($query) => $query->where(function ($q) use ($branchId) {
+                $q->whereHas('lead', fn ($lead) => $lead->where('branch_id', $branchId))
+                    ->orWhereHas('customer', fn ($customer) => $customer->where('branch_id', $branchId));
+            }))
+            ->whereNotNull('closed_at')
+            ->where('closed_at', '>=', $start)
+            ->get(['pipeline_stage_id', 'closed_at'])
+            ->filter(fn (CrmDeal $deal) => $deal->pipelineStage?->is_closed_won);
+
+        return collect(range(0, $months - 1))
+            ->map(fn (int $i) => $start->copy()->addMonths($i))
+            ->map(function (Carbon $period) use ($customers, $leads, $wonDeals) {
+                $label = $period->format('Y-m');
+
+                return [
+                    'period' => $label,
+                    'new_customers' => $customers->filter(fn ($c) => $c->created_at->format('Y-m') === $label)->count(),
+                    'new_leads' => $leads->filter(fn ($l) => $l->created_at->format('Y-m') === $label)->count(),
+                    'deals_won' => $wonDeals->filter(fn ($d) => $d->closed_at->format('Y-m') === $label)->count(),
                 ];
             })
             ->values()
