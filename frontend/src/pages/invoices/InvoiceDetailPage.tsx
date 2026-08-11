@@ -158,9 +158,20 @@ export function InvoiceDetailPage() {
       <Card>
         <CardContent className="p-8">
           <div className="mb-8 flex items-start justify-between">
-            <div>
-              <p className="text-lg font-bold text-foreground">{company?.name}</p>
-              <p className="text-sm text-muted-foreground">Invoice</p>
+            <div className="flex items-center gap-3">
+              <img
+                src={company?.logo_url || '/logo.png'}
+                onError={(event) => {
+                  event.currentTarget.onerror = null
+                  event.currentTarget.src = '/logo.png'
+                }}
+                alt={company?.name ?? 'Company logo'}
+                className="h-10 w-auto object-contain"
+              />
+              <div>
+                <p className="text-lg font-bold text-foreground">{company?.name}</p>
+                <p className="text-sm text-muted-foreground">Invoice</p>
+              </div>
             </div>
             <StatusBadge label={INVOICE_STATUS_LABEL[invoice.status]} variant={INVOICE_STATUS_VARIANT[invoice.status]} className="text-sm" />
           </div>

@@ -1,13 +1,18 @@
+import { useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 
 import { formatCurrency } from '@/lib/currency'
 import type { Product } from '@/types/product'
 import type { PriceListItem, TaxRate } from '@/types/pos'
+import type { CrmService } from '@/types/crm'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
+
+const PRODUCT_PREFIX = 'product:'
+const SERVICE_PREFIX = 'service:'
 
 export interface LineItemRow {
   key: string
@@ -30,9 +35,33 @@ interface LineItemsEditorProps {
   taxRates: TaxRate[]
   priceListItems?: PriceListItem[]
   disabled?: boolean
+  // Optional — pages without CRM access simply omit these and the picker only offers
+  // products, same as before.
+  services?: CrmService[]
+  onResolveService?: (serviceId: number) => Promise<Product>
 }
 
-export function LineItemsEditor({ rows, onChange, products, taxRates, priceListItems, disabled }: LineItemsEditorProps) {
+export function LineItemsEditor({ rows, onChange, products, taxRates, priceListItems, disabled, services, onResolveService }: LineItemsEditorProps) {
+  // A service picked here doesn't become a real Product until onResolveService creates its
+  // shadow product (see CrmService::ensureProduct) — kept locally so the row can show it as
+  // selected immediately, without waiting for the parent's product list to refetch.
+  const [resolvedProducts, setResolvedProducts] = useState<Product[]>([])
+  const [resolvingKey, setResolvingKey] = useState<string | null>(null)
+
+  const allProducts = useMemo(() => {
+    const byId = new Map(products.map((product) => [product.id, product]))
+    resolvedProducts.forEach((product) => byId.set(product.id, product))
+    return Array.from(byId.values())
+  }, [products, resolvedProducts])
+
+  const pickerOptions = useMemo(
+    () => [
+      ...allProducts.map((product) => ({ value: `${PRODUCT_PREFIX}${product.id}`, label: product.name, sublabel: product.sku })),
+      ...(services ?? []).map((service) => ({ value: `${SERVICE_PREFIX}${service.id}`, label: service.name, sublabel: 'Service' })),
+    ],
+    [allProducts, services],
+  )
+
   const updateRow = (key: string, patch: Partial<LineItemRow>) => {
     onChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)))
   }
@@ -43,8 +72,8 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
     onChange([...rows, { key: crypto.randomUUID(), product_id: null, quantity: 1, unit_price: null, tax_rate_id: null, discount_amount: 0 }])
   }
 
-  const handleProductChange = (key: string, productId: number | null) => {
-    const product = products.find((p) => p.id === productId)
+  const applyProduct = (key: string, productId: number | null) => {
+    const product = allProducts.find((p) => p.id === productId)
     const priceListPrice = priceListItems?.find((item) => item.product_id === productId && !item.product_variant_id)?.price
     const unitPrice = priceListPrice ?? (product ? Number(product.selling_price) : null)
 
@@ -55,11 +84,32 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
     })
   }
 
+  const handlePickOption = async (key: string, optionValue: string | null) => {
+    if (!optionValue) {
+      applyProduct(key, null)
+      return
+    }
+    if (optionValue.startsWith(SERVICE_PREFIX)) {
+      if (!onResolveService) return
+      const serviceId = Number(optionValue.slice(SERVICE_PREFIX.length))
+      setResolvingKey(key)
+      try {
+        const product = await onResolveService(serviceId)
+        setResolvedProducts((prev) => (prev.some((p) => p.id === product.id) ? prev : [...prev, product]))
+        applyProduct(key, product.id)
+      } finally {
+        setResolvingKey(null)
+      }
+      return
+    }
+    applyProduct(key, Number(optionValue.slice(PRODUCT_PREFIX.length)))
+  }
+
   return (
     <div className="space-y-3">
       <div className="rounded-xl border border-border">
         <div className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] gap-2 border-b border-border bg-[#F9FAFB] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          <span>Product</span>
+          <span>Product / Service</span>
           <span>Qty</span>
           <span>Unit Price</span>
           <span>Tax Rate</span>
@@ -69,15 +119,17 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
         </div>
 
         {rows.length === 0 ? (
-          <p className="p-4 text-sm text-muted-foreground">No line items yet. Add a product below.</p>
+          <p className="p-4 text-sm text-muted-foreground">No line items yet. Add a product or service below.</p>
         ) : (
           rows.map((row) => (
             <div key={row.key} className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] items-center gap-2 border-b border-border px-3 py-2 last:border-b-0">
               <SearchableSelect
-                options={products.map((product) => ({ value: String(product.id), label: product.name, sublabel: product.sku }))}
-                value={row.product_id ? String(row.product_id) : null}
-                onChange={(value) => handleProductChange(row.key, value ? Number(value) : null)}
-                placeholder="Select product"
+                options={pickerOptions}
+                value={row.product_id ? `${PRODUCT_PREFIX}${row.product_id}` : null}
+                onChange={(value) => handlePickOption(row.key, value)}
+                placeholder={resolvingKey === row.key ? 'Adding service…' : 'Select product or service'}
+                searchPlaceholder="Search products and services…"
+                disabled={disabled || resolvingKey === row.key}
                 className="h-9"
               />
               <Input

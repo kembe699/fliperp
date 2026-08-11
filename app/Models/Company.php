@@ -42,21 +42,26 @@ class Company extends Model
      * Resolves logo_url (a public-disk URL) back to a local filesystem path.
      * PDF rendering (dompdf) has enable_remote disabled, so images must be
      * embedded via a local file:// path rather than fetched over HTTP.
+     *
+     * Falls back to the app's own bundled brand logo (public/logo.png, committed
+     * to git) whenever the company hasn't uploaded one, or an uploaded one is
+     * missing on disk (e.g. wiped by a deploy platform with no persistent
+     * storage across releases) — every generated document should carry a logo,
+     * not silently fall back to plain text.
      */
     public function logoFilePath(): ?string
     {
-        if (! $this->logo_url) {
-            return null;
+        if ($this->logo_url) {
+            $path = parse_url($this->logo_url, PHP_URL_PATH);
+            $fullPath = $path ? public_path(ltrim($path, '/')) : null;
+
+            if ($fullPath && is_file($fullPath)) {
+                return $fullPath;
+            }
         }
 
-        $path = parse_url($this->logo_url, PHP_URL_PATH);
+        $default = public_path('logo.png');
 
-        if (! $path) {
-            return null;
-        }
-
-        $fullPath = public_path(ltrim($path, '/'));
-
-        return is_file($fullPath) ? $fullPath : null;
+        return is_file($default) ? $default : null;
     }
 }

@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { downloadPdf } from '@/lib/pdf-download'
+import { useAuthStore } from '@/lib/auth-store'
 import { usePermissions } from '@/hooks/use-permissions'
 import { QUOTATION_STATUS_LABEL, QUOTATION_STATUS_VARIANT } from '@/components/sales/status-variants'
 
@@ -24,6 +25,7 @@ export function QuotationDetailPage() {
   const quotationId = Number(id)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const company = useAuthStore((state) => state.company)
   const { can } = usePermissions()
 
   const { data: quotation, isLoading } = useQuery({
@@ -162,9 +164,20 @@ export function QuotationDetailPage() {
       <Card>
         <CardContent className="p-8">
           <div className="mb-8 flex items-start justify-between">
-            <div>
-              <p className="text-lg font-bold text-foreground">Quotation</p>
-              {quotation.notes && <p className="text-sm text-muted-foreground">{quotation.notes}</p>}
+            <div className="flex items-center gap-3">
+              <img
+                src={company?.logo_url || '/logo.png'}
+                onError={(event) => {
+                  event.currentTarget.onerror = null
+                  event.currentTarget.src = '/logo.png'
+                }}
+                alt={company?.name ?? 'Company logo'}
+                className="h-10 w-auto object-contain"
+              />
+              <div>
+                <p className="text-lg font-bold text-foreground">Quotation</p>
+                {quotation.notes && <p className="text-sm text-muted-foreground">{quotation.notes}</p>}
+              </div>
             </div>
             <StatusBadge label={QUOTATION_STATUS_LABEL[quotation.status]} variant={QUOTATION_STATUS_VARIANT[quotation.status]} className="text-sm" />
           </div>

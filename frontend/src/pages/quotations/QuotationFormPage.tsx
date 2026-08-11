@@ -8,9 +8,11 @@ import { fetchBranches } from '@/api/branches'
 import { fetchCustomers } from '@/api/customers'
 import { fetchActiveProducts } from '@/api/products'
 import { fetchPriceListItems, fetchPriceLists, fetchTaxRates } from '@/api/pos'
+import { ensureCrmServiceProduct, fetchCrmServices } from '@/api/crm'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { computeTotals } from '@/lib/sales-totals'
 import { useAuthStore } from '@/lib/auth-store'
+import { usePermissions } from '@/hooks/use-permissions'
 import type { QuotationFormInput } from '@/types/quotation'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -30,6 +32,7 @@ export function QuotationFormPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
+  const { can } = usePermissions()
 
   const { data: existingQuotation, isLoading: quotationLoading } = useQuery({
     queryKey: ['quotation', id],
@@ -42,6 +45,14 @@ export function QuotationFormPage() {
   const { data: products } = useQuery({ queryKey: ['products-all'], queryFn: () => fetchActiveProducts() })
   const { data: taxRates } = useQuery({ queryKey: ['tax-rates'], queryFn: fetchTaxRates })
   const { data: priceLists } = useQuery({ queryKey: ['price-lists'], queryFn: fetchPriceLists })
+  // Lets a quote pull line items straight from the CRM service catalog, not just Products —
+  // omitted for users without CRM access so the picker quietly falls back to products-only.
+  const canUseCrmServices = can('crm-services.view')
+  const { data: servicesPage } = useQuery({
+    queryKey: ['crm-services-all'],
+    queryFn: () => fetchCrmServices({ per_page: 100, is_active: true }),
+    enabled: canUseCrmServices,
+  })
 
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [branchId, setBranchId] = useState('')
@@ -134,6 +145,12 @@ export function QuotationFormPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const resolveService = async (serviceId: number) => {
+    const product = await ensureCrmServiceProduct(serviceId)
+    queryClient.invalidateQueries({ queryKey: ['products-all'] })
+    return product
+  }
+
   if (isEdit && quotationLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Loading quotation…</div>
   }
@@ -206,7 +223,15 @@ export function QuotationFormPage() {
       </Card>
 
       <div className="mb-4">
-        <LineItemsEditor rows={rows} onChange={setRows} products={products ?? []} taxRates={taxRates ?? []} priceListItems={priceListItems} />
+        <LineItemsEditor
+          rows={rows}
+          onChange={setRows}
+          products={products ?? []}
+          taxRates={taxRates ?? []}
+          priceListItems={priceListItems}
+          services={canUseCrmServices ? servicesPage?.data : undefined}
+          onResolveService={canUseCrmServices ? resolveService : undefined}
+        />
       </div>
 
       <div className="mb-6 flex justify-end">

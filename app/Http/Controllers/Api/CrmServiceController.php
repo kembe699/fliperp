@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CrmService\StoreCrmServiceRequest;
 use App\Http\Requests\CrmService\UpdateCrmServiceRequest;
 use App\Http\Resources\CrmServiceResource;
+use App\Http\Resources\ProductResource;
 use App\Models\CrmService;
 use App\Services\Crm\ServiceCatalogService;
 use Illuminate\Http\JsonResponse;
@@ -59,5 +60,20 @@ class CrmServiceController extends Controller
         $this->serviceCatalogService->delete($crmService);
 
         return $this->success(null, 'Service deleted successfully.');
+    }
+
+    /**
+     * Quotations/invoices only store product_id line items (see CrmService::ensureProduct),
+     * so the generic line-items editor calls this the moment a user picks a CRM service as a
+     * line item, resolving it to its shadow product (creating it on first use) before the row
+     * is added — from then on it's an ordinary product line, same as CrmQuotationLinkService.
+     */
+    public function ensureProduct(CrmService $crmService): JsonResponse
+    {
+        $this->authorize('view', $crmService);
+
+        $product = $crmService->ensureProduct();
+
+        return $this->success(new ProductResource($product));
     }
 }

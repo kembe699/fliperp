@@ -1,6 +1,7 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
 import type { Customer } from '@/types/customer'
+import type { Product } from '@/types/product'
 import type { Quotation } from '@/types/quotation'
 import type {
   CrmAccountAssignment,
@@ -59,6 +60,15 @@ export async function updateCrmService(id: number, values: Partial<CrmServiceInp
 
 export async function deleteCrmService(id: number): Promise<void> {
   await api.delete(`/crm/services/${id}`)
+}
+
+// Quotations/invoices only accept product_id line items — this resolves a CRM service to
+// its shadow Product (creating it on first use, see CrmService::ensureProduct) so it can be
+// added as an ordinary line item. Called the moment a service is picked in the line items
+// editor, not ahead of time, matching the backend's lazy-creation design.
+export async function ensureCrmServiceProduct(serviceId: number): Promise<Product> {
+  const { data } = await api.post<ApiResponse<Product>>(`/crm/services/${serviceId}/ensure-product`)
+  return data.data
 }
 
 // --- Pipeline stages ---

@@ -355,6 +355,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('crm')->group(function () {
             Route::apiResource('services', CrmServiceController::class)
                 ->parameters(['services' => 'crm_service']);
+            Route::post('services/{crm_service}/ensure-product', [CrmServiceController::class, 'ensureProduct']);
 
             Route::post('pipeline-stages/reorder', [CrmPipelineStageController::class, 'reorder'])
                 ->middleware('permission:crm-pipeline-stages.reorder');
