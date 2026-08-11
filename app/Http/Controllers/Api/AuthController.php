@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterCompanyRequest;
+use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\CompanyResource;
 use App\Http\Resources\UserResource;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -36,6 +39,21 @@ class AuthController extends Controller
         $user = $request->user()->load(['company', 'branch', 'roles']);
 
         return $this->success($this->authPayload($user));
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        if (! empty($data['password']) && ! Hash::check($data['current_password'], $request->user()->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['The current password you entered is incorrect.'],
+            ]);
+        }
+
+        $user = $this->authService->updateProfile($request->user(), $data);
+
+        return $this->success($this->authPayload($user), 'Profile updated successfully.');
     }
 
     public function registerCompany(RegisterCompanyRequest $request): JsonResponse

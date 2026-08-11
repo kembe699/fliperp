@@ -76,6 +76,7 @@ class CrmQuotationLinkService
 
                 return [
                     'product_id' => $product->id,
+                    'description' => $item['description'] ?? $service->description,
                     'quantity' => $item['quantity'] ?? 1,
                     'unit_price' => $item['unit_price'] ?? (float) $service->default_price,
                 ];
@@ -90,6 +91,7 @@ class CrmQuotationLinkService
 
         return $attachedServices->map(fn (CrmService $service) => [
             'product_id' => $service->ensureProduct()->id,
+            'description' => $service->description,
             'quantity' => 1,
             'unit_price' => (float) $service->default_price,
         ])->all();

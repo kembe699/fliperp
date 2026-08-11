@@ -43,6 +43,25 @@ class AuthService
         $user->currentAccessToken()?->delete();
     }
 
+    /**
+     * Self-service profile edit — name/email/phone plus an optional password change.
+     * The current password is verified by the caller (AuthController::updateProfile)
+     * before this runs, since that check needs to throw a field-specific validation
+     * error rather than a generic one.
+     */
+    public function updateProfile(User $user, array $data): User
+    {
+        $payload = collect($data)->only(['name', 'email', 'phone'])->toArray();
+
+        if (! empty($data['password'])) {
+            $payload['password'] = Hash::make($data['password']);
+        }
+
+        $user->update($payload);
+
+        return $user->fresh(['company', 'branch', 'roles']);
+    }
+
     public function registerCompany(array $data): array
     {
         return DB::transaction(function () use ($data) {

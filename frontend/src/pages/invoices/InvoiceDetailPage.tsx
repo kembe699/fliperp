@@ -209,7 +209,10 @@ export function InvoiceDetailPage() {
             <tbody>
               {invoice.items.map((item) => (
                 <tr key={item.id} className="border-b border-border last:border-b-0">
-                  <td className="py-2 text-foreground">{productName(item.product_id)}</td>
+                  <td className="py-2 text-foreground">
+                    {productName(item.product_id)}
+                    {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                  </td>
                   <td className="py-2 text-right text-foreground">{Number(item.quantity)}</td>
                   <td className="py-2 text-right text-foreground">{formatCurrency(item.unit_price)}</td>
                   <td className="py-2 text-right text-foreground">{formatCurrency(item.discount_amount)}</td>

@@ -17,6 +17,7 @@ const SERVICE_PREFIX = 'service:'
 export interface LineItemRow {
   key: string
   product_id: number | null
+  description: string
   quantity: number
   unit_price: number | null
   tax_rate_id: number | null
@@ -69,18 +70,23 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
   const removeRow = (key: string) => onChange(rows.filter((row) => row.key !== key))
 
   const addRow = () => {
-    onChange([...rows, { key: crypto.randomUUID(), product_id: null, quantity: 1, unit_price: null, tax_rate_id: null, discount_amount: 0 }])
+    onChange([...rows, { key: crypto.randomUUID(), product_id: null, description: '', quantity: 1, unit_price: null, tax_rate_id: null, discount_amount: 0 }])
   }
 
   const applyProduct = (key: string, productId: number | null) => {
     const product = allProducts.find((p) => p.id === productId)
     const priceListPrice = priceListItems?.find((item) => item.product_id === productId && !item.product_variant_id)?.price
     const unitPrice = priceListPrice ?? (product ? Number(product.selling_price) : null)
+    // Suggest the product/service's own description as a starting point, but never
+    // overwrite something the user already typed for this line.
+    const existingDescription = rows.find((row) => row.key === key)?.description
+    const description = existingDescription || product?.description || ''
 
     updateRow(key, {
       product_id: productId,
       unit_price: unitPrice,
       tax_rate_id: product?.tax_rate_id ?? null,
+      description,
     })
   }
 
@@ -123,15 +129,24 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
         ) : (
           rows.map((row) => (
             <div key={row.key} className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] items-center gap-2 border-b border-border px-3 py-2 last:border-b-0">
-              <SearchableSelect
-                options={pickerOptions}
-                value={row.product_id ? `${PRODUCT_PREFIX}${row.product_id}` : null}
-                onChange={(value) => handlePickOption(row.key, value)}
-                placeholder={resolvingKey === row.key ? 'Adding service…' : 'Select product or service'}
-                searchPlaceholder="Search products and services…"
-                disabled={disabled || resolvingKey === row.key}
-                className="h-9"
-              />
+              <div className="space-y-1">
+                <SearchableSelect
+                  options={pickerOptions}
+                  value={row.product_id ? `${PRODUCT_PREFIX}${row.product_id}` : null}
+                  onChange={(value) => handlePickOption(row.key, value)}
+                  placeholder={resolvingKey === row.key ? 'Adding service…' : 'Select product or service'}
+                  searchPlaceholder="Search products and services…"
+                  disabled={disabled || resolvingKey === row.key}
+                  className="h-9"
+                />
+                <Input
+                  value={row.description}
+                  disabled={disabled}
+                  onChange={(event) => updateRow(row.key, { description: event.target.value })}
+                  placeholder="Short description (optional)"
+                  className="h-7 text-xs text-muted-foreground"
+                />
+              </div>
               <Input
                 type="number"
                 min="0.01"

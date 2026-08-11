@@ -9,9 +9,20 @@ export interface ApiErrorInfo {
 export function getApiErrorInfo(error: unknown): ApiErrorInfo {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as { message?: string; errors?: Record<string, string[]> } | undefined
+    const errors = data?.errors ?? null
+
+    // The backend's top-level `message` for a 422 is always the generic "The given data
+    // was invalid." (see bootstrap/app.php's ValidationException renderer) — both real
+    // field-validation failures AND business-rule messages (e.g. "cannot delete a role
+    // that users currently hold", thrown via ValidationException::withMessages()) land in
+    // `errors` instead, which is the only place the actual reason lives. Prefer that
+    // whenever it's present so the toast tells the user what actually went wrong, not a
+    // one-size-fits-all phrase.
+    const fieldMessages = errors ? Object.values(errors).flat() : []
+
     return {
-      message: data?.message ?? 'Something went wrong. Please try again.',
-      errors: data?.errors ?? null,
+      message: fieldMessages.length > 0 ? fieldMessages.join(' ') : (data?.message ?? 'Something went wrong. Please try again.'),
+      errors,
     }
   }
   return { message: 'Something went wrong. Please try again.', errors: null }

@@ -59,6 +59,9 @@
                         @if ($item->variant)
                             <br><span style="color:#000000; font-size:8.5pt;">{{ $item->variant->name }}</span>
                         @endif
+                        @if ($item->description)
+                            <br><span style="color:#555555; font-size:8pt;">{{ $item->description }}</span>
+                        @endif
                     </td>
                     <td class="num">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
                     <td class="num">{{ $currencyCode }} {{ number_format((float) $item->unit_price, 2) }}</td>

@@ -5,6 +5,7 @@ export interface InvoiceItem {
   invoice_id: number
   product_id: number
   product_variant_id: number | null
+  description: string | null
   quantity: number
   unit_price: number
   tax_rate_id: number | null
@@ -38,6 +39,7 @@ export interface Invoice {
 export interface InvoiceLineInput {
   product_id: number | null
   product_variant_id?: number | null
+  description?: string | null
   quantity: number
   unit_price: number | null
   tax_rate_id?: number | null

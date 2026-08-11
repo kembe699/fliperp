@@ -25,6 +25,7 @@ class UpdateInvoiceRequest extends FormRequest
             'items' => ['sometimes', 'array', 'min:1'],
             'items.*.product_id' => ['required_with:items', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'items.*.product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.quantity' => ['required_with:items', 'numeric', 'gt:0'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.tax_rate_id' => ['nullable', Rule::exists('tax_rates', 'id')->where('company_id', $companyId)],

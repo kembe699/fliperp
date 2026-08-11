@@ -179,6 +179,7 @@ class QuotationService
             $invoice->items()->createMany($quotation->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
                 'product_variant_id' => $item->product_variant_id,
+                'description' => $item->description,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'tax_rate_id' => $item->tax_rate_id,
@@ -247,6 +248,7 @@ class QuotationService
             $normalized[] = [
                 'product_id' => $item['product_id'],
                 'product_variant_id' => $item['product_variant_id'] ?? null,
+                'description' => $item['description'] ?? null,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'tax_rate_id' => $item['tax_rate_id'] ?? null,

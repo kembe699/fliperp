@@ -12,6 +12,20 @@ export async function fetchMe(): Promise<AuthPayload> {
   return data.data
 }
 
+export interface UpdateProfileInput {
+  name?: string
+  email?: string
+  phone?: string | null
+  current_password?: string
+  password?: string
+  password_confirmation?: string
+}
+
+export async function updateProfile(values: UpdateProfileInput): Promise<AuthPayload> {
+  const { data } = await api.put<ApiResponse<AuthPayload>>('/auth/profile', values)
+  return data.data
+}
+
 export async function logout(): Promise<void> {
   await api.post('/auth/logout')
 }

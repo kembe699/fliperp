@@ -296,6 +296,7 @@ class InvoiceService
             $normalized[] = [
                 'product_id' => $item['product_id'],
                 'product_variant_id' => $item['product_variant_id'] ?? null,
+                'description' => $item['description'] ?? null,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'tax_rate_id' => $item['tax_rate_id'] ?? null,

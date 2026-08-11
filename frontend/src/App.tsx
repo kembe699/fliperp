@@ -92,6 +92,7 @@ import { GeneralLedgerReportPage } from '@/pages/accounting/GeneralLedgerReportP
 import { CashFlowReportPage } from '@/pages/accounting/CashFlowReportPage'
 import { ShiftReportPage } from '@/pages/accounting/ShiftReportPage'
 
+import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { CompanySettingsPage } from '@/pages/settings/CompanySettingsPage'
 import { BranchesSettingsPage } from '@/pages/settings/BranchesSettingsPage'
 import { UsersSettingsPage } from '@/pages/settings/UsersSettingsPage'
@@ -281,6 +282,8 @@ function App() {
           <Route path="/reports/general-ledger" element={<GeneralLedgerReportPage />} />
           <Route path="/reports/cash-flow" element={<CashFlowReportPage />} />
           <Route path="/reports/shift-report" element={<ShiftReportPage />} />
+
+          <Route path="/profile" element={<ProfilePage />} />
 
           <Route path="/settings/company" element={<CompanySettingsPage />} />
           <Route path="/settings/branches" element={<BranchesSettingsPage />} />

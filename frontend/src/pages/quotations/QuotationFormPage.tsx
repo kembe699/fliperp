@@ -73,7 +73,7 @@ export function QuotationFormPage() {
     if (!isEdit) {
       setBranchId(user?.branch_id ? String(user.branch_id) : '')
       setQuotationDate(new Date().toISOString().slice(0, 10))
-      setRows([{ key: crypto.randomUUID(), product_id: null, quantity: 1, unit_price: null, tax_rate_id: null, discount_amount: 0 }])
+      setRows([{ key: crypto.randomUUID(), product_id: null, description: '', quantity: 1, unit_price: null, tax_rate_id: null, discount_amount: 0 }])
       return
     }
     if (existingQuotation) {
@@ -88,6 +88,7 @@ export function QuotationFormPage() {
         existingQuotation.items.map((item) => ({
           key: crypto.randomUUID(),
           product_id: item.product_id,
+          description: item.description ?? '',
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price),
           tax_rate_id: item.tax_rate_id,
@@ -111,6 +112,7 @@ export function QuotationFormPage() {
       .filter((row) => row.product_id)
       .map((row) => ({
         product_id: row.product_id!,
+        description: row.description || null,
         quantity: row.quantity,
         unit_price: row.unit_price,
         tax_rate_id: row.tax_rate_id,
