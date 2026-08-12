@@ -6,7 +6,7 @@
 @endphp
 <style>
     @page {
-        margin: 145px 48px 80px 48px;
+        margin: 168px 48px 80px 48px;
     }
 
     * {
@@ -23,19 +23,19 @@
 
     .header {
         position: fixed;
-        top: -145px;
+        top: -168px;
         left: -48px;
         right: -48px;
-        height: 145px;
+        height: 168px;
     }
 
     .header-inner {
-        padding: 0 48px;
+        padding: 16px 48px 0 48px;
     }
 
     .company-logo {
-        max-width: 150px;
-        max-height: 50px;
+        max-width: 175px;
+        max-height: 64px;
         width: auto;
         height: auto;
         display: block;
