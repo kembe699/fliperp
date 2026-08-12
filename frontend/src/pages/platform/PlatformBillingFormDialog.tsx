@@ -2,27 +2,32 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, Trash2 } from 'lucide-react'
 
 import { createPlatformInvoice, createPlatformQuotation } from '@/api/platform'
 import { fetchActiveProducts } from '@/api/products'
+import { fetchTaxRates } from '@/api/pos'
+import { ensureCrmServiceProduct, fetchCrmServices } from '@/api/crm'
+import { usePermissions } from '@/hooks/use-permissions'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
+import { computeTotals } from '@/lib/sales-totals'
 import type { PlatformLineItemInput } from '@/types/platform'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { LineItemsEditor, type LineItemRow } from '@/components/sales/LineItemsEditor'
 
-interface DraftLine {
-  product_id: number | null
-  quantity: number
-  unit_price: number | null
-}
-
-const emptyLine: DraftLine = { product_id: null, quantity: 1, unit_price: null }
+const emptyRow = (): LineItemRow => ({
+  key: crypto.randomUUID(),
+  product_id: null,
+  description: '',
+  quantity: 1,
+  unit_price: null,
+  tax_rate_id: null,
+  discount_amount: 0,
+})
 
 interface PlatformBillingFormDialogProps {
   open: boolean
@@ -34,26 +39,47 @@ interface PlatformBillingFormDialogProps {
 export function PlatformBillingFormDialog({ open, onOpenChange, clientId, kind }: PlatformBillingFormDialogProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { can } = usePermissions()
+
   const [dateValue, setDateValue] = useState('')
   const [notes, setNotes] = useState('')
-  const [lines, setLines] = useState<DraftLine[]>([{ ...emptyLine }])
+  const [rows, setRows] = useState<LineItemRow[]>([emptyRow()])
 
-  const { data: products } = useQuery({ queryKey: ['products', 'active'], queryFn: () => fetchActiveProducts() })
+  const { data: products } = useQuery({ queryKey: ['products-all'], queryFn: () => fetchActiveProducts() })
+  const { data: taxRates } = useQuery({ queryKey: ['tax-rates'], queryFn: fetchTaxRates })
+  // Same mechanism as InvoiceFormPage/QuotationFormPage: a CRM service is lazily turned into
+  // a real (non-stock-tracked) Product on first use, so it can be billed the same as any
+  // other line item — no separate service_id column, no second invoicing path.
+  const canUseCrmServices = can('crm-services.view')
+  const { data: servicesPage } = useQuery({
+    queryKey: ['crm-services-all'],
+    queryFn: () => fetchCrmServices({ per_page: 100, is_active: true }),
+    enabled: canUseCrmServices,
+  })
+
+  const resolveService = async (serviceId: number) => {
+    const product = await ensureCrmServiceProduct(serviceId)
+    queryClient.invalidateQueries({ queryKey: ['products-all'] })
+    return product
+  }
 
   const reset = () => {
     setDateValue('')
     setNotes('')
-    setLines([{ ...emptyLine }])
+    setRows([emptyRow()])
   }
 
   const mutation = useMutation({
     mutationFn: async (): Promise<{ id: number }> => {
-      const items: PlatformLineItemInput[] = lines
-        .filter((line) => line.product_id)
-        .map((line) => ({
-          product_id: line.product_id!,
-          quantity: line.quantity,
-          unit_price: line.unit_price,
+      const items: PlatformLineItemInput[] = rows
+        .filter((row) => row.product_id)
+        .map((row) => ({
+          product_id: row.product_id!,
+          description: row.description || null,
+          quantity: row.quantity,
+          unit_price: row.unit_price,
+          tax_rate_id: row.tax_rate_id,
+          discount_amount: row.discount_amount,
         }))
 
       if (kind === 'invoice') {
@@ -71,27 +97,12 @@ export function PlatformBillingFormDialog({ open, onOpenChange, clientId, kind }
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
-  const updateLine = (index: number, patch: Partial<DraftLine>) => {
-    setLines((prev) => prev.map((line, i) => (i === index ? { ...line, ...patch } : line)))
-  }
-
-  const selectProduct = (index: number, productId: number) => {
-    const product = products?.find((p) => p.id === productId)
-    updateLine(index, { product_id: productId, unit_price: product?.selling_price ?? null })
-  }
-
-  const total = lines.reduce((sum, line) => {
-    if (!line.product_id) return sum
-    const product = products?.find((p) => p.id === line.product_id)
-    const price = line.unit_price ?? product?.selling_price ?? 0
-    return sum + price * line.quantity
-  }, 0)
-
-  const canSubmit = dateValue && lines.some((line) => line.product_id)
+  const totals = computeTotals(rows, taxRates ?? [], 0)
+  const canSubmit = dateValue && rows.some((row) => row.product_id)
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) reset(); onOpenChange(next) }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{kind === 'invoice' ? 'Create Invoice' : 'Create Quotation'}</DialogTitle>
         </DialogHeader>
@@ -108,50 +119,28 @@ export function PlatformBillingFormDialog({ open, onOpenChange, clientId, kind }
             <Input id="billing-date" type="date" required value={dateValue} onChange={(event) => setDateValue(event.target.value)} />
           </div>
 
-          <div className="space-y-2">
-            <Label>Line Items</Label>
-            {lines.map((line, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Select value={line.product_id ? String(line.product_id) : undefined} onValueChange={(value) => selectProduct(index, Number(value))}>
-                  <SelectTrigger className="h-9 flex-1 text-sm">
-                    <SelectValue placeholder="Select product…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products?.map((product) => (
-                      <SelectItem key={product.id} value={String(product.id)}>
-                        {product.name} — {formatCurrency(product.selling_price)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number"
-                  min={1}
-                  className="h-9 w-16"
-                  value={line.quantity}
-                  onChange={(event) => updateLine(index, { quantity: Number(event.target.value) || 1 })}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 text-muted-foreground"
-                  disabled={lines.length === 1}
-                  onClick={() => setLines((prev) => prev.filter((_, i) => i !== index))}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => setLines((prev) => [...prev, { ...emptyLine }])}>
-              <Plus className="h-3.5 w-3.5" />
-              Add Line
-            </Button>
-          </div>
+          <LineItemsEditor
+            rows={rows}
+            onChange={setRows}
+            products={products ?? []}
+            taxRates={taxRates ?? []}
+            services={canUseCrmServices ? servicesPage?.data : undefined}
+            onResolveService={canUseCrmServices ? resolveService : undefined}
+          />
 
-          <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-semibold text-foreground">
-            <span>Estimated Total</span>
-            <span>{formatCurrency(total)}</span>
+          <div className="space-y-1 border-t border-border pt-3 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>{formatCurrency(totals.subtotal)}</span>
+            </div>
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Tax</span>
+              <span>{formatCurrency(totals.taxAmount)}</span>
+            </div>
+            <div className="flex items-center justify-between text-base font-semibold text-foreground">
+              <span>Total</span>
+              <span>{formatCurrency(totals.total)}</span>
+            </div>
           </div>
 
           <DialogFooter>

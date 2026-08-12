@@ -33,6 +33,15 @@ class UnitOfMeasureController extends Controller
         return $this->success(new UnitOfMeasureResource($unit), 'Unit of measure created successfully.', 201);
     }
 
+    public function seed(): JsonResponse
+    {
+        $this->authorize('create', UnitOfMeasure::class);
+
+        $units = $this->unitOfMeasureService->seedDefaults();
+
+        return $this->success(UnitOfMeasureResource::collection($units), 'Default units of measure seeded.');
+    }
+
     public function show(UnitOfMeasure $unitOfMeasure): JsonResponse
     {
         $this->authorize('view', $unitOfMeasure);

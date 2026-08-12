@@ -246,6 +246,7 @@ Route::prefix('v1')->group(function () {
         // "units-of-measure" singularizes to "units_of_measure" (Laravel only
         // singularizes the trailing word, and "measure" is already singular),
         // which wouldn't match the $unitOfMeasure controller parameter.
+        Route::post('units-of-measure/seed', [UnitOfMeasureController::class, 'seed']);
         Route::apiResource('units-of-measure', UnitOfMeasureController::class)
             ->parameters(['units-of-measure' => 'unit_of_measure']);
 

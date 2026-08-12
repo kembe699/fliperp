@@ -101,6 +101,25 @@ export async function fetchUnitsOfMeasure(): Promise<UnitOfMeasure[]> {
   return data.data
 }
 
+export async function createUnitOfMeasure(values: { name: string; abbreviation: string }): Promise<UnitOfMeasure> {
+  const { data } = await api.post<ApiResponse<UnitOfMeasure>>('/units-of-measure', values)
+  return data.data
+}
+
+export async function updateUnitOfMeasure(id: number, values: Partial<{ name: string; abbreviation: string }>): Promise<UnitOfMeasure> {
+  const { data } = await api.put<ApiResponse<UnitOfMeasure>>(`/units-of-measure/${id}`, values)
+  return data.data
+}
+
+export async function deleteUnitOfMeasure(id: number): Promise<void> {
+  await api.delete(`/units-of-measure/${id}`)
+}
+
+export async function seedUnitsOfMeasure(): Promise<UnitOfMeasure[]> {
+  const { data } = await api.post<ApiResponse<UnitOfMeasure[]>>('/units-of-measure/seed')
+  return data.data
+}
+
 // Warehouses
 export async function fetchWarehouses(): Promise<Warehouse[]> {
   const { data } = await api.get<PaginatedResponse<Warehouse>>('/warehouses', { params: { per_page: 100 } })

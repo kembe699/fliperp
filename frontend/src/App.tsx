@@ -40,6 +40,7 @@ import { QuotationDetailPage } from '@/pages/quotations/QuotationDetailPage'
 import { ProductsListPage } from '@/pages/inventory/ProductsListPage'
 import { ProductDetailPage } from '@/pages/inventory/ProductDetailPage'
 import { CategoriesPage } from '@/pages/inventory/CategoriesPage'
+import { UnitsOfMeasurePage } from '@/pages/inventory/UnitsOfMeasurePage'
 import { WarehousesPage } from '@/pages/inventory/WarehousesPage'
 import { StockTransfersListPage } from '@/pages/inventory/StockTransfersListPage'
 import { StockTransferDetailPage } from '@/pages/inventory/StockTransferDetailPage'
@@ -133,6 +134,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/quotations',
   '/products',
   '/categories',
+  '/units-of-measure',
   '/warehouses',
   '/stock-transfers',
   '/stock-adjustments',
@@ -241,6 +243,7 @@ function App() {
           <Route path="/products" element={<ProductsListPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/units-of-measure" element={<UnitsOfMeasurePage />} />
           <Route path="/warehouses" element={<WarehousesPage />} />
           <Route path="/stock-transfers" element={<StockTransfersListPage />} />
           <Route path="/stock-transfers/:id" element={<StockTransferDetailPage />} />

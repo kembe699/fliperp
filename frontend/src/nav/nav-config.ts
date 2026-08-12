@@ -57,6 +57,7 @@ export const navConfig: NavItem[] = [
     children: [
       { label: 'Products', path: '/products', requiredPermission: 'products.view' },
       { label: 'Categories', path: '/categories', requiredPermission: 'categories.view' },
+      { label: 'Units of Measure', path: '/units-of-measure', requiredPermission: 'units-of-measure.view' },
       { label: 'Stock Transfers', path: '/stock-transfers', requiredPermission: 'stock-transfers.view' },
       { label: 'Stock Adjustments', path: '/stock-adjustments', requiredPermission: 'stock-adjustments.view' },
       { label: 'Warehouses', path: '/warehouses', requiredPermission: 'warehouses.view' },
