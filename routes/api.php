@@ -253,6 +253,7 @@ Route::prefix('v1')->group(function () {
 
         Route::apiResource('products', ProductController::class);
         Route::get('products/{product}/stock-movements', [ProductController::class, 'stockMovements']);
+        Route::post('products/{product}/ensure-crm-service', [ProductController::class, 'ensureCrmService']);
         Route::post('products/{product}/image', [ProductController::class, 'uploadImage']);
         Route::delete('products/{product}/image', [ProductController::class, 'deleteImage']);
         Route::apiResource('products.variants', ProductVariantController::class);

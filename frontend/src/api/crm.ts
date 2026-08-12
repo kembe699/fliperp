@@ -72,6 +72,14 @@ export async function ensureCrmServiceProduct(serviceId: number): Promise<Produc
   return data.data
 }
 
+// The reverse — CRM pickers (e.g. attaching an item to a deal) work in terms of CrmService
+// rows, so a plain catalog Product needs a CrmService counterpart before it can be attached
+// the same way a real service would be. See CrmService::fromProduct().
+export async function ensureCrmServiceFromProduct(productId: number): Promise<CrmService> {
+  const { data } = await api.post<ApiResponse<CrmService>>(`/products/${productId}/ensure-crm-service`)
+  return data.data
+}
+
 // --- Pipeline stages ---
 
 export async function fetchCrmPipelineStages(): Promise<CrmPipelineStage[]> {

@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { createCrmDeal, fetchCrmLeads, fetchCrmCustomers, fetchCrmServices } from '@/api/crm'
+import { createCrmDeal, ensureCrmServiceFromProduct, fetchCrmLeads, fetchCrmCustomers, fetchCrmServices } from '@/api/crm'
+import { fetchActiveProducts } from '@/api/products'
 import { fetchUsers } from '@/api/settings'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { formatCurrency } from '@/lib/currency'
 import type { CrmPipelineStage } from '@/types/crm'
 
 import { Button } from '@/components/ui/button'
@@ -13,6 +15,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
+
+const PRODUCT_PREFIX = 'product:'
+const SERVICE_PREFIX = 'service:'
 
 interface CrmDealFormDialogProps {
   open: boolean
@@ -29,6 +34,8 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [pipelineStageId, setPipelineStageId] = useState<string>('')
   const [serviceId, setServiceId] = useState<string>('')
+  const [itemPickerValue, setItemPickerValue] = useState<string | null>(null)
+  const [resolvingItem, setResolvingItem] = useState(false)
   const [title, setTitle] = useState('')
   const [expectedCloseDate, setExpectedCloseDate] = useState('')
   const [assignedTo, setAssignedTo] = useState<string>('')
@@ -49,7 +56,49 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
     queryFn: () => fetchCrmServices({ per_page: 100, is_active: true }),
     enabled: open,
   })
+  const { data: products } = useQuery({
+    queryKey: ['products-all'],
+    queryFn: () => fetchActiveProducts(),
+    enabled: open,
+  })
   const { data: users } = useQuery({ queryKey: ['settings-users-all'], queryFn: () => fetchUsers({ per_page: 100 }), enabled: open })
+
+  const itemPickerOptions = [
+    ...(services?.data ?? []).map((service) => ({
+      value: `${SERVICE_PREFIX}${service.id}`,
+      label: service.name,
+      sublabel: `Service · ${formatCurrency(service.default_price)}`,
+    })),
+    ...(products ?? []).map((product) => ({
+      value: `${PRODUCT_PREFIX}${product.id}`,
+      label: product.name,
+      sublabel: `${product.sku} · ${formatCurrency(product.selling_price)}`,
+    })),
+  ]
+
+  const handlePickItem = async (value: string | null) => {
+    setItemPickerValue(value)
+    if (!value) {
+      setServiceId('')
+      return
+    }
+    if (value.startsWith(SERVICE_PREFIX)) {
+      setServiceId(value.slice(SERVICE_PREFIX.length))
+      return
+    }
+    const productId = Number(value.slice(PRODUCT_PREFIX.length))
+    setResolvingItem(true)
+    try {
+      const service = await ensureCrmServiceFromProduct(productId)
+      setServiceId(String(service.id))
+      queryClient.invalidateQueries({ queryKey: ['crm-services-all'] })
+    } catch (err) {
+      setItemPickerValue(null)
+      setError(getApiErrorInfo(err).message)
+    } finally {
+      setResolvingItem(false)
+    }
+  }
 
   useEffect(() => {
     if (!open) return
@@ -58,6 +107,7 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
     setCustomerId(null)
     setPipelineStageId(defaultStageId ? String(defaultStageId) : stages[0] ? String(stages[0].id) : '')
     setServiceId('')
+    setItemPickerValue(null)
     setTitle('')
     setExpectedCloseDate('')
     setAssignedTo('')
@@ -145,7 +195,8 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Deal value isn't set here — it's calculated automatically once you attach services on the deal's Overview tab.
+            Picking a product or service below attaches it to the deal as soon as it's created, and sets the
+            deal's value from it — add more or change it later from the deal's Overview tab.
           </p>
 
           <div className="grid grid-cols-2 gap-4">
@@ -172,19 +223,15 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Service</Label>
-              <Select value={serviceId} onValueChange={setServiceId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Optional" />
-                </SelectTrigger>
-                <SelectContent>
-                  {services?.data.map((service) => (
-                    <SelectItem key={service.id} value={String(service.id)}>
-                      {service.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Product / Service</Label>
+              <SearchableSelect
+                value={itemPickerValue}
+                onChange={handlePickItem}
+                placeholder={resolvingItem ? 'Adding…' : 'Optional'}
+                searchPlaceholder="Search products and services…"
+                disabled={resolvingItem}
+                options={itemPickerOptions}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Assigned To</Label>

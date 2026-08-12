@@ -92,4 +92,19 @@ class CrmService extends TenantModel
 
         return $product;
     }
+
+    /**
+     * The reverse of ensureProduct(): CRM-facing pickers (e.g. attaching an item to a
+     * deal) work in terms of CrmService rows, not Products, so a plain catalog Product
+     * needs a CrmService counterpart before it can be attached the same way a real
+     * service would be. Reuses the same shadow row on repeat calls via product_id
+     * rather than creating a duplicate every time the same product is picked again.
+     */
+    public static function fromProduct(Product $product): self
+    {
+        return static::query()->firstOrCreate(
+            ['company_id' => $product->company_id, 'product_id' => $product->id],
+            ['name' => $product->name, 'description' => $product->description, 'default_price' => $product->selling_price, 'is_active' => true],
+        );
+    }
 }

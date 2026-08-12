@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\StoreProductImageRequest;
 use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
+use App\Http\Resources\CrmServiceResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\StockMovementResource;
+use App\Models\CrmService;
 use App\Models\Product;
 use App\Services\Inventory\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -95,5 +97,21 @@ class ProductController extends Controller
             ->paginate($request->integer('per_page', 15));
 
         return $this->paginated(StockMovementResource::collection($movements));
+    }
+
+    /**
+     * The reverse of CrmServiceController::ensureProduct — CRM pickers (e.g.
+     * attaching an item to a deal) work in terms of CrmService rows, so a plain
+     * catalog product needs a CrmService counterpart before it can be attached
+     * the same way a real service would be. See CrmService::fromProduct().
+     */
+    public function ensureCrmService(Product $product): JsonResponse
+    {
+        $this->authorize('view', $product);
+        $this->authorize('create', CrmService::class);
+
+        $service = CrmService::fromProduct($product);
+
+        return $this->success(new CrmServiceResource($service));
     }
 }

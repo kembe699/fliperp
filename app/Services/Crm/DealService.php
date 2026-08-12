@@ -68,7 +68,15 @@ class DealService
                 'moved_at' => now(),
             ]);
 
-            return $deal->load(['lead', 'customer', 'pipelineStage', 'service', 'assignedTo']);
+            // crm_service_id alone is just a decorative pointer (CrmDeal::service()) —
+            // without this, a service picked at creation time never actually lands in
+            // the crm_deal_services pivot, so it doesn't show as attached and doesn't
+            // count toward value until the user manually re-adds it on the Overview tab.
+            if (! empty($data['crm_service_id'])) {
+                $this->syncServices($deal, [$data['crm_service_id']]);
+            }
+
+            return $deal->fresh(['lead', 'customer', 'pipelineStage', 'service', 'assignedTo']);
         });
     }
 

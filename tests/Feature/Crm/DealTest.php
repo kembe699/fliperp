@@ -101,6 +101,24 @@ it('rejects moving a deal to a pipeline stage from another company', function ()
         ->assertStatus(422);
 });
 
+it('attaches a service picked at creation time and sets the deal value from it', function () {
+    $service = createCrmService($this->company, ['name' => 'Setup Fee', 'default_price' => 250]);
+
+    $deal = ($this->createDeal)(['crm_service_id' => $service->id]);
+
+    expect((float) $deal['value'])->toBe(250.0);
+
+    $response = $this->getJson("/api/v1/crm/deals/{$deal['id']}/detail")->assertOk();
+    $attachedServiceIds = collect($response->json('data.services'))->pluck('id');
+    expect($attachedServiceIds)->toContain($service->id);
+});
+
+it('leaves the deal value at zero when no service is picked at creation', function () {
+    $deal = ($this->createDeal)();
+
+    expect((float) $deal['value'])->toBe(0.0);
+});
+
 it('returns the kanban board grouped by stage in position order', function () {
     $dealA = ($this->createDeal)(['title' => 'Deal A']);
     $dealB = ($this->createDeal)(['pipeline_stage_id' => $this->contactedStage->id, 'title' => 'Deal B']);
