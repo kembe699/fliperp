@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'company_active' => \App\Http\Middleware\EnsureCompanyActive::class,
+            'platform_staff' => \App\Http\Middleware\EnsurePlatformStaff::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

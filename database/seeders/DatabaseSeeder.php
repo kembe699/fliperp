@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             CurrencySeeder::class,
             DemoCompanySeeder::class,
+            PlatformCompanySeeder::class,
             ChartOfAccountsSeeder::class,
             StatutoryDeductionSeeder::class,
             HRDemoSeeder::class,

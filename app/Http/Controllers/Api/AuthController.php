@@ -22,7 +22,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        $result = $this->authService->login($credentials['email'], $credentials['password']);
+        $result = $this->authService->login($credentials['client_code'], $credentials['email'], $credentials['password']);
 
         return $this->success($this->authPayload($result['user'], $result['token']), 'Logged in successfully.');
     }

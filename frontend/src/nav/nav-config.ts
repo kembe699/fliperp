@@ -144,6 +144,7 @@ export const navConfig: NavItem[] = [
       { label: 'Roles', path: '/settings/roles', requiredPermission: 'roles.view' },
       { label: 'Tax Rates', path: '/settings/tax-rates', requiredPermission: 'tax-rates.view' },
       { label: 'Payment Types', path: '/settings/payment-types', requiredPermission: 'payment-types.view' },
+      { label: 'Support Tickets', path: '/settings/support-tickets', requiredPermission: 'support-tickets.view' },
     ],
   },
 ]

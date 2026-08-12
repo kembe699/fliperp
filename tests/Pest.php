@@ -241,6 +241,29 @@ function createCustomer(Company $company, array $overrides = []): Customer
     ], $overrides));
 }
 
+/**
+ * A platform company (is_platform=true, status=active) with a main branch and one
+ * is_platform_staff=true user holding the platform_admin role — everything a test
+ * needs to act as Nile Hive staff against /platform-admin/* routes.
+ *
+ * @return array{0: Company, 1: Branch, 2: User}
+ */
+function createPlatformCompany(array $userOverrides = []): array
+{
+    $company = Company::factory()->create(['is_platform' => true]);
+    $branch = Branch::factory()->create(['company_id' => $company->id, 'code' => 'HQ', 'is_main' => true]);
+
+    $staff = User::factory()->create(array_merge([
+        'company_id' => $company->id,
+        'branch_id' => $branch->id,
+        'is_platform_staff' => true,
+        'is_active' => true,
+    ], $userOverrides));
+    $staff->assignRole('platform_admin');
+
+    return [$company, $branch, $staff];
+}
+
 function createRestaurantTable(Company $company, Branch $branch, array $overrides = []): RestaurantTable
 {
     return RestaurantTable::create(array_merge([

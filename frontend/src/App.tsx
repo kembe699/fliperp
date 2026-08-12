@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PortalProtectedRoute } from '@/routes/PortalProtectedRoute'
 import { PortalShell } from '@/components/portal/PortalShell'
 import { LoginPage } from '@/pages/LoginPage'
+import { AccountBlockedPage } from '@/pages/AccountBlockedPage'
 import { ReceiptVerifyPage } from '@/pages/ReceiptVerifyPage'
 import { PortalLoginPage } from '@/pages/portal/PortalLoginPage'
 import { PortalDashboardPage } from '@/pages/portal/PortalDashboardPage'
@@ -99,6 +100,14 @@ import { UsersSettingsPage } from '@/pages/settings/UsersSettingsPage'
 import { RolesSettingsPage } from '@/pages/settings/RolesSettingsPage'
 import { TaxRatesSettingsPage } from '@/pages/settings/TaxRatesSettingsPage'
 import { PaymentTypesSettingsPage } from '@/pages/settings/PaymentTypesSettingsPage'
+import { SupportTicketsPage } from '@/pages/support/SupportTicketsPage'
+
+import { PlatformLayout } from '@/components/layout/PlatformLayout'
+import { PlatformDashboardPage } from '@/pages/platform/PlatformDashboardPage'
+import { PlatformClientsPage } from '@/pages/platform/PlatformClientsPage'
+import { PlatformClientDetailPage } from '@/pages/platform/PlatformClientDetailPage'
+import { PlatformBillingPage } from '@/pages/platform/PlatformBillingPage'
+import { PlatformTicketsPage } from '@/pages/platform/PlatformTicketsPage'
 
 interface PlaceholderRoute {
   path: string
@@ -158,6 +167,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/settings/roles',
   '/settings/tax-rates',
   '/settings/payment-types',
+  '/settings/support-tickets',
 ])
 
 const placeholderRoutes: PlaceholderRoute[] = navConfig
@@ -173,6 +183,7 @@ function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/account-blocked" element={<AccountBlockedPage />} />
         <Route path="/verify/:id" element={<ReceiptVerifyPage />} />
 
         <Route path="/employee-portal/login" element={<PortalLoginPage />} />
@@ -291,6 +302,7 @@ function App() {
           <Route path="/settings/roles" element={<RolesSettingsPage />} />
           <Route path="/settings/tax-rates" element={<TaxRatesSettingsPage />} />
           <Route path="/settings/payment-types" element={<PaymentTypesSettingsPage />} />
+          <Route path="/settings/support-tickets" element={<SupportTicketsPage />} />
 
           {placeholderRoutes.map((route) => (
             <Route
@@ -299,6 +311,20 @@ function App() {
               element={<ComingSoonPage title={route.title} parent={route.parent} />}
             />
           ))}
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <PlatformLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/platform-admin" element={<PlatformDashboardPage />} />
+          <Route path="/platform-admin/clients" element={<PlatformClientsPage />} />
+          <Route path="/platform-admin/clients/:id" element={<PlatformClientDetailPage />} />
+          <Route path="/platform-admin/billing" element={<PlatformBillingPage />} />
+          <Route path="/platform-admin/tickets" element={<PlatformTicketsPage />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

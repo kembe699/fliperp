@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, UserCircle } from 'lucide-react'
+import { LogOut, ShieldCheck, UserCircle } from 'lucide-react'
 
 import { useAuthStore } from '@/lib/auth-store'
 import { useUiStore } from '@/lib/ui-store'
@@ -8,6 +8,7 @@ import { disconnectEcho } from '@/lib/echo'
 import { fetchBranches } from '@/api/branches'
 import { logout as logoutRequest } from '@/api/auth'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +74,18 @@ export function AppTopbar() {
         </Select>
 
         <NotificationBell />
+
+        {user?.is_platform_staff && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 rounded-full"
+            onClick={() => navigate('/platform-admin')}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Platform Admin
+          </Button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

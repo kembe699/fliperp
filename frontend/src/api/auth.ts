@@ -2,8 +2,8 @@ import { api } from '@/lib/api'
 import type { ApiResponse } from '@/types/api'
 import type { AuthPayload } from '@/types/auth'
 
-export async function login(email: string, password: string): Promise<AuthPayload> {
-  const { data } = await api.post<ApiResponse<AuthPayload>>('/auth/login', { email, password })
+export async function login(clientCode: string, email: string, password: string): Promise<AuthPayload> {
+  const { data } = await api.post<ApiResponse<AuthPayload>>('/auth/login', { client_code: clientCode, email, password })
   return data.data
 }
 

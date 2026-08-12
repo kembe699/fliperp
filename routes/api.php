@@ -59,6 +59,9 @@ use App\Http\Controllers\Api\PriceListItemController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\PublicSaleController;
 use App\Http\Controllers\Api\ProductVariantController;
+use App\Http\Controllers\Api\PlatformBillingController;
+use App\Http\Controllers\Api\PlatformClientController;
+use App\Http\Controllers\Api\PlatformTicketController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\QuotationController;
@@ -75,6 +78,7 @@ use App\Http\Controllers\Api\StockTransferController;
 use App\Http\Controllers\Api\SupplierBillController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplierPaymentController;
+use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\TaxRateController;
 use App\Http\Controllers\Api\UnitOfMeasureController;
 use App\Http\Controllers\Api\UserController;
@@ -92,7 +96,7 @@ Route::prefix('v1')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
         Route::post('register-company', [AuthController::class, 'registerCompany'])->middleware('throttle:5,60');
 
-        Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware(['auth:sanctum', 'company_active'])->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('me', [AuthController::class, 'me']);
             Route::put('profile', [AuthController::class, 'updateProfile']);
@@ -129,7 +133,7 @@ Route::prefix('v1')->group(function () {
     // with the right symbol instead of falling back to a raw currency code.
     Route::get('currencies', [CurrencyController::class, 'index']);
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'company_active'])->group(function () {
         // Echo's default authorizer is cookie/session based; this app is a
         // bearer-token SPA, so the channel-auth request must go through
         // auth:sanctum like every other endpoint instead of Broadcast::
@@ -420,5 +424,55 @@ Route::prefix('v1')->group(function () {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])
             ->middleware('permission:dashboard.view');
+
+        // Client-facing support tickets — auto-scoped to the caller's own company via
+        // PlatformTicket's TenantModel/CompanyScope, same as every other tenant model.
+        // The platform-staff side of the SAME table lives under /platform-admin/tickets.
+        Route::middleware('permission:support-tickets.view')->group(function () {
+            Route::get('support/tickets', [SupportTicketController::class, 'index']);
+            Route::get('support/tickets/{ticket}', [SupportTicketController::class, 'show']);
+        });
+        Route::post('support/tickets', [SupportTicketController::class, 'store'])
+            ->middleware('permission:support-tickets.create');
+        Route::post('support/tickets/{ticket}/replies', [SupportTicketController::class, 'reply'])
+            ->middleware('permission:support-tickets.reply');
+    });
+
+    // Platform Admin — Nile Hive staff only. Deliberately its own top-level group, NOT
+    // nested inside the block above: no `company_active` check (platform staff must keep
+    // managing a client while THAT client's company is suspended), and every route here
+    // requires `platform_staff` (is_platform_staff=true) on top of the normal per-ability
+    // `permission:platform-x.y` checks — see EnsurePlatformStaff's docblock for why this
+    // is a dedicated middleware rather than reusing/widening CompanyScope.
+    Route::prefix('platform-admin')->middleware(['auth:sanctum', 'platform_staff'])->group(function () {
+        Route::middleware('permission:platform-clients.view')->group(function () {
+            Route::get('clients', [PlatformClientController::class, 'index']);
+            Route::get('clients/{client}', [PlatformClientController::class, 'show']);
+        });
+        Route::post('clients', [PlatformClientController::class, 'store'])
+            ->middleware('permission:platform-clients.create');
+        Route::patch('clients/{client}', [PlatformClientController::class, 'update'])
+            ->middleware('permission:platform-clients.update');
+        Route::patch('clients/{client}/suspend', [PlatformClientController::class, 'suspend'])
+            ->middleware('permission:platform-clients.suspend');
+        Route::patch('clients/{client}/activate', [PlatformClientController::class, 'activate'])
+            ->middleware('permission:platform-clients.activate');
+
+        Route::middleware('permission:platform-billing.view')->group(function () {
+            Route::get('billing/summary', [PlatformBillingController::class, 'summary']);
+        });
+        Route::middleware('permission:platform-billing.create')->group(function () {
+            Route::post('clients/{client}/quotations', [PlatformBillingController::class, 'storeQuotation']);
+            Route::post('clients/{client}/invoices', [PlatformBillingController::class, 'storeInvoice']);
+        });
+
+        Route::middleware('permission:platform-tickets.view')->group(function () {
+            Route::get('tickets', [PlatformTicketController::class, 'index']);
+            Route::get('tickets/{ticket}', [PlatformTicketController::class, 'show']);
+        });
+        Route::middleware('permission:platform-tickets.manage')->group(function () {
+            Route::patch('tickets/{ticket}', [PlatformTicketController::class, 'update']);
+            Route::post('tickets/{ticket}/replies', [PlatformTicketController::class, 'reply']);
+        });
     });
 });

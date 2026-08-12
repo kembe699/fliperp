@@ -12,13 +12,34 @@ use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    public function login(string $email, string $password): array
+    /**
+     * client_code resolves WHICH company's user table to look in — a plain "email
+     * exists somewhere" check would leak whether an email is registered at all
+     * across every tenant. Not found / wrong company / wrong password all fail
+     * with the exact same generic message (standard practice: don't reveal which
+     * part was wrong). Auth::check() is false during login (nobody's authenticated
+     * yet), so CompanyScope adds no WHERE clause here regardless — no bypass needed.
+     */
+    public function login(string $clientCode, string $email, string $password): array
     {
-        $user = User::where('email', $email)->first();
+        $company = Company::where('client_code', $clientCode)->first();
+        $user = $company ? User::where('email', $email)->where('company_id', $company->id)->first() : null;
 
-        if (! $user || ! Hash::check($password, $user->password)) {
+        if (! $company || ! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'client_code' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        if ($company->status === 'suspended') {
+            throw ValidationException::withMessages([
+                'client_code' => ['Your account is currently suspended. Please contact support.'],
+            ]);
+        }
+
+        if ($company->status === 'pending') {
+            throw ValidationException::withMessages([
+                'client_code' => ['Your account is not yet active. Please contact support to complete activation.'],
             ]);
         }
 
@@ -71,6 +92,11 @@ class AuthService
                 'currency_code' => $data['currency_code'] ?? 'USD',
                 'timezone' => $data['timezone'] ?? 'UTC',
                 'is_active' => true,
+                // Self-registration is a separate, pre-existing path from the new
+                // platform-onboarding flow — it should keep working immediately,
+                // not land in 'pending' (that status is for platform-staff-created
+                // clients awaiting activation).
+                'status' => 'active',
             ]);
 
             $branch = Branch::create([

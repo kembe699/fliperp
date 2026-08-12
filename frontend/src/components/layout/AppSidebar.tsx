@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import { logout as logoutRequest } from '@/api/auth'
 import { usePermissions } from '@/hooks/use-permissions'
 import { navConfig } from '@/nav/nav-config'
+import { ContactSupportModal } from '@/components/support/ContactSupportModal'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -53,6 +54,7 @@ export function AppSidebar() {
   }, [location.pathname, visibleNavConfig])
 
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(activeParentLabel ? [activeParentLabel] : []))
+  const [supportModalOpen, setSupportModalOpen] = useState(false)
 
   useEffect(() => {
     if (activeParentLabel) {
@@ -171,10 +173,11 @@ export function AppSidebar() {
 
       {/* Sticky footer */}
       <div className="shrink-0 border-t border-border p-3">
-        <Button className="mb-3 w-full justify-start gap-2" size="sm">
+        <Button className="mb-3 w-full justify-start gap-2" size="sm" onClick={() => setSupportModalOpen(true)}>
           <Headset className="h-4 w-4" />
           Contact Support
         </Button>
+        <ContactSupportModal open={supportModalOpen} onOpenChange={setSupportModalOpen} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

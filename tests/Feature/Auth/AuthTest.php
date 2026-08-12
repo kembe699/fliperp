@@ -11,6 +11,7 @@ it('logs in successfully with valid credentials', function () {
     $user = createUserWithRole('company_admin', $company, $branch);
 
     $response = $this->postJson('/api/v1/auth/login', [
+        'client_code' => $company->client_code,
         'email' => $user->email,
         'password' => 'password',
     ]);
@@ -26,6 +27,7 @@ it('fails to log in with invalid credentials', function () {
     $user = createUserWithRole('company_admin', $company, $branch);
 
     $response = $this->postJson('/api/v1/auth/login', [
+        'client_code' => $company->client_code,
         'email' => $user->email,
         'password' => 'wrong-password',
     ]);
@@ -39,11 +41,11 @@ it('throttles repeated login attempts from the same client', function () {
     $user = createUserWithRole('company_admin', $company, $branch);
 
     for ($i = 0; $i < 10; $i++) {
-        $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong-password'])
+        $this->postJson('/api/v1/auth/login', ['client_code' => $company->client_code, 'email' => $user->email, 'password' => 'wrong-password'])
             ->assertStatus(422);
     }
 
-    $this->postJson('/api/v1/auth/login', ['email' => $user->email, 'password' => 'wrong-password'])
+    $this->postJson('/api/v1/auth/login', ['client_code' => $company->client_code, 'email' => $user->email, 'password' => 'wrong-password'])
         ->assertStatus(429);
 });
 
@@ -52,6 +54,7 @@ it('logs out and revokes the token', function () {
     $user = createUserWithRole('company_admin', $company, $branch);
 
     $token = $this->postJson('/api/v1/auth/login', [
+        'client_code' => $company->client_code,
         'email' => $user->email,
         'password' => 'password',
     ])->json('data.token');
@@ -71,6 +74,7 @@ it('returns the authenticated user on the me endpoint', function () {
     $user = createUserWithRole('company_admin', $company, $branch);
 
     $token = $this->postJson('/api/v1/auth/login', [
+        'client_code' => $company->client_code,
         'email' => $user->email,
         'password' => 'password',
     ])->json('data.token');

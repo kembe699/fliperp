@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import axios from 'axios'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 
 import { login } from '@/api/auth'
 import { useAuthStore } from '@/lib/auth-store'
@@ -13,11 +13,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 const loginSchema = z.object({
+  clientCode: z.string().min(1, 'Client code is required'),
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
+
+// The backend can't tell the frontend "suspended" vs. "pending" vs. "wrong
+// credentials" as a structured code today — login failures all land on the
+// same client_code validation error, distinguished only by message text
+// (see AuthService::login). Matching on these substrings is what decides
+// whether to show the extra "you can't self-serve a ticket, contact us
+// directly" block below.
+function isAccountBlockedMessage(message: string): boolean {
+  return message.includes('suspended') || message.includes('not yet active')
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -35,17 +46,20 @@ export function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setServerError(null)
     try {
-      const payload = await login(values.email, values.password)
+      const payload = await login(values.clientCode, values.email, values.password)
       setAuth(payload)
       navigate('/dashboard', { replace: true })
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setServerError(error.response?.data?.message ?? 'Unable to log in. Please check your credentials.')
+        const fieldMessage = error.response?.data?.errors?.client_code?.[0]
+        setServerError(fieldMessage ?? error.response?.data?.message ?? 'Unable to log in. Please check your credentials.')
       } else {
         setServerError('Unable to log in. Please try again.')
       }
     }
   }
+
+  const accountBlocked = serverError ? isAccountBlockedMessage(serverError) : false
 
   return (
     <div
@@ -62,6 +76,19 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="clientCode">Client Code</Label>
+            <Input
+              id="clientCode"
+              type="text"
+              autoComplete="organization"
+              placeholder="NHC-XXXXX"
+              className="border-0 bg-[#EEF3FB] uppercase placeholder:normal-case"
+              {...register('clientCode')}
+            />
+            {errors.clientCode && <p className="text-xs text-destructive">{errors.clientCode.message}</p>}
+          </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="email">Email or Username</Label>
             <Input
@@ -88,7 +115,20 @@ export function LoginPage() {
             {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
 
-          {serverError && <p className="rounded-lg bg-danger-bg px-3 py-2 text-sm text-danger">{serverError}</p>}
+          {serverError && (
+            <div className="rounded-lg bg-danger-bg px-3 py-2 text-sm text-danger">
+              <p>{serverError}</p>
+              {accountBlocked && (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  Need help? Contact{' '}
+                  <a href="mailto:support@nilehc.tech" className="font-medium underline underline-offset-2">
+                    support@nilehc.tech
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -115,7 +155,7 @@ export function LoginPage() {
 
         <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
           <span>New here? Contact us</span>
-          <a href="#" className="font-medium text-primary hover:underline">
+          <a href="mailto:support@nilehc.tech" className="font-medium text-primary hover:underline">
             Help
           </a>
         </div>

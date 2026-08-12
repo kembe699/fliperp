@@ -34,6 +34,17 @@ api.interceptors.response.use(
         window.location.href = '/login'
       }
     }
+    // A company suspended/marked pending mid-session — EnsureCompanyActive rejects
+    // the very next request with this reason, not just future logins. Full-page
+    // redirect (not a React Query error toast): the whole app should stop, not
+    // keep rendering half-authenticated screens.
+    const reason = error.response?.data?.reason
+    if (error.response?.status === 403 && (reason === 'company_suspended' || reason === 'company_pending')) {
+      useAuthStore.getState().clearAuth()
+      if (!window.location.pathname.startsWith('/account-blocked')) {
+        window.location.href = `/account-blocked?reason=${reason}`
+      }
+    }
     return Promise.reject(error)
   },
 )

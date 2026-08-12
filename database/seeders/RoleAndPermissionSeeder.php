@@ -111,6 +111,19 @@ class RoleAndPermissionSeeder extends Seeder
         // CustomerVisibilityService. Manager-tier roles get this; a
         // support/sales staffer only sees their own book of customers.
         'crm-customers' => ['view-all'],
+
+        // Platform Admin (Nile Hive staff only — see PlatformStaff middleware,
+        // which additionally requires users.is_platform_staff = true regardless
+        // of these permissions; a non-platform-staff user holding these grants
+        // alone still can't reach /platform-admin/*).
+        'platform-clients' => ['view', 'create', 'update', 'suspend', 'activate'],
+        'platform-billing' => ['view', 'create'],
+        'platform-tickets' => ['view', 'manage'],
+
+        // Support tickets a tenant user raises about their own company/account
+        // (distinct from platform-tickets.* above, which is the platform-staff
+        // side of the same table).
+        'support-tickets' => ['view', 'create', 'reply'],
     ];
 
     /**
@@ -198,7 +211,88 @@ class RoleAndPermissionSeeder extends Seeder
             'crm-emails' => ['view', 'create'],
             'crm-reports' => ['view'],
             'crm-customers' => ['view-all'],
+            'support-tickets' => ['view', 'create', 'reply'],
         ],
+
+        // Nile Hive staff — everything company_admin has (they're a normal user of their
+        // own home tenant, the platform company) PLUS the platform-* modules gating
+        // /platform-admin/* (also requires users.is_platform_staff = true — see the
+        // platform_staff middleware; holding this role alone isn't enough).
+        'platform_admin' => [
+            'companies' => ['view', 'update'],
+            'branches' => ['view', 'create', 'update', 'delete'],
+            'users' => ['view', 'create', 'update', 'delete'],
+            'roles' => ['view', 'create', 'update', 'delete'],
+            'permissions' => ['view', 'assign'],
+            'audit-logs' => ['view'],
+            'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
+            'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],
+            'departments' => ['view', 'create', 'update', 'delete'],
+            'positions' => ['view', 'create', 'update', 'delete'],
+            'employees' => ['view', 'create', 'update', 'delete'],
+            'employee-contracts' => ['view', 'create', 'update', 'delete'],
+            'attendance' => ['view', 'create', 'update', 'delete'],
+            'attendance-geofences' => ['view', 'create', 'update', 'delete'],
+            'leave-types' => ['view', 'create', 'update', 'delete'],
+            'leave-requests' => ['view', 'create', 'update', 'delete', 'approve', 'reject'],
+            'payroll-runs' => ['view', 'create', 'process'],
+            'salary-structures' => ['view', 'create', 'update', 'delete'],
+            'statutory-deduction-rules' => ['view', 'create', 'update', 'delete'],
+            'asset-categories' => ['view', 'create', 'update', 'delete'],
+            'assets' => ['view', 'create', 'update', 'delete', 'assign', 'dispose', 'run-depreciation'],
+            'vehicles' => ['view', 'create', 'update', 'delete'],
+            'dispatches' => ['view', 'create', 'update', 'delete', 'track'],
+            'budget-periods' => ['view', 'create', 'update', 'delete'],
+            'budget-lines' => ['view', 'create', 'update', 'delete'],
+            'me-projects' => ['view', 'create', 'update', 'delete'],
+            'me-indicators' => ['view', 'create', 'update', 'delete'],
+            'me-activities' => ['view', 'create', 'update', 'delete'],
+            'me-results' => ['view', 'create', 'update', 'delete'],
+            'categories' => ['view', 'create', 'update', 'delete'],
+            'units-of-measure' => ['view', 'create', 'update', 'delete'],
+            'products' => ['view', 'create', 'update', 'delete'],
+            'warehouses' => ['view', 'create', 'update', 'delete'],
+            'stock-levels' => ['view'],
+            'stock-movements' => ['view', 'manual'],
+            'stock-transfers' => ['view', 'create', 'update', 'delete', 'complete'],
+            'stock-adjustments' => ['view', 'create', 'update', 'delete', 'approve'],
+            'suppliers' => ['view', 'create', 'update', 'delete'],
+            'purchase-orders' => ['view', 'create', 'update', 'delete', 'submit', 'approve', 'cancel'],
+            'goods-received-notes' => ['view', 'create', 'update', 'delete', 'confirm'],
+            'supplier-bills' => ['view', 'create', 'update', 'delete'],
+            'supplier-payments' => ['view', 'create', 'update', 'delete'],
+            'tax-rates' => ['view', 'create', 'update', 'delete'],
+            'payment-types' => ['view', 'create', 'update', 'delete'],
+            'customers' => ['view', 'create', 'update', 'delete'],
+            'restaurant-tables' => ['view', 'create', 'update', 'delete'],
+            'cash-drawer-sessions' => ['view', 'open', 'close', 'reconcile'],
+            'sales' => ['view', 'create', 'update', 'delete', 'hold', 'complete', 'void', 'refund'],
+            'pos-reports' => ['view'],
+            'price-lists' => ['view', 'create', 'update', 'delete'],
+            'promotions' => ['view', 'create', 'update', 'delete'],
+            'quotations' => ['view', 'create', 'update', 'delete', 'send', 'accept', 'reject', 'convert-to-invoice'],
+            'invoices' => ['view', 'create', 'update', 'delete', 'send', 'cancel'],
+            'customer-payments' => ['view', 'create', 'update', 'delete'],
+            'accounting-periods' => ['view', 'create', 'update', 'delete', 'close'],
+            'reports' => ['view', 'snapshot'],
+            'dashboard' => ['view'],
+            'crm-services' => ['view', 'create', 'update', 'delete'],
+            'crm-pipeline-stages' => ['view', 'create', 'update', 'delete', 'reorder'],
+            'crm-leads' => ['view', 'create', 'update', 'delete', 'convert'],
+            'crm-deals' => ['view', 'create', 'update', 'delete', 'move-stage'],
+            'crm-customer-services' => ['view', 'create', 'update', 'delete'],
+            'crm-account-assignments' => ['view', 'assign', 'unassign'],
+            'crm-activities' => ['view', 'create', 'update', 'delete', 'resolve'],
+            'crm-meetings' => ['view', 'create', 'update', 'delete'],
+            'crm-emails' => ['view', 'create'],
+            'crm-reports' => ['view'],
+            'crm-customers' => ['view-all'],
+            'support-tickets' => ['view', 'create', 'reply'],
+            'platform-clients' => ['view', 'create', 'update', 'suspend', 'activate'],
+            'platform-billing' => ['view', 'create'],
+            'platform-tickets' => ['view', 'manage'],
+        ],
+
         'branch_manager' => [
             'branches' => ['view'],
             'users' => ['view', 'create', 'update'],
@@ -248,6 +342,7 @@ class RoleAndPermissionSeeder extends Seeder
             'crm-emails' => ['view', 'create'],
             'crm-reports' => ['view'],
             'crm-customers' => ['view-all'],
+            'support-tickets' => ['view', 'create', 'reply'],
         ],
         'cashier' => [
             'branches' => ['view'],
@@ -266,6 +361,7 @@ class RoleAndPermissionSeeder extends Seeder
             'sales' => ['view', 'create', 'update', 'delete', 'hold', 'complete', 'void', 'refund'],
             'pos-reports' => ['view'],
             'dashboard' => ['view'],
+            'support-tickets' => ['view', 'create', 'reply'],
         ],
         'accountant' => [
             'branches' => ['view'],
@@ -302,6 +398,7 @@ class RoleAndPermissionSeeder extends Seeder
             'reports' => ['view', 'snapshot'],
             'dashboard' => ['view'],
             'crm-reports' => ['view'],
+            'support-tickets' => ['view', 'create', 'reply'],
         ],
         'procurement_officer' => [
             'branches' => ['view'],
@@ -322,6 +419,7 @@ class RoleAndPermissionSeeder extends Seeder
             'goods-received-notes' => ['view', 'create', 'update', 'delete', 'confirm'],
             'supplier-bills' => ['view', 'create'],
             'supplier-payments' => ['view', 'create'],
+            'support-tickets' => ['view', 'create', 'reply'],
         ],
 
         // Employee Self-Service Portal: intentionally granted zero module

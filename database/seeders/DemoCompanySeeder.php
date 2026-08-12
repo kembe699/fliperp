@@ -19,6 +19,7 @@ class DemoCompanySeeder extends Seeder
             'currency_code' => 'USD',
             'timezone' => 'UTC',
             'is_active' => true,
+            'status' => 'active',
         ]);
 
         $branch = Branch::create([
