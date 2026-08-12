@@ -50,6 +50,28 @@ it('deletes the company logo and clears logo_url', function () {
     Storage::disk('public')->assertMissing($path);
 });
 
+it('embeds the companys own uploaded logo as a data URI, for PDF rendering', function () {
+    $this->postJson('/api/v1/company/logo', [
+        'image' => UploadedFile::fake()->create('logo.png', 200, 'image/png'),
+    ])->assertOk();
+
+    $dataUri = $this->company->fresh()->logoDataUri();
+
+    expect($dataUri)->not->toBeNull();
+    expect($dataUri)->toStartWith('data:');
+    expect($dataUri)->toContain(';base64,');
+});
+
+it('returns null (not a bundled fallback logo) for logoDataUri when the company has no logo', function () {
+    expect($this->company->logoDataUri())->toBeNull();
+});
+
+it('returns null for logoDataUri when logo_url does not point at our own public storage', function () {
+    $this->company->update(['logo_url' => 'https://example.com/some-external-image.png']);
+
+    expect($this->company->fresh()->logoDataUri())->toBeNull();
+});
+
 it('denies a super_admin with no single company from using the convenience logo endpoint', function () {
     $superAdmin = createUserWithRole('super_admin');
     // createUserWithRole() runs while $this->admin (company-scoped) is still the

@@ -189,7 +189,7 @@
 </head>
 <body>
     <div class="center">
-        @if ($logoPath = $company?->logoFilePath())
+        @if ($logoPath = $company?->logoDataUri())
             <img src="{{ $logoPath }}" alt="{{ $company->name }}" class="logo">
         @endif
         <p class="company-name">{{ strtoupper($company->name ?? 'Receipt') }}</p>

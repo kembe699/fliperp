@@ -1,8 +1,7 @@
 {{-- Expects: $companyName, $branchName, $branchAddress, $branchPhone, $documentType, $referenceNumber, $documentDate, $metaRows (array<string,string>), optional $referenceLabel (default "Reference"), optional $company (for logo) --}}
 @php($referenceLabel = $referenceLabel ?? 'Reference')
-@php($logoPath = ($company ?? null)?->logoFilePath())
+@php($logoPath = ($company ?? null)?->logoDataUri())
 <div class="header">
-    <div class="header-band"></div>
     <div class="header-inner">
         <table style="width: 100%; border-collapse: collapse;">
             <tr>

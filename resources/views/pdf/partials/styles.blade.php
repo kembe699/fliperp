@@ -1,12 +1,12 @@
 @php
     $accent = '#1B5FAE';
-    $accentDark = '#123F73';
-    $accentTint = '#EAF1FA';
-    $ink = '#000000';
+    $ink = '#111827';
+    $muted = '#6B7280';
+    $rule = '#E5E7EB';
 @endphp
 <style>
     @page {
-        margin: 185px 48px 95px 48px;
+        margin: 145px 48px 80px 48px;
     }
 
     * {
@@ -15,7 +15,7 @@
 
     body {
         font-family: 'Helvetica', 'DejaVu Sans', sans-serif;
-        font-size: 10.5pt;
+        font-size: 10pt;
         color: {{ $ink }};
         margin: 0;
         padding: 0;
@@ -23,16 +23,10 @@
 
     .header {
         position: fixed;
-        top: -175px;
+        top: -145px;
         left: -48px;
         right: -48px;
-        height: 175px;
-    }
-
-    .header-band {
-        height: 6px;
-        background-color: {{ $accent }};
-        margin-bottom: 22px;
+        height: 145px;
     }
 
     .header-inner {
@@ -40,8 +34,8 @@
     }
 
     .company-logo {
-        max-width: 155px;
-        max-height: 60px;
+        max-width: 150px;
+        max-height: 50px;
         width: auto;
         height: auto;
         display: block;
@@ -49,31 +43,25 @@
     }
 
     .company-name {
-        font-size: 17pt;
+        font-size: 14pt;
         font-weight: bold;
         color: {{ $ink }};
-        margin: 0 0 3px 0;
-        letter-spacing: 0.2px;
+        margin: 0 0 4px 0;
     }
 
     .company-meta {
         font-size: 8.5pt;
-        color: {{ $ink }};
-        line-height: 1.6;
-    }
-
-    .doc-meta-table {
-        width: 100%;
+        color: {{ $muted }};
+        line-height: 1.5;
     }
 
     .doc-title {
-        font-size: 19pt;
+        font-size: 15pt;
         font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.3px;
         color: {{ $accent }};
         text-align: right;
-        margin: 0 0 10px 0;
+        margin: 0 0 8px 0;
     }
 
     .doc-meta-row {
@@ -84,44 +72,34 @@
     }
 
     .doc-meta-label {
-        color: {{ $ink }};
+        color: {{ $muted }};
         text-transform: uppercase;
         font-size: 7.5pt;
         font-weight: bold;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
     }
 
     .rule {
         border: none;
-        border-top: 2px solid {{ $accent }};
-        margin: 14px 48px 18px 48px;
-    }
-
-    .rule-thin {
-        border: none;
-        border-top: 1px solid {{ $accent }};
-        margin: 0;
+        border-top: 1px solid {{ $rule }};
+        margin: 16px 0 0 0;
     }
 
     .section-label {
         text-transform: uppercase;
         font-size: 7.5pt;
         font-weight: bold;
-        letter-spacing: 0.6px;
-        color: {{ $accent }};
+        letter-spacing: 0.5px;
+        color: {{ $muted }};
         margin: 0 0 6px 0;
     }
 
     .bill-to-box {
-        background-color: {{ $accentTint }};
-        border: 1px solid #D6E3F3;
-        border-radius: 4px;
-        padding: 12px 16px;
-        margin-bottom: 4px;
+        margin: 28px 0 4px 0;
     }
 
     .bill-to-name {
-        font-size: 12pt;
+        font-size: 11pt;
         font-weight: bold;
         color: {{ $ink }};
         margin: 0 0 3px 0;
@@ -129,7 +107,7 @@
 
     .bill-to-meta {
         font-size: 9pt;
-        color: {{ $ink }};
+        color: {{ $muted }};
         line-height: 1.5;
     }
 
@@ -143,21 +121,11 @@
         text-transform: uppercase;
         font-size: 7.5pt;
         font-weight: bold;
-        letter-spacing: 0.5px;
-        color: {{ $ink }};
+        letter-spacing: 0.4px;
+        color: {{ $muted }};
         text-align: left;
-        padding: 8px 8px;
-        background-color: {{ $accentTint }};
-        border-top: 1.5px solid {{ $accent }};
-        border-bottom: 1.5px solid {{ $accent }};
-    }
-
-    table.items thead th:first-child {
-        border-left: 1.5px solid {{ $accent }};
-    }
-
-    table.items thead th:last-child {
-        border-right: 1.5px solid {{ $accent }};
+        padding: 0 8px 8px 8px;
+        border-bottom: 1px solid {{ $ink }};
     }
 
     table.items thead th.num {
@@ -165,8 +133,8 @@
     }
 
     table.items tbody td {
-        padding: 8px 8px;
-        border-bottom: 1px solid #E5E7EB;
+        padding: 9px 8px;
+        border-bottom: 1px solid {{ $rule }};
         font-size: 9.5pt;
         color: {{ $ink }};
         vertical-align: top;
@@ -177,17 +145,10 @@
         white-space: nowrap;
     }
 
-    table.items tbody tr:nth-child(even) {
-        background-color: #F7FAFD;
-    }
-
     .totals {
-        width: 300px;
+        width: 260px;
         margin-left: auto;
-        margin-top: 16px;
-        border: 1px solid #D6E3F3;
-        border-radius: 4px;
-        overflow: hidden;
+        margin-top: 4px;
     }
 
     .totals table {
@@ -196,7 +157,7 @@
     }
 
     .totals td {
-        padding: 7px 14px;
+        padding: 6px 0;
         font-size: 9.5pt;
         color: {{ $ink }};
         white-space: nowrap;
@@ -204,6 +165,7 @@
 
     .totals td.label {
         text-align: left;
+        color: {{ $muted }};
     }
 
     .totals td.value {
@@ -211,30 +173,25 @@
     }
 
     .totals tr.total-row td {
-        background-color: {{ $accent }};
+        border-top: 1px solid {{ $ink }};
         padding-top: 10px;
-        padding-bottom: 10px;
-        font-size: 13pt;
+        font-size: 12pt;
         font-weight: bold;
-        color: #FFFFFF;
+        color: {{ $ink }};
     }
 
     .footer {
         position: fixed;
-        bottom: -85px;
+        bottom: -70px;
         left: -48px;
         right: -48px;
-        height: 85px;
-    }
-
-    .footer-band {
-        height: 3px;
-        background-color: {{ $accent }};
+        height: 70px;
+        padding: 0 48px;
     }
 
     .footer-notes {
         font-size: 8.5pt;
-        color: {{ $ink }};
+        color: {{ $muted }};
         line-height: 1.6;
     }
 
@@ -243,10 +200,10 @@
         font-size: 7.5pt;
         font-weight: bold;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #FFFFFF;
-        background-color: {{ $accentDark }};
-        padding: 3px 10px;
+        letter-spacing: 0.4px;
+        color: {{ $muted }};
+        border: 1px solid {{ $rule }};
+        padding: 3px 9px;
         border-radius: 3px;
     }
 </style>

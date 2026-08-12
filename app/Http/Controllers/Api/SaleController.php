@@ -170,7 +170,7 @@ class SaleController extends Controller
 
     protected function receiptHeightPoints(Sale $sale, ?Company $company): float
     {
-        $base = $company?->logoFilePath() ? 462.0 : 432.0;
+        $base = $company?->logoDataUri() ? 462.0 : 432.0;
         $perItem = 26.0;
         $perPayment = 14.0;
 
