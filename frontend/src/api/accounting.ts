@@ -25,6 +25,11 @@ export async function deleteChartOfAccount(id: number): Promise<void> {
   await api.delete(`/chart-of-accounts/${id}`)
 }
 
+export async function seedChartOfAccounts(): Promise<ChartOfAccount[]> {
+  const { data } = await api.post<ApiResponse<ChartOfAccount[]>>('/chart-of-accounts/seed')
+  return data.data
+}
+
 // Journal entries
 export interface JournalEntryFilters {
   page?: number

@@ -102,7 +102,7 @@ export function PlatformBillingFormDialog({ open, onOpenChange, clientId, kind }
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) reset(); onOpenChange(next) }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{kind === 'invoice' ? 'Create Invoice' : 'Create Quotation'}</DialogTitle>
         </DialogHeader>
@@ -119,14 +119,16 @@ export function PlatformBillingFormDialog({ open, onOpenChange, clientId, kind }
             <Input id="billing-date" type="date" required value={dateValue} onChange={(event) => setDateValue(event.target.value)} />
           </div>
 
-          <LineItemsEditor
-            rows={rows}
-            onChange={setRows}
-            products={products ?? []}
-            taxRates={taxRates ?? []}
-            services={canUseCrmServices ? servicesPage?.data : undefined}
-            onResolveService={canUseCrmServices ? resolveService : undefined}
-          />
+          <div className="overflow-x-auto">
+            <LineItemsEditor
+              rows={rows}
+              onChange={setRows}
+              products={products ?? []}
+              taxRates={taxRates ?? []}
+              services={canUseCrmServices ? servicesPage?.data : undefined}
+              onResolveService={canUseCrmServices ? resolveService : undefined}
+            />
+          </div>
 
           <div className="space-y-1 border-t border-border pt-3 text-sm">
             <div className="flex items-center justify-between text-muted-foreground">

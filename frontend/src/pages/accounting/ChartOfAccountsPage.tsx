@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles } from 'lucide-react'
 
-import { createChartOfAccount, deleteChartOfAccount, updateChartOfAccount } from '@/api/accounting'
+import { createChartOfAccount, deleteChartOfAccount, seedChartOfAccounts, updateChartOfAccount } from '@/api/accounting'
 import { fetchChartOfAccounts } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
@@ -87,6 +87,15 @@ export function ChartOfAccountsPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const seedMutation = useMutation({
+    mutationFn: seedChartOfAccounts,
+    onSuccess: (seeded) => {
+      toast.success(`${seeded.length} accounts available`)
+      queryClient.invalidateQueries({ queryKey: ['chart-of-accounts'] })
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
   const columns: DataTableColumn<ChartOfAccount>[] = [
     { key: 'code', header: 'Code', accessor: (row) => row.code, sortable: true },
     { key: 'name', header: 'Name', accessor: (row) => row.name },
@@ -108,6 +117,12 @@ export function ChartOfAccountsPage() {
         action={
           <div className="flex gap-2">
             <ExportCsvButton onExport={async () => exportToCsv('chart-of-accounts.csv', csvColumnsFromDataTable(columns), filtered)} />
+            {can('chart-of-accounts.create') && (
+              <Button variant="outline" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
+                <Sparkles className="h-4 w-4" />
+                {seedMutation.isPending ? 'Seeding…' : 'Seed Common Accounts'}
+              </Button>
+            )}
             {can('chart-of-accounts.create') && (
               <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
                 <Plus className="h-4 w-4" />

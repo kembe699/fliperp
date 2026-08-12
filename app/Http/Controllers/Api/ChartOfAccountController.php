@@ -33,6 +33,15 @@ class ChartOfAccountController extends Controller
         return $this->success(new ChartOfAccountResource($account), 'Chart of account created successfully.', 201);
     }
 
+    public function seed(): JsonResponse
+    {
+        $this->authorize('create', ChartOfAccount::class);
+
+        $accounts = $this->chartOfAccountService->seedDefaults();
+
+        return $this->success(ChartOfAccountResource::collection($accounts), 'Default chart of accounts seeded.');
+    }
+
     public function show(ChartOfAccount $chartOfAccount): JsonResponse
     {
         $this->authorize('view', $chartOfAccount);
