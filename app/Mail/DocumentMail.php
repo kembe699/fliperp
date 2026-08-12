@@ -36,7 +36,7 @@ class DocumentMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(markdown: 'emails.document');
+        return new Content(view: 'emails.document');
     }
 
     public function attachments(): array
