@@ -14,6 +14,7 @@ import { downloadPdf } from '@/lib/pdf-download'
 import { useAuthStore } from '@/lib/auth-store'
 import { usePermissions } from '@/hooks/use-permissions'
 import { QUOTATION_STATUS_LABEL, QUOTATION_STATUS_VARIANT } from '@/components/sales/status-variants'
+import { isQuotationEditable } from '@/types/quotation'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -104,7 +105,7 @@ export function QuotationDetailPage() {
     return <div className="p-6 text-sm text-muted-foreground">Loading quotation…</div>
   }
 
-  const canEdit = can('quotations.update') && quotation.status === 'draft'
+  const canEdit = can('quotations.update') && isQuotationEditable(quotation.status)
   const canSend = can('quotations.send') && quotation.status === 'draft'
   const canAccept = can('quotations.accept') && quotation.status === 'sent'
   const canReject = can('quotations.reject') && quotation.status === 'sent'

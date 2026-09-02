@@ -1,5 +1,15 @@
 export type QuotationStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted'
 
+/**
+ * Mirrors QuotationService::EDITABLE_STATUSES on the API — a sent quotation
+ * can still be revised, but one the customer has responded to (accepted /
+ * rejected / expired) or that has been billed (converted) is locked.
+ */
+export const EDITABLE_QUOTATION_STATUSES: QuotationStatus[] = ['draft', 'sent']
+
+export const isQuotationEditable = (status: QuotationStatus): boolean =>
+  EDITABLE_QUOTATION_STATUSES.includes(status)
+
 export interface QuotationItem {
   id: number
   quotation_id: number

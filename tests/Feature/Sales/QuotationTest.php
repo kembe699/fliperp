@@ -47,12 +47,23 @@ it('allows rejecting a sent quotation', function () {
     $this->postJson("/api/v1/quotations/{$quotation['id']}/reject")->assertOk()->assertJsonPath('data.status', 'rejected');
 });
 
-it('blocks editing and deleting a quotation once it is no longer draft', function () {
+it('allows editing a sent quotation, but locks it once the customer has responded', function () {
     $quotation = ($this->createDraftQuotation)();
     $this->postJson("/api/v1/quotations/{$quotation['id']}/send")->assertOk();
 
-    $this->putJson("/api/v1/quotations/{$quotation['id']}", ['notes' => 'changed'])->assertStatus(422);
+    // Revising after sending is normal practice (a corrected price, a line the
+    // customer asked for) — and the edit must not knock it back to draft.
+    $this->putJson("/api/v1/quotations/{$quotation['id']}", ['notes' => 'changed'])
+        ->assertOk()
+        ->assertJsonPath('data.notes', 'changed')
+        ->assertJsonPath('data.status', 'sent');
+
+    // Deleting still requires draft, so a sent quotation can't vanish on the customer.
     $this->deleteJson("/api/v1/quotations/{$quotation['id']}")->assertStatus(422);
+
+    // Once accepted the figures back a decision (and soon an invoice) — locked.
+    $this->postJson("/api/v1/quotations/{$quotation['id']}/accept")->assertOk();
+    $this->putJson("/api/v1/quotations/{$quotation['id']}", ['notes' => 'too late'])->assertStatus(422);
 });
 
 it('only converts an accepted quotation, copying items 1:1 and linking both records', function () {

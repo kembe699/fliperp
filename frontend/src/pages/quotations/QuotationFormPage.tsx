@@ -13,7 +13,7 @@ import { getApiErrorInfo } from '@/lib/api-errors'
 import { computeTotals } from '@/lib/sales-totals'
 import { useAuthStore } from '@/lib/auth-store'
 import { usePermissions } from '@/hooks/use-permissions'
-import type { QuotationFormInput } from '@/types/quotation'
+import { isQuotationEditable, type QuotationFormInput } from '@/types/quotation'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -157,7 +157,7 @@ export function QuotationFormPage() {
     return <div className="p-6 text-sm text-muted-foreground">Loading quotation…</div>
   }
 
-  if (isEdit && existingQuotation && existingQuotation.status !== 'draft') {
+  if (isEdit && existingQuotation && !isQuotationEditable(existingQuotation.status)) {
     return <Navigate to={`/quotations/${id}`} replace />
   }
 

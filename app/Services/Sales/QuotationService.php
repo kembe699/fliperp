@@ -66,11 +66,22 @@ class QuotationService
         });
     }
 
+    /**
+     * Statuses a quotation can still be edited in. A sent quotation is
+     * included because revising one after sending (a corrected price, an
+     * extra line the customer asked for) is normal practice and previously
+     * forced staff to delete and re-create it. Editing stops once the
+     * customer has responded or the quotation has been billed — accepted,
+     * rejected, expired and converted all stay locked, since by then the
+     * figures back an invoice or a decision.
+     */
+    public const EDITABLE_STATUSES = ['draft', 'sent'];
+
     public function update(Quotation $quotation, array $data): Quotation
     {
-        if ($quotation->status !== 'draft') {
+        if (! in_array($quotation->status, self::EDITABLE_STATUSES, true)) {
             throw ValidationException::withMessages([
-                'status' => ['Only draft quotations can be edited.'],
+                'status' => ['Only draft or sent quotations can be edited.'],
             ]);
         }
 

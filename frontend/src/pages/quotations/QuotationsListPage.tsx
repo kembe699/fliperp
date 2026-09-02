@@ -11,7 +11,7 @@ import { formatDate } from '@/lib/format'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import { QUOTATION_STATUS_LABEL, QUOTATION_STATUS_VARIANT } from '@/components/sales/status-variants'
-import type { Quotation, QuotationStatus } from '@/types/quotation'
+import { isQuotationEditable, type Quotation, type QuotationStatus } from '@/types/quotation'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { FilterBar } from '@/components/layout/FilterBar'
@@ -67,7 +67,7 @@ export function QuotationsListPage() {
 
   const rowActions: (row: Quotation) => DataTableRowAction<Quotation>[] = (row) => [
     { label: 'View', onClick: (quotation) => navigate(`/quotations/${quotation.id}`) },
-    ...(row.status === 'draft' && can('quotations.update')
+    ...(isQuotationEditable(row.status) && can('quotations.update')
       ? [{ label: 'Edit', onClick: (quotation: Quotation) => navigate(`/quotations/${quotation.id}/edit`) }]
       : []),
   ]
