@@ -4,6 +4,7 @@ namespace App\Services\EmployeePortal;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class EmployeePortalAuthService
@@ -13,7 +14,11 @@ class EmployeePortalAuthService
         // Login runs unauthenticated, so User's CompanyScope is skipped
         // automatically (it only applies once Auth::check() is true) —
         // this search is intentionally unscoped, mirroring AuthService::login().
-        $user = User::where('email', $email)->first();
+        // Case-insensitive and trimmed, for the same reason as AuthService::login():
+        // PostgreSQL compares exactly, and a phone keyboard autocapitalises the
+        // first letter of an email, which then matches nothing and reports back as
+        // a wrong password.
+        $user = User::whereRaw('LOWER(email) = ?', [Str::lower(trim($email))])->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([

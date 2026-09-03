@@ -78,26 +78,53 @@ export function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="clientCode">Client Code</Label>
+            {/*
+              The `uppercase` class is text-transform — it changes only how the
+              value looks, never what is submitted. The field therefore displayed
+              NHC-WMRYI while sending nhc-wmryi, and the lookup found nothing, so
+              a correctly-typed code was reported as wrong credentials. The input
+              event now normalises the value itself, and autoCapitalize/autoCorrect
+              stop a phone keyboard editing it on the way in.
+            */}
             <Input
               id="clientCode"
               type="text"
               autoComplete="organization"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="NHC-XXXXX"
               className="border-0 bg-[#EEF3FB] uppercase placeholder:normal-case"
-              {...register('clientCode')}
+              {...register('clientCode', {
+                setValueAs: (v: string) => (v ?? '').trim().toUpperCase(),
+              })}
+              onInput={(e) => {
+                const el = e.currentTarget
+                el.value = el.value.toUpperCase()
+              }}
             />
             {errors.clientCode && <p className="text-xs text-destructive">{errors.clientCode.message}</p>}
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="email">Email or Username</Label>
+            {/*
+              autoCapitalize is what matters on a phone: without it the keyboard
+              capitalises the first letter, turning admin@x.com into Admin@x.com,
+              which no longer matches and reads back as a wrong password.
+            */}
             <Input
               id="email"
               type="text"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="you@company.com"
               className="border-0 bg-[#EEF3FB]"
-              {...register('email')}
+              {...register('email', {
+                setValueAs: (v: string) => (v ?? '').trim(),
+              })}
             />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>

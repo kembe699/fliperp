@@ -22,8 +22,25 @@ class AuthService
      */
     public function login(string $clientCode, string $email, string $password): array
     {
-        $company = Company::where('client_code', $clientCode)->first();
-        $user = $company ? User::where('email', $email)->where('company_id', $company->id)->first() : null;
+        // Case-insensitive, whitespace-tolerant lookups.
+        //
+        // PostgreSQL compares strings exactly, unlike MySQL, and client codes are
+        // stored uppercase (NHC-WMRYI). Anything else the user types — a lowercase
+        // code, or an email a phone keyboard has autocapitalised to Admin@... —
+        // matched nothing and came back as "credentials are incorrect", which sent
+        // people hunting for a password problem that did not exist. A pasted value
+        // with a stray leading or trailing space failed the same way.
+        //
+        // Normalising here rather than only in the form means existing users are
+        // fixed without having to retype anything, and any future caller (mobile
+        // app, integration) gets the same tolerance.
+        $clientCode = trim($clientCode);
+        $email = trim($email);
+
+        $company = Company::whereRaw('LOWER(client_code) = ?', [Str::lower($clientCode)])->first();
+        $user = $company
+            ? User::whereRaw('LOWER(email) = ?', [Str::lower($email)])->where('company_id', $company->id)->first()
+            : null;
 
         if (! $company || ! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
