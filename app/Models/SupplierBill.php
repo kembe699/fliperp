@@ -27,6 +27,7 @@ class SupplierBill extends TenantModel
         'journal_entry_id',
         'currency_code',
         'exchange_rate',
+        'expense_account_id',
     ];
 
     protected function casts(): array

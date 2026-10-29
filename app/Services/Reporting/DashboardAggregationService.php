@@ -6,6 +6,7 @@ use App\Models\BudgetPeriod;
 use App\Models\CashDrawerSession;
 use App\Models\ChartOfAccount;
 use App\Models\Invoice;
+use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\LeaveRequest;
 use App\Models\PayrollRun;
@@ -80,7 +81,7 @@ class DashboardAggregationService
         $baseQuery = fn (int $accountId) => JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $companyId)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
             ->where('journal_entry_lines.account_id', $accountId)
             ->whereBetween('journal_entries.entry_date', [$from, $to])
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId));

@@ -21,6 +21,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   customer_payments: 'Customer Payments',
   supplier_payments: 'Supplier Payments',
   payroll_runs: 'Payroll',
+  other: 'Other (manual journals, transfers, assets)',
 }
 
 export function CashFlowReportPage() {

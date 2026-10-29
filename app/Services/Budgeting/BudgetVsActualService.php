@@ -4,6 +4,7 @@ namespace App\Services\Budgeting;
 
 use App\Models\BudgetLine;
 use App\Models\BudgetPeriod;
+use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 
 class BudgetVsActualService
@@ -22,7 +23,7 @@ class BudgetVsActualService
             ->where('account_id', $line->account_id)
             ->whereHas('journalEntry', function ($query) use ($budgetPeriod, $line) {
                 $query->where('company_id', $budgetPeriod->company_id)
-                    ->where('status', 'posted')
+                    ->whereIn('status', JournalEntry::LEDGER_STATUSES)
                     ->whereBetween('entry_date', [$budgetPeriod->start_date, $budgetPeriod->end_date]);
 
                 if ($line->branch_id) {

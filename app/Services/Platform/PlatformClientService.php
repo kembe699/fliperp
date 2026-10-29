@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\User;
+use App\Services\Finance\ChartOfAccountService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -66,6 +67,8 @@ class PlatformClientService
                 'is_main' => true,
                 'is_active' => true,
             ]);
+
+            app(ChartOfAccountService::class)->seedDefaultsFor($company->id);
 
             $billingCustomer = Customer::create([
                 'company_id' => $platformCompany->id,

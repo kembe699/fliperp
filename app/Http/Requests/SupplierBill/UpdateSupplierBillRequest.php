@@ -28,6 +28,10 @@ class UpdateSupplierBillRequest extends FormRequest
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'currency_code' => ['nullable', 'string', 'size:3', 'exists:currencies,code'],
             'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
+            'expense_account_id' => [
+                'nullable',
+                Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId),
+            ],
         ];
     }
 }

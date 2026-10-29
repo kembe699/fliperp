@@ -27,6 +27,11 @@ export async function createMeProject(values: MeProjectInput): Promise<MeProject
   return data.data
 }
 
+export async function updateMeProject(id: number, values: Partial<MeProjectInput>): Promise<MeProject> {
+  const { data } = await api.put<ApiResponse<MeProject>>(`/me-projects/${id}`, values)
+  return data.data
+}
+
 export async function fetchMeProjectDashboard(id: number): Promise<MeProjectDashboard> {
   const { data } = await api.get<ApiResponse<MeProjectDashboard>>(`/me-projects/${id}/dashboard`)
   return data.data

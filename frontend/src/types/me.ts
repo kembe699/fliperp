@@ -1,3 +1,5 @@
+import type { BudgetVsActualLine } from '@/types/budgeting'
+
 export type MeProjectStatus = 'planned' | 'ongoing' | 'completed'
 
 export interface MeProject {
@@ -63,4 +65,16 @@ export interface MeProjectDashboard {
     completed: number
     completion_percent: number | null
   }
+  /** Budget vs actual (posted ledger activity) from the project's budget period; null if none is linked. */
+  finance: {
+    budget_period_id: number
+    budget_period_name: string
+    start_date: string | null
+    end_date: string | null
+    budgeted_total: number
+    actual_total: number
+    variance: number
+    utilization_percent: number | null
+    lines: BudgetVsActualLine[]
+  } | null
 }

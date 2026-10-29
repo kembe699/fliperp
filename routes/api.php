@@ -360,6 +360,8 @@ Route::prefix('v1')->group(function () {
             Route::get('reports/balance-sheet', [ReportController::class, 'balanceSheet']);
             Route::get('reports/general-ledger', [ReportController::class, 'generalLedger']);
             Route::get('reports/cash-flow', [ReportController::class, 'cashFlow']);
+            Route::get('reports/receivables', [ReportController::class, 'receivables']);
+            Route::get('reports/payables', [ReportController::class, 'payables']);
             Route::get('reports/snapshots', [ReportController::class, 'snapshots']);
         });
         Route::post('reports/{type}/snapshot', [ReportController::class, 'snapshot'])

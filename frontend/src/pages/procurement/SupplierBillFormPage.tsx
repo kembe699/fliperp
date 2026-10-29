@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { createSupplierBill, fetchSuppliers } from '@/api/procurement'
+import { fetchChartOfAccounts } from '@/api/reports'
 import { applyFieldErrors, getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { useAuthStore } from '@/lib/auth-store'
@@ -35,6 +36,11 @@ export function SupplierBillFormPage() {
   const queryClient = useQueryClient()
 
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => fetchSuppliers({ per_page: 100 }) })
+  const { data: accounts } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts })
+  // What the bill is for: posted Dr this account / Cr Accounts Payable. Defaults to 5200.
+  const expenseAccounts = (accounts ?? []).filter((account) => account.is_active && (account.type === 'expense' || account.type === 'asset'))
+  const [expenseAccountId, setExpenseAccountId] = useState<string | null>(null)
+  const selectedExpenseAccountId = expenseAccountId ?? (expenseAccounts.find((account) => account.code === '5200')?.id.toString() ?? null)
 
   const {
     handleSubmit,
@@ -73,6 +79,7 @@ export function SupplierBillFormPage() {
         tax_amount: values.tax_amount,
         currency_code: currency,
         exchange_rate: Number(rate),
+        expense_account_id: selectedExpenseAccountId ? Number(selectedExpenseAccountId) : null,
       }),
     onSuccess: (bill) => {
       toast.success('Supplier bill created')
@@ -133,6 +140,16 @@ export function SupplierBillFormPage() {
               {errors.due_date && <p className="text-xs text-destructive">{errors.due_date.message}</p>}
             </div>
             <CurrencyRateFields currency={currency} onCurrencyChange={setCurrency} date={billDate} rate={rate} onRateChange={setRate} />
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Expense account</Label>
+              <SearchableSelect
+                options={expenseAccounts.map((account) => ({ value: String(account.id), label: `${account.code} — ${account.name}` }))}
+                value={selectedExpenseAccountId}
+                onChange={setExpenseAccountId}
+                placeholder="Select account"
+              />
+              <p className="text-xs text-muted-foreground">The bill is posted to this account and to Accounts Payable.</p>
+            </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="subtotal">Subtotal</Label>

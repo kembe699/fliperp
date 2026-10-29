@@ -12,6 +12,7 @@ import type {
   TrialBalanceReport,
 } from '@/types/accounting'
 import type { ReportCurrencyInfo } from '@/types/exchangeRate'
+import type { PayablesReport, ReceivablesReport } from '@/types/aging'
 
 export type { ChartOfAccount }
 
@@ -211,4 +212,14 @@ export async function downloadReport(type: QuickReportType, from: string, to: st
     ...report.categories,
     { source_module: 'Net Cash Movement', cash_in: 0, cash_out: 0, net: report.net_cash_movement },
   ])
+}
+
+export async function fetchReceivables(asOf?: string): Promise<ReceivablesReport> {
+  const { data } = await api.get<ApiResponse<ReceivablesReport>>('/reports/receivables', { params: { as_of: asOf } })
+  return data.data
+}
+
+export async function fetchPayables(asOf?: string): Promise<PayablesReport> {
+  const { data } = await api.get<ApiResponse<PayablesReport>>('/reports/payables', { params: { as_of: asOf } })
+  return data.data
 }

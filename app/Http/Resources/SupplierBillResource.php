@@ -24,6 +24,7 @@ class SupplierBillResource extends JsonResource
             'amount_paid' => (float) $this->amount_paid,
             'currency_code' => $this->currency_code,
             'exchange_rate' => (float) $this->exchange_rate,
+            'expense_account_id' => $this->expense_account_id,
             'balance_due' => round((float) $this->total_amount - (float) $this->amount_paid, 2),
             'status' => $this->status,
             'journal_entry_id' => $this->journal_entry_id,

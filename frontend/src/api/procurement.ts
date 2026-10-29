@@ -184,6 +184,7 @@ export interface SupplierBillInput {
   tax_amount?: number
   currency_code?: string
   exchange_rate?: number
+  expense_account_id?: number | null
 }
 
 export async function createSupplierBill(values: SupplierBillInput): Promise<SupplierBill> {

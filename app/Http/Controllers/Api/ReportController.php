@@ -9,6 +9,7 @@ use App\Http\Requests\Report\GeneralLedgerRequest;
 use App\Http\Requests\Report\ProfitAndLossRequest;
 use App\Http\Requests\Report\TrialBalanceRequest;
 use App\Http\Resources\ReportSnapshotResource;
+use App\Services\Reporting\AgingReportService;
 use App\Services\Reporting\BalanceSheetService;
 use App\Services\Reporting\CashFlowService;
 use App\Services\Reporting\GeneralLedgerService;
@@ -34,7 +35,24 @@ class ReportController extends Controller
         protected CashFlowService $cashFlowService,
         protected ReportSnapshotService $reportSnapshotService,
         protected ReportCurrencyConverter $currencyConverter,
+        protected AgingReportService $agingReportService,
     ) {}
+
+    /** Accounts receivable as at a date: open invoices aged, per customer, against control account 1100. */
+    public function receivables(Request $request): JsonResponse
+    {
+        $asOf = $request->validate(['as_of' => ['nullable', 'date']])['as_of'] ?? now()->toDateString();
+
+        return $this->success($this->agingReportService->receivables($request->user()->company_id, $asOf));
+    }
+
+    /** Accounts payable as at a date: open supplier bills aged, per supplier, against control account 2000. */
+    public function payables(Request $request): JsonResponse
+    {
+        $asOf = $request->validate(['as_of' => ['nullable', 'date']])['as_of'] ?? now()->toDateString();
+
+        return $this->success($this->agingReportService->payables($request->user()->company_id, $asOf));
+    }
 
     public function trialBalance(TrialBalanceRequest $request): JsonResponse
     {

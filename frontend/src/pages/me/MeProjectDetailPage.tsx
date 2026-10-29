@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 
 import { fetchMeActivities, fetchMeIndicators, fetchMeProject, fetchMeProjectDashboard } from '@/api/me'
 import { fetchEmployees } from '@/api/hr'
 import { formatDate } from '@/lib/format'
+import { formatCurrency } from '@/lib/currency'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { MeActivityStatus, MeIndicator } from '@/types/me'
 
@@ -16,6 +17,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { MeIndicatorFormDialog } from '@/components/me/MeIndicatorFormDialog'
 import { MeActivityFormDialog } from '@/components/me/MeActivityFormDialog'
 import { RecordResultDialog } from '@/components/me/RecordResultDialog'
+import { MeProjectFormDialog } from '@/components/me/MeProjectFormDialog'
 
 const ACTIVITY_STATUS_VARIANT: Record<MeActivityStatus, 'neutral' | 'info' | 'success' | 'danger'> = {
   not_started: 'neutral',
@@ -29,6 +31,7 @@ export function MeProjectDetailPage() {
   const projectId = Number(id)
   const { can } = usePermissions()
 
+  const [projectFormOpen, setProjectFormOpen] = useState(false)
   const [indicatorFormOpen, setIndicatorFormOpen] = useState(false)
   const [activityFormOpen, setActivityFormOpen] = useState(false)
   const [recordResultIndicator, setRecordResultIndicator] = useState<MeIndicator | null>(null)
@@ -45,7 +48,12 @@ export function MeProjectDetailPage() {
 
   return (
     <div>
-      <PageHeader parent="M&E Projects" title={project.name} />
+      <PageHeader
+        parent="M&E Projects"
+        title={project.name}
+        action={can('me-projects.update') ? <Button variant="outline" onClick={() => setProjectFormOpen(true)}>Edit Project</Button> : undefined}
+      />
+      <MeProjectFormDialog open={projectFormOpen} onOpenChange={setProjectFormOpen} project={project} />
 
       {dashboard && (
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -78,6 +86,78 @@ export function MeProjectDetailPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {dashboard && (
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Budget vs actual</p>
+              {dashboard.finance && (
+                <Link className="text-sm text-primary hover:underline" to={`/budget-periods/${dashboard.finance.budget_period_id}`}>
+                  {dashboard.finance.budget_period_name}
+                </Link>
+              )}
+            </div>
+            {!dashboard.finance ? (
+              <p className="text-sm text-muted-foreground">Link this project to a budget period (Edit Project) to see its budget against actual spending from the ledger.</p>
+            ) : (
+              <>
+                <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Budget</p>
+                    <p className="mt-1 text-lg font-bold text-foreground">{formatCurrency(dashboard.finance.budgeted_total)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Actual (ledger)</p>
+                    <p className="mt-1 text-lg font-bold text-foreground">{formatCurrency(dashboard.finance.actual_total)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Remaining</p>
+                    <p className={`mt-1 text-lg font-bold ${dashboard.finance.variance < 0 ? 'text-danger' : 'text-success'}`}>{formatCurrency(dashboard.finance.variance)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Used</p>
+                    <p className="mt-1 text-lg font-bold text-primary">
+                      {dashboard.finance.utilization_percent !== null ? `${dashboard.finance.utilization_percent}%` : '—'}
+                    </p>
+                  </div>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                      <th className="py-2">Account</th>
+                      <th className="py-2 text-right">Budget</th>
+                      <th className="py-2 text-right">Actual</th>
+                      <th className="py-2 text-right">Remaining</th>
+                      <th className="py-2 text-right">Used</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.finance.lines.map((line) => (
+                      <tr key={line.budget_line_id} className="border-b border-border last:border-b-0">
+                        <td className="py-2 text-foreground">
+                          {line.account_code} — {line.account_name}
+                        </td>
+                        <td className="py-2 text-right">{formatCurrency(line.budgeted_amount)}</td>
+                        <td className="py-2 text-right">{formatCurrency(line.actual_amount)}</td>
+                        <td className={`py-2 text-right ${line.variance < 0 ? 'text-danger' : ''}`}>{formatCurrency(line.variance)}</td>
+                        <td className="py-2 text-right">{line.utilization_percent !== null ? `${line.utilization_percent}%` : '—'}</td>
+                      </tr>
+                    ))}
+                    {dashboard.finance.lines.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-4 text-center text-muted-foreground">
+                          The budget period has no budget lines yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <div className="mb-6">

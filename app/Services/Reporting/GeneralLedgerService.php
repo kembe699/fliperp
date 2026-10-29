@@ -3,6 +3,7 @@
 namespace App\Services\Reporting;
 
 use App\Models\ChartOfAccount;
+use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 
 /**
@@ -31,7 +32,7 @@ class GeneralLedgerService
             ->selectRaw('SUM(journal_entry_lines.debit) as total_debit, SUM(journal_entry_lines.credit) as total_credit')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $companyId)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
             ->where('journal_entry_lines.account_id', $accountId)
             ->where('journal_entries.entry_date', '<', $from)
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))
@@ -46,7 +47,7 @@ class GeneralLedgerService
             ->select('journal_entry_lines.*', 'journal_entries.entry_date', 'journal_entries.reference_number', 'journal_entries.source_module', 'journal_entries.source_id')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $companyId)
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
             ->where('journal_entry_lines.account_id', $accountId)
             ->whereBetween('journal_entries.entry_date', [$from, $to])
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))

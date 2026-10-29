@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Finance\ChartOfAccountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -123,6 +124,8 @@ class AuthService
                 'is_main' => true,
                 'is_active' => true,
             ]);
+
+            app(ChartOfAccountService::class)->seedDefaultsFor($company->id);
 
             $user = User::create([
                 'company_id' => $company->id,

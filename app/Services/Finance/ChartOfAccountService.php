@@ -5,6 +5,7 @@ namespace App\Services\Finance;
 use App\Models\ChartOfAccount;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class ChartOfAccountService
 {
@@ -50,17 +51,29 @@ class ChartOfAccountService
      */
     public function seedDefaults(): Collection
     {
-        $existingCodes = ChartOfAccount::query()->pluck('code')->all();
+        $this->seedDefaultsFor(Auth::user()->company_id);
+
+        return ChartOfAccount::query()->orderBy('code')->get();
+    }
+
+    /**
+     * Same as seedDefaults() for any company, signed in or not — run when a
+     * company is created, so invoicing, payments, payroll and the reports
+     * work from day one instead of failing on a missing account code.
+     */
+    public function seedDefaultsFor(int $companyId): void
+    {
+        $existingCodes = ChartOfAccount::withoutGlobalScopes()->where('company_id', $companyId)->pluck('code')->all();
 
         foreach (self::DEFAULTS as [$code, $name, $type]) {
             if (in_array($code, $existingCodes, true)) {
                 continue;
             }
 
-            ChartOfAccount::create(['code' => $code, 'name' => $name, 'type' => $type, 'is_active' => true]);
+            ChartOfAccount::withoutGlobalScopes()->create([
+                'company_id' => $companyId, 'code' => $code, 'name' => $name, 'type' => $type, 'is_active' => true,
+            ]);
         }
-
-        return ChartOfAccount::query()->orderBy('code')->get();
     }
 
     public function create(array $data): ChartOfAccount

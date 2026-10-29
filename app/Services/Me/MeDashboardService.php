@@ -2,11 +2,15 @@
 
 namespace App\Services\Me;
 
+use App\Models\BudgetPeriod;
 use App\Models\MeIndicator;
 use App\Models\MeProject;
+use App\Services\Budgeting\BudgetVsActualService;
 
 class MeDashboardService
 {
+    public function __construct(protected BudgetVsActualService $budgetVsActualService) {}
+
     public function dashboard(MeProject $project): array
     {
         $indicators = $project->indicators()
@@ -29,6 +33,37 @@ class MeDashboardService
                     ? round(($completedActivities / $totalActivities) * 100, 2)
                     : null,
             ],
+            'finance' => $this->finance($project),
+        ];
+    }
+
+    /**
+     * Money for the project, from the budget period it is linked to: each
+     * budget line against posted ledger activity on its account in that
+     * period (BudgetVsActualService). Null when no budget period is linked.
+     */
+    protected function finance(MeProject $project): ?array
+    {
+        $period = $project->budget_period_id ? BudgetPeriod::find($project->budget_period_id) : null;
+
+        if (! $period) {
+            return null;
+        }
+
+        $lines = $this->budgetVsActualService->compare($period);
+        $budgeted = round(array_sum(array_column($lines, 'budgeted_amount')), 2);
+        $actual = round(array_sum(array_column($lines, 'actual_amount')), 2);
+
+        return [
+            'budget_period_id' => $period->id,
+            'budget_period_name' => $period->name,
+            'start_date' => $period->start_date?->toDateString(),
+            'end_date' => $period->end_date?->toDateString(),
+            'budgeted_total' => $budgeted,
+            'actual_total' => $actual,
+            'variance' => round($budgeted - $actual, 2),
+            'utilization_percent' => $budgeted > 0 ? round($actual / $budgeted * 100, 2) : null,
+            'lines' => $lines,
         ];
     }
 

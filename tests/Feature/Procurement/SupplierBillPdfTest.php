@@ -4,6 +4,8 @@ use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     [$this->company, $this->branch] = createCompanyWithMainBranch();
+    // Bills post to Accounts Payable, which needs the chart of accounts.
+    seedChartOfAccounts($this->company);
     $this->admin = createUserWithRole('company_admin', $this->company, $this->branch);
     $this->supplier = createSupplier($this->company);
 

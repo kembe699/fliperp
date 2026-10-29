@@ -127,6 +127,8 @@ export const navConfig: NavItem[] = [
       { label: 'Journal Entries', path: '/journal-entries', requiredPermission: 'journal-entries.view' },
       { label: 'Accounting Periods', path: '/accounting-periods', requiredPermission: 'accounting-periods.view' },
       { label: 'Exchange Rates', path: '/exchange-rates', requiredPermission: 'exchange-rates.view' },
+      { label: 'Accounts Receivable', path: '/reports/receivables', requiredPermission: 'reports.view' },
+      { label: 'Accounts Payable', path: '/reports/payables', requiredPermission: 'reports.view' },
       { label: 'Trial Balance', path: '/reports/trial-balance', requiredPermission: 'reports.view' },
       { label: 'Profit & Loss', path: '/reports/profit-and-loss', requiredPermission: 'reports.view' },
       { label: 'Balance Sheet', path: '/reports/balance-sheet', requiredPermission: 'reports.view' },

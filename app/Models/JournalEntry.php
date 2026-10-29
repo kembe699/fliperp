@@ -10,6 +10,15 @@ class JournalEntry extends TenantModel
 {
     use Auditable;
 
+    /**
+     * Statuses whose lines are part of the ledger. A reversed entry stays in:
+     * reverse() posts a mirror-image entry and marks the original
+     * 'reversed', so the two together net to zero. Counting only 'posted'
+     * dropped the original but kept its mirror — every reversal then showed
+     * in the reports as the opposite of the original amount.
+     */
+    public const LEDGER_STATUSES = ['posted', 'reversed'];
+
     protected $fillable = [
         'company_id',
         'branch_id',
