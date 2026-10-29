@@ -11,6 +11,14 @@ export interface InvoiceItem {
   tax_rate_id: number | null
   discount_amount: number
   line_total: number
+  grant_id?: number | null
+  grant_code?: string | null
+  dea_id?: number | null
+  dea_code?: string | null
+  project_id?: number | null
+  project_code?: string | null
+  cost_centre_id?: number | null
+  cost_centre_code?: string | null
 }
 
 export interface Invoice {
@@ -47,6 +55,10 @@ export interface InvoiceLineInput {
   unit_price: number | null
   tax_rate_id?: number | null
   discount_amount?: number
+  grant_id?: number | null
+  dea_id?: number | null
+  project_id?: number | null
+  cost_centre_id?: number | null
 }
 
 export interface InvoiceFormInput {

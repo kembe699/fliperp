@@ -5,6 +5,7 @@ namespace App\Services\Reporting;
 use App\Models\ChartOfAccount;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Services\Grants\DimensionService;
 
 /**
  * Shape of generate():
@@ -20,7 +21,7 @@ use App\Models\JournalEntryLine;
  */
 class TrialBalanceService
 {
-    public function generate(int $companyId, string $from, string $to, ?int $branchId = null): array
+    public function generate(int $companyId, string $from, string $to, ?int $branchId = null, array $dimensions = []): array
     {
         $rows = JournalEntryLine::query()
             ->selectRaw('journal_entry_lines.account_id, SUM(journal_entry_lines.debit) as total_debit, SUM(journal_entry_lines.credit) as total_credit')
@@ -29,6 +30,7 @@ class TrialBalanceService
             ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$from, $to])
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))
+            ->tap(fn ($query) => DimensionService::filter($query, $dimensions))
             ->groupBy('journal_entry_lines.account_id')
             ->get()
             ->keyBy('account_id');

@@ -53,7 +53,7 @@ export function SalaryStructureFormDialog({ open, onOpenChange }: { open: boolea
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Employee</Label>
+            <Label required>Employee</Label>
             <SearchableSelect
               options={(employees?.data ?? []).map((employee) => ({ value: String(employee.id), label: `${employee.first_name} ${employee.last_name}`, sublabel: employee.employee_code }))}
               value={employeeId}
@@ -63,11 +63,11 @@ export function SalaryStructureFormDialog({ open, onOpenChange }: { open: boolea
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Basic Salary</Label>
+              <Label required>Basic Salary</Label>
               <Input type="number" min="0" step="0.01" value={basicSalary} onChange={(event) => setBasicSalary(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Effective Date</Label>
+              <Label required>Effective Date</Label>
               <Input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
             </div>
           </div>

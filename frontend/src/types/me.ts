@@ -5,6 +5,7 @@ export type MeProjectStatus = 'planned' | 'ongoing' | 'completed'
 export interface MeProject {
   id: number
   company_id: number
+  code?: string | null
   name: string
   description: string | null
   start_date: string

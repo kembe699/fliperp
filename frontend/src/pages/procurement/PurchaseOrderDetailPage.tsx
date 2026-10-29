@@ -14,6 +14,7 @@ import { downloadPdf } from '@/lib/pdf-download'
 import { usePermissions } from '@/hooks/use-permissions'
 import { PURCHASE_ORDER_STATUS_VARIANT } from '@/components/sales/inventory-status-variants'
 
+import { codingSummary } from '@/lib/coding'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -159,6 +160,7 @@ export function PurchaseOrderDetailPage() {
             <thead>
               <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="py-2">Product</th>
+                <th className="py-2">Coding</th>
                 <th className="py-2 text-right">Qty Ordered</th>
                 <th className="py-2 text-right">Qty Received</th>
                 <th className="py-2 text-right">Unit Cost</th>
@@ -172,6 +174,7 @@ export function PurchaseOrderDetailPage() {
                     {productName(item.product_id)}
                     <span className="ml-1 text-xs text-muted-foreground">{productSku(item.product_id)}</span>
                   </td>
+                  <td className="py-2 text-xs text-muted-foreground">{codingSummary(item) ?? '—'}</td>
                   <td className="py-2 text-right text-foreground">{item.quantity_ordered}</td>
                   <td className="py-2 text-right text-foreground">{item.quantity_received}</td>
                   <td className="py-2 text-right text-foreground">{formatCurrency(item.unit_cost)}</td>

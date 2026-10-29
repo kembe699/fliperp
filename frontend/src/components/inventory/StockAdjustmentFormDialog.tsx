@@ -80,11 +80,11 @@ export function StockAdjustmentFormDialog({ open, onOpenChange }: { open: boolea
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Reference Number</Label>
+              <Label required>Reference Number</Label>
               <Input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} placeholder="ADJ-001" />
             </div>
             <div className="space-y-1.5">
-              <Label>Warehouse</Label>
+              <Label required>Warehouse</Label>
               <Select value={warehouseId} onValueChange={(value) => { setWarehouseId(value); setRows([{ key: crypto.randomUUID(), product_id: null, counted_quantity: 0 }]) }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select warehouse" />
@@ -106,7 +106,7 @@ export function StockAdjustmentFormDialog({ open, onOpenChange }: { open: boolea
           </div>
 
           <div className="space-y-2">
-            <Label>Items</Label>
+            <Label required>Items</Label>
             {rows.map((row) => (
               <div key={row.key} className="flex items-center gap-2">
                 <div className="flex-1">

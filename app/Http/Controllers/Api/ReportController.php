@@ -9,6 +9,7 @@ use App\Http\Requests\Report\GeneralLedgerRequest;
 use App\Http\Requests\Report\ProfitAndLossRequest;
 use App\Http\Requests\Report\TrialBalanceRequest;
 use App\Http\Resources\ReportSnapshotResource;
+use App\Services\Grants\DimensionService;
 use App\Services\Reporting\AgingReportService;
 use App\Services\Reporting\BalanceSheetService;
 use App\Services\Reporting\CashFlowService;
@@ -61,6 +62,7 @@ class ReportController extends Controller
             $request->string('from')->toString(),
             $request->string('to')->toString(),
             $request->integer('branch_id') ?: null,
+            $this->dimensionFilters($request),
         );
 
         $data = $this->currencyConverter->convert(
@@ -80,6 +82,7 @@ class ReportController extends Controller
             $request->string('from')->toString(),
             $request->string('to')->toString(),
             $request->integer('branch_id') ?: null,
+            $this->dimensionFilters($request),
         );
 
         $data = $this->currencyConverter->convert(
@@ -118,6 +121,7 @@ class ReportController extends Controller
             $request->string('from')->toString(),
             $request->string('to')->toString(),
             $request->integer('branch_id') ?: null,
+            $this->dimensionFilters($request),
         );
 
         $data = $this->currencyConverter->convert(
@@ -217,5 +221,11 @@ class ReportController extends Controller
         $data = $this->generalLedgerService->generate($companyId, $validated['account_id'], $validated['from'], $validated['to'], $branchId);
 
         return [$validated['from'], $validated['to'], $data];
+    }
+
+    /** The SOF/DEA/project/cost-centre filters given on a report request. */
+    protected function dimensionFilters(Request $request): array
+    {
+        return array_filter(DimensionService::of($request->only(DimensionService::KEYS)));
     }
 }

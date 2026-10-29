@@ -1,5 +1,6 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
+import type { Coding } from '@/types/grants'
 import type {
   GoodsReceivedNote,
   GrnItemCondition,
@@ -72,7 +73,7 @@ export interface PurchaseOrderInput {
   order_date: string
   expected_delivery_date?: string | null
   notes?: string | null
-  items: { product_id: number; product_variant_id?: number | null; quantity_ordered: number; unit_cost: number }[]
+  items: ({ product_id: number; product_variant_id?: number | null; quantity_ordered: number; unit_cost: number } & Partial<Coding>)[]
 }
 
 export async function createPurchaseOrder(values: PurchaseOrderInput): Promise<PurchaseOrder> {
@@ -185,6 +186,10 @@ export interface SupplierBillInput {
   currency_code?: string
   exchange_rate?: number
   expense_account_id?: number | null
+  grant_id?: number | null
+  dea_id?: number | null
+  project_id?: number | null
+  cost_centre_id?: number | null
 }
 
 export async function createSupplierBill(values: SupplierBillInput): Promise<SupplierBill> {

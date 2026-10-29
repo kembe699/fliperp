@@ -21,6 +21,9 @@ class CurrencySeeder extends Seeder
             ['code' => 'KES', 'name' => 'Kenyan Shilling', 'symbol' => 'KSh'],
             ['code' => 'TZS', 'name' => 'Tanzanian Shilling', 'symbol' => 'TSh'],
             ['code' => 'RWF', 'name' => 'Rwandan Franc', 'symbol' => 'FRw'],
+            // Donor currencies grants (SOFs) are commonly awarded in.
+            ['code' => 'EUR', 'name' => 'Euro', 'symbol' => '€'],
+            ['code' => 'GBP', 'name' => 'British Pound', 'symbol' => '£'],
         ];
 
         foreach ($currencies as $currency) {

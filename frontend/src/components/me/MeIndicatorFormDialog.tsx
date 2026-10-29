@@ -48,7 +48,7 @@ export function MeIndicatorFormDialog({ open, onOpenChange, projectId }: { open:
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Name</Label>
+            <Label required>Name</Label>
             <Input value={name} onChange={(event) => setName(event.target.value)} />
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -61,7 +61,7 @@ export function MeIndicatorFormDialog({ open, onOpenChange, projectId }: { open:
               <Input type="number" step="0.01" value={baseline} onChange={(event) => setBaseline(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Target</Label>
+              <Label required>Target</Label>
               <Input type="number" step="0.01" value={target} onChange={(event) => setTarget(event.target.value)} />
             </div>
           </div>

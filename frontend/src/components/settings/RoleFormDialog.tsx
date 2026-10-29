@@ -74,7 +74,7 @@ export function RoleFormDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Role Name</Label>
+            <Label required>Role Name</Label>
             <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="warehouse_clerk" />
           </div>
 

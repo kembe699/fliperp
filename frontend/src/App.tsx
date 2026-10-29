@@ -85,6 +85,11 @@ import { MeProjectDetailPage } from '@/pages/me/MeProjectDetailPage'
 import { ChartOfAccountsPage } from '@/pages/accounting/ChartOfAccountsPage'
 import { ExchangeRatesPage } from '@/pages/accounting/ExchangeRatesPage'
 import { ReceivablesPage } from '@/pages/accounting/ReceivablesPage'
+import { GrantsListPage } from '@/pages/grants/GrantsListPage'
+import { GrantDetailPage } from '@/pages/grants/GrantDetailPage'
+import { GrantReportPage } from '@/pages/grants/GrantReportPage'
+import { DonorsPage } from '@/pages/grants/DonorsPage'
+import { CostCentresPage } from '@/pages/grants/CostCentresPage'
 import { PayablesPage } from '@/pages/accounting/PayablesPage'
 import { JournalEntriesListPage } from '@/pages/accounting/JournalEntriesListPage'
 import { JournalEntryFormPage } from '@/pages/accounting/JournalEntryFormPage'
@@ -157,6 +162,9 @@ const IMPLEMENTED_PATHS = new Set([
   '/dispatches',
   '/budget-periods',
   '/me-projects',
+  '/grants',
+  '/donors',
+  '/cost-centres',
   '/chart-of-accounts',
   '/journal-entries',
   '/accounting-periods',
@@ -290,6 +298,11 @@ function App() {
 
           <Route path="/me-projects" element={<MeProjectsListPage />} />
           <Route path="/me-projects/:id" element={<MeProjectDetailPage />} />
+          <Route path="/grants" element={<GrantsListPage />} />
+          <Route path="/grants/:id" element={<GrantDetailPage />} />
+          <Route path="/grants/:id/report" element={<GrantReportPage />} />
+          <Route path="/donors" element={<DonorsPage />} />
+          <Route path="/cost-centres" element={<CostCentresPage />} />
 
           <Route path="/chart-of-accounts" element={<ChartOfAccountsPage />} />
           <Route path="/exchange-rates" element={<ExchangeRatesPage />} />

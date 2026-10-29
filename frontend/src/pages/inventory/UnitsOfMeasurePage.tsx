@@ -137,11 +137,11 @@ export function UnitsOfMeasurePage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Kilogram" />
             </div>
             <div className="space-y-1.5">
-              <Label>Abbreviation</Label>
+              <Label required>Abbreviation</Label>
               <Input value={abbreviation} onChange={(event) => setAbbreviation(event.target.value)} placeholder="Kg" />
             </div>
           </div>

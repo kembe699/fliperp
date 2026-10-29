@@ -10,6 +10,7 @@ use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
 use App\Models\SupplierBill;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Grants\DimensionService;
 use App\Services\Inventory\StockMovementService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -111,6 +112,9 @@ class GrnService
             }
 
             $goodSubtotal = 0.0;
+            // Received value per PO-line coding (SOF/DEA/project/cost centre),
+            // so the coding chosen on the order reaches the ledger.
+            $codedAmounts = [];
 
             foreach ($grn->items as $item) {
                 if ($item->condition === 'good') {
@@ -124,7 +128,15 @@ class GrnService
                         'reference_id' => $grn->id,
                     ]);
 
-                    $goodSubtotal += (float) $item->quantity_received * (float) $item->unit_cost;
+                    $value = (float) $item->quantity_received * (float) $item->unit_cost;
+                    $goodSubtotal += $value;
+
+                    $coding = $item->purchase_order_item_id
+                        ? (PurchaseOrderItem::find($item->purchase_order_item_id)?->only(DimensionService::KEYS) ?? DimensionService::of([]))
+                        : DimensionService::of([]);
+                    $key = implode('-', $coding);
+                    $codedAmounts[$key] ??= ['dimensions' => $coding, 'amount' => 0.0];
+                    $codedAmounts[$key]['amount'] += $value;
                 }
 
                 if ($item->purchase_order_item_id) {
@@ -142,7 +154,7 @@ class GrnService
                 $this->recomputePurchaseOrderStatus($grn->purchase_order_id);
             }
 
-            $this->autoCreateSupplierBill($grn, $goodSubtotal);
+            $this->autoCreateSupplierBill($grn, $goodSubtotal, array_values($codedAmounts));
 
             return $grn->fresh(['items', 'purchaseOrder']);
         });
@@ -179,7 +191,7 @@ class GrnService
         }
     }
 
-    protected function autoCreateSupplierBill(GoodsReceivedNote $grn, float $subtotal): ?SupplierBill
+    protected function autoCreateSupplierBill(GoodsReceivedNote $grn, float $subtotal, array $codedAmounts = []): ?SupplierBill
     {
         if (SupplierBill::where('grn_id', $grn->id)->exists() || $subtotal <= 0) {
             return null;
@@ -203,7 +215,7 @@ class GrnService
             // Goods are received at base-currency cost, so the bill is too.
             'currency_code' => Company::query()->whereKey($grn->company_id)->value('currency_code'),
             'exchange_rate' => 1,
-        ]);
+        ] + (count($codedAmounts) === 1 ? $codedAmounts[0]['dimensions'] : []));
 
         $inventoryAccount = $this->resolveAccount($grn->company_id, self::INVENTORY_ACCOUNT_CODE);
         $payableAccount = $this->resolveAccount($grn->company_id, self::ACCOUNTS_PAYABLE_ACCOUNT_CODE);
@@ -215,7 +227,7 @@ class GrnService
             'source_module' => 'procurement',
             'source_id' => $grn->id,
             'lines' => [
-                ['account_id' => $inventoryAccount->id, 'debit' => $totalAmount, 'credit' => 0, 'description' => 'Inventory received'],
+                ...$this->inventoryLines($inventoryAccount->id, $totalAmount, $codedAmounts),
                 ['account_id' => $payableAccount->id, 'debit' => 0, 'credit' => $totalAmount, 'description' => 'Accounts payable'],
             ],
         ]);
@@ -223,6 +235,24 @@ class GrnService
         $bill->update(['journal_entry_id' => $journalEntry->id]);
 
         return $bill;
+    }
+
+    /** One inventory debit per coding; the last takes any rounding so they sum to $total. */
+    protected function inventoryLines(int $accountId, float $total, array $codedAmounts): array
+    {
+        if (count($codedAmounts) <= 1) {
+            return [['account_id' => $accountId, 'debit' => $total, 'credit' => 0, 'description' => 'Inventory received'] + ($codedAmounts[0]['dimensions'] ?? [])];
+        }
+
+        $lines = [];
+        $allocated = 0.0;
+        foreach ($codedAmounts as $index => $coded) {
+            $amount = $index === count($codedAmounts) - 1 ? round($total - $allocated, 2) : round($coded['amount'], 2);
+            $allocated += $amount;
+            $lines[] = ['account_id' => $accountId, 'debit' => $amount, 'credit' => 0, 'description' => 'Inventory received'] + $coded['dimensions'];
+        }
+
+        return $lines;
     }
 
     protected function resolveAccount(int $companyId, string $code): ChartOfAccount

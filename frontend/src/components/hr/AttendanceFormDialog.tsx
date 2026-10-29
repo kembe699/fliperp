@@ -63,7 +63,7 @@ export function AttendanceFormDialog({ open, onOpenChange }: { open: boolean; on
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Employee</Label>
+            <Label required>Employee</Label>
             <SearchableSelect
               options={(employees?.data ?? []).map((employee) => ({ value: String(employee.id), label: `${employee.first_name} ${employee.last_name}`, sublabel: employee.employee_code }))}
               value={employeeId}
@@ -73,11 +73,11 @@ export function AttendanceFormDialog({ open, onOpenChange }: { open: boolean; on
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Date</Label>
+              <Label required>Date</Label>
               <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label required>Status</Label>
               <Select value={status} onValueChange={(value) => setStatus(value as AttendanceStatus)}>
                 <SelectTrigger>
                   <SelectValue />

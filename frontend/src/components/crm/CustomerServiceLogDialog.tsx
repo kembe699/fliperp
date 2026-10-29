@@ -75,7 +75,7 @@ export function CustomerServiceLogDialog({ open, onOpenChange, deal }: CustomerS
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Service</Label>
+            <Label required>Service</Label>
             <Select value={serviceId} onValueChange={setServiceId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a service" />
@@ -92,11 +92,11 @@ export function CustomerServiceLogDialog({ open, onOpenChange, deal }: CustomerS
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="price-charged">Price Charged</Label>
+              <Label htmlFor="price-charged" required>Price Charged</Label>
               <Input id="price-charged" type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="start-date">Start Date</Label>
+              <Label htmlFor="start-date" required>Start Date</Label>
               <Input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
           </div>

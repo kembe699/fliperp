@@ -4,6 +4,7 @@ namespace App\Services\Procurement;
 
 use App\Models\PurchaseOrder;
 use App\Notifications\PurchaseOrderApprovalNeeded;
+use App\Services\Grants\DimensionService;
 use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderService
 {
-    public function __construct(protected NotificationRecipientResolver $recipientResolver) {}
+    public function __construct(
+        protected NotificationRecipientResolver $recipientResolver,
+        protected DimensionService $dimensionService,
+    ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
@@ -28,6 +32,8 @@ class PurchaseOrderService
 
     public function create(array $data): PurchaseOrder
     {
+        $this->dimensionService->validate(Auth::user()->company_id, $data['items'], $data['order_date'], 'items');
+
         return DB::transaction(function () use ($data) {
             $purchaseOrder = PurchaseOrder::create([
                 'branch_id' => $data['branch_id'],
@@ -53,6 +59,10 @@ class PurchaseOrderService
             throw ValidationException::withMessages([
                 'status' => ['Only draft purchase orders can be edited. Create a new purchase order instead.'],
             ]);
+        }
+
+        if (isset($data['items'])) {
+            $this->dimensionService->validate($purchaseOrder->company_id, $data['items'], $data['order_date'] ?? $purchaseOrder->order_date->toDateString(), 'items');
         }
 
         return DB::transaction(function () use ($purchaseOrder, $data) {

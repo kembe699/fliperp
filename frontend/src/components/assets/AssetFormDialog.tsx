@@ -75,17 +75,17 @@ export function AssetFormDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Asset Code</Label>
+              <Label required>Asset Code</Label>
               <Input value={assetCode} onChange={(event) => setAssetCode(event.target.value)} placeholder="AST-001" />
             </div>
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Branch</Label>
+              <Label required>Branch</Label>
               <Select value={branchId} onValueChange={setBranchId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
@@ -100,7 +100,7 @@ export function AssetFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Category</Label>
+              <Label required>Category</Label>
               <Select value={categoryId} onValueChange={setCategoryId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -117,11 +117,11 @@ export function AssetFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Purchase Date</Label>
+              <Label required>Purchase Date</Label>
               <Input type="date" value={purchaseDate} onChange={(event) => setPurchaseDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Purchase Cost</Label>
+              <Label required>Purchase Cost</Label>
               <Input type="number" min="0" step="0.01" value={purchaseCost} onChange={(event) => setPurchaseCost(event.target.value)} />
             </div>
           </div>

@@ -70,13 +70,13 @@ export function StockTransferFormDialog({ open, onOpenChange }: { open: boolean;
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Reference Number</Label>
+            <Label required>Reference Number</Label>
             <Input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} placeholder="TRF-001" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>From Warehouse</Label>
+              <Label required>From Warehouse</Label>
               <Select value={fromWarehouseId} onValueChange={setFromWarehouseId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select warehouse" />
@@ -91,7 +91,7 @@ export function StockTransferFormDialog({ open, onOpenChange }: { open: boolean;
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>To Warehouse</Label>
+              <Label required>To Warehouse</Label>
               <Select value={toWarehouseId} onValueChange={setToWarehouseId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select warehouse" />
@@ -108,7 +108,7 @@ export function StockTransferFormDialog({ open, onOpenChange }: { open: boolean;
           </div>
 
           <div className="space-y-2">
-            <Label>Items</Label>
+            <Label required>Items</Label>
             {rows.map((row) => (
               <div key={row.key} className="flex items-center gap-2">
                 <div className="flex-1">

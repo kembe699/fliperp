@@ -21,6 +21,7 @@ import { downloadPdf } from '@/lib/pdf-download'
 import { usePermissions } from '@/hooks/use-permissions'
 import { SUPPLIER_BILL_STATUS_LABEL, SUPPLIER_BILL_STATUS_VARIANT } from '@/components/sales/inventory-status-variants'
 
+import { codingSummary } from '@/lib/coding'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -186,6 +187,12 @@ export function SupplierBillDetailPage() {
               <p className="text-xs font-semibold uppercase text-muted-foreground">Due Date</p>
               <p className="mt-1 text-sm text-foreground">{formatDate(bill.due_date)}</p>
             </div>
+            {codingSummary(bill) && (
+              <div className="col-span-2 sm:col-span-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Coding (SOF / DEA / Project / Cost centre)</p>
+                <p className="mt-1 text-sm text-foreground">{codingSummary(bill)}</p>
+              </div>
+            )}
           </div>
 
           {(grn || purchaseOrder) && (
@@ -292,7 +299,7 @@ export function SupplierBillDetailPage() {
               Balance due: <span className="font-semibold text-foreground">{formatCurrency(bill.balance_due, bill.currency_code)}</span>
             </p>
             <div className="space-y-1.5">
-              <Label>Amount</Label>
+              <Label required>Amount</Label>
               <Input
                 type="number"
                 min="0.01"
@@ -322,7 +329,7 @@ export function SupplierBillDetailPage() {
               <Input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} placeholder="Optional" />
             </div>
             <div className="space-y-1.5">
-              <Label>Payment Date</Label>
+              <Label required>Payment Date</Label>
               <Input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
             </div>
             {bill && <CurrencyRateFields currency={bill.currency_code} date={paymentDate} rate={paymentRate} onRateChange={setPaymentRate} />}

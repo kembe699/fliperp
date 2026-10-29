@@ -10,8 +10,21 @@ const labelVariants = cva(
 
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & VariantProps<typeof labelVariants>
->(({ className, ...props }, ref) => <LabelPrimitive.Root ref={ref} className={cn(labelVariants(), className)} {...props} />)
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants> & {
+      /** Marks the field as one the form can't be saved without. */
+      required?: boolean
+    }
+>(({ className, required, children, ...props }, ref) => (
+  <LabelPrimitive.Root ref={ref} className={cn(labelVariants(), className)} {...props}>
+    {children}
+    {required && (
+      <span className="ml-0.5 text-danger" aria-hidden="true">
+        *
+      </span>
+    )}
+  </LabelPrimitive.Root>
+))
 Label.displayName = LabelPrimitive.Root.displayName
 
 export { Label }

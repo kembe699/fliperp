@@ -22,6 +22,9 @@ class StoreBudgetLineRequest extends FormRequest
             'department_id' => ['nullable', Rule::exists('departments', 'id')->where('company_id', $companyId)],
             'account_id' => ['required', Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId)],
             'budgeted_amount' => ['required', 'numeric', 'min:0'],
+            'grant_id' => ['nullable', Rule::exists('grants', 'id')->where('company_id', $companyId)],
+            'project_id' => ['nullable', Rule::exists('me_projects', 'id')->where('company_id', $companyId)],
+            'cost_centre_id' => ['nullable', Rule::exists('cost_centres', 'id')->where('company_id', $companyId)],
         ];
     }
 }

@@ -225,11 +225,11 @@ export function AssetDetailPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Date</Label>
+              <Label required>Date</Label>
               <Input type="date" value={maintenanceDate} onChange={(event) => setMaintenanceDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Description</Label>
+              <Label required>Description</Label>
               <Input value={description} onChange={(event) => setDescription(event.target.value)} />
             </div>
             <div className="space-y-1.5">

@@ -7,6 +7,7 @@ use App\Models\JournalEntry;
 use App\Models\SupplierBill;
 use App\Services\Finance\ExchangeRateService;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Grants\DimensionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -19,6 +20,7 @@ use Illuminate\Validation\ValidationException;
  * / Cr Accounts Payable for its total, in the bill's currency and rate, so
  * payables in the ledger always match the bills owed. Bills raised from a
  * goods-received note are posted by GrnService (Dr Inventory) instead.
+ * The bill's coding (SOF/DEA/project/cost centre) goes on the expense line.
  */
 class SupplierBillService
 {
@@ -29,6 +31,7 @@ class SupplierBillService
     public function __construct(
         protected ExchangeRateService $exchangeRateService,
         protected JournalEntryService $journalEntryService,
+        protected DimensionService $dimensionService,
     ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -59,6 +62,7 @@ class SupplierBillService
         [$currency, $rate] = $this->exchangeRateService->resolve(
             Auth::user()->company_id, $data['currency_code'] ?? null, $data['bill_date'], $data['exchange_rate'] ?? null,
         );
+        $this->dimensionService->validate(Auth::user()->company_id, [$data], $data['bill_date'], '');
 
         $bill = SupplierBill::create([
             'supplier_id' => $data['supplier_id'],
@@ -73,7 +77,7 @@ class SupplierBillService
             'currency_code' => $currency,
             'exchange_rate' => $rate,
             'expense_account_id' => $data['expense_account_id'] ?? $this->defaultExpenseAccountId(Auth::user()->company_id),
-        ]);
+        ] + DimensionService::of($data));
 
         $this->postBill($bill);
 
@@ -106,12 +110,19 @@ class SupplierBillService
         $payload['tax_amount'] = $taxAmount;
         $payload['total_amount'] = round($subtotal + $taxAmount, 2);
 
+        $this->dimensionService->validate(
+            $bill->company_id,
+            [array_merge($bill->only(DimensionService::KEYS), array_intersect_key($data, array_flip(DimensionService::KEYS)))],
+            $data['bill_date'] ?? $bill->bill_date->toDateString(),
+            '',
+        );
+
         return DB::transaction(function () use ($bill, $payload) {
             $bill->update($payload);
 
             // A manual bill's posting follows its amounts: the old entry is
             // reversed and the bill posted again as it now stands.
-            if (! $bill->grn_id && $bill->wasChanged(['total_amount', 'currency_code', 'exchange_rate', 'bill_date', 'expense_account_id'])) {
+            if (! $bill->grn_id && $bill->wasChanged(['total_amount', 'currency_code', 'exchange_rate', 'bill_date', 'expense_account_id', ...DimensionService::KEYS])) {
                 $this->reversePosting($bill);
                 $this->postBill($bill);
             }
@@ -161,7 +172,7 @@ class SupplierBillService
             'currency_code' => $bill->currency_code,
             'exchange_rate' => $bill->exchange_rate,
             'lines' => [
-                ['account_id' => $expenseAccountId, 'debit' => $total, 'credit' => 0, 'description' => 'Supplier bill expense'],
+                ['account_id' => $expenseAccountId, 'debit' => $total, 'credit' => 0, 'description' => 'Supplier bill expense'] + $bill->only(DimensionService::KEYS),
                 ['account_id' => $payableAccount->id, 'debit' => 0, 'credit' => $total, 'description' => 'Amount owed to supplier'],
             ],
         ]);

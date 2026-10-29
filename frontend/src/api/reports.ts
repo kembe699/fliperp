@@ -13,6 +13,10 @@ import type {
 } from '@/types/accounting'
 import type { ReportCurrencyInfo } from '@/types/exchangeRate'
 import type { PayablesReport, ReceivablesReport } from '@/types/aging'
+import type { Coding } from '@/types/grants'
+
+/** SOF / DEA / project / cost-centre report filters. */
+export type DimensionParams = Partial<Record<keyof Coding, number>>
 
 export type { ChartOfAccount }
 
@@ -32,6 +36,15 @@ export interface GeneralLedgerLine {
   balance: number
   source_module: string | null
   source_id: number | null
+  /** The line as transacted; debit/credit above are base-currency figures. */
+  currency_code?: string | null
+  exchange_rate?: number
+  transaction_debit?: number
+  transaction_credit?: number
+  grant_code?: string | null
+  dea_code?: string | null
+  project_code?: string | null
+  cost_centre_code?: string | null
 }
 
 export interface GeneralLedgerReport {
@@ -49,17 +62,17 @@ export async function fetchGeneralLedger(params: {
   from: string
   to: string
   currency?: string
-}): Promise<GeneralLedgerReport> {
+} & DimensionParams): Promise<GeneralLedgerReport> {
   const { data } = await api.get<ApiResponse<GeneralLedgerReport>>('/reports/general-ledger', { params })
   return data.data
 }
 
-export async function fetchTrialBalance(params: { from: string; to: string; branch_id?: number; currency?: string }): Promise<TrialBalanceReport> {
+export async function fetchTrialBalance(params: { from: string; to: string; branch_id?: number; currency?: string } & DimensionParams): Promise<TrialBalanceReport> {
   const { data } = await api.get<ApiResponse<TrialBalanceReport>>('/reports/trial-balance', { params })
   return data.data
 }
 
-export async function fetchProfitAndLoss(params: { from: string; to: string; branch_id?: number; currency?: string }): Promise<ProfitAndLossReport> {
+export async function fetchProfitAndLoss(params: { from: string; to: string; branch_id?: number; currency?: string } & DimensionParams): Promise<ProfitAndLossReport> {
   const { data } = await api.get<ApiResponse<ProfitAndLossReport>>('/reports/profit-and-loss', { params })
   return data.data
 }
@@ -86,8 +99,8 @@ export async function saveReportSnapshot(type: ReportSnapshotType, params: Recor
 }
 
 /** For the General Ledger report, which needs account_id, not just from/to. One row per ledger line. */
-export async function downloadGeneralLedger(accountId: number, from: string, to: string, currency?: string): Promise<void> {
-  const report = await fetchGeneralLedger({ account_id: accountId, from, to, currency })
+export async function downloadGeneralLedger(accountId: number, from: string, to: string, currency?: string, dimensions: DimensionParams = {}): Promise<void> {
+  const report = await fetchGeneralLedger({ account_id: accountId, from, to, currency, ...dimensions })
 
   const columns: CsvColumn<GeneralLedgerLine>[] = [
     { header: 'Date', accessor: (row) => row.date },
@@ -98,6 +111,14 @@ export async function downloadGeneralLedger(accountId: number, from: string, to:
     { header: 'Balance', accessor: (row) => row.balance },
     { header: 'Source Module', accessor: (row) => row.source_module },
     { header: 'Source ID', accessor: (row) => row.source_id },
+    { header: 'Transaction Currency', accessor: (row) => row.currency_code ?? '' },
+    { header: 'Exchange Rate', accessor: (row) => row.exchange_rate ?? '' },
+    { header: 'Transaction Debit', accessor: (row) => row.transaction_debit ?? '' },
+    { header: 'Transaction Credit', accessor: (row) => row.transaction_credit ?? '' },
+    { header: 'SOF', accessor: (row) => row.grant_code ?? '' },
+    { header: 'DEA', accessor: (row) => row.dea_code ?? '' },
+    { header: 'Project', accessor: (row) => row.project_code ?? '' },
+    { header: 'Cost Centre', accessor: (row) => row.cost_centre_code ?? '' },
   ]
 
   const openingRow: GeneralLedgerLine = {
@@ -151,12 +172,12 @@ function csvCurrencySuffix(currency?: ReportCurrencyInfo): string {
 }
 
 /** Fetches a report and triggers a CSV download, one row per account/section, structured per report shape. */
-export async function downloadReport(type: QuickReportType, from: string, to: string, currency?: string): Promise<void> {
+export async function downloadReport(type: QuickReportType, from: string, to: string, currency?: string, dimensions: DimensionParams = {}): Promise<void> {
   const suffix = currency ? `-in-${currency}` : ''
   const filename = `${type}-${from}-to-${to}${suffix}.csv`
 
   if (type === 'trial-balance') {
-    const report = await fetchTrialBalance({ from, to, currency })
+    const report = await fetchTrialBalance({ from, to, currency, ...dimensions })
     const columns: CsvColumn<TrialBalanceReport['accounts'][number]>[] = [
       { header: 'Code', accessor: (row) => row.code },
       { header: 'Account', accessor: (row) => row.name },
@@ -170,7 +191,7 @@ export async function downloadReport(type: QuickReportType, from: string, to: st
   }
 
   if (type === 'profit-and-loss') {
-    const report = await fetchProfitAndLoss({ from, to, currency })
+    const report = await fetchProfitAndLoss({ from, to, currency, ...dimensions })
     const rows: ReportCsvRow[] = [
       ...accountRows('Revenue', report.revenue.accounts),
       { section: 'Revenue', code: '', name: 'Total Revenue', amount: report.revenue.total },

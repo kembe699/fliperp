@@ -18,6 +18,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import { usePermissions } from '@/hooks/use-permissions'
 import { INVOICE_STATUS_LABEL, INVOICE_STATUS_VARIANT } from '@/components/sales/status-variants'
 
+import { codingSummary } from '@/lib/coding'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -215,6 +216,7 @@ export function InvoiceDetailPage() {
                   <td className="py-2 text-foreground">
                     {productName(item.product_id)}
                     {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                    {codingSummary(item) && <p className="text-xs text-muted-foreground">Coding: {codingSummary(item)}</p>}
                   </td>
                   <td className="py-2 text-right text-foreground">{Number(item.quantity)}</td>
                   <td className="py-2 text-right text-foreground">{formatCurrency(item.unit_price, invoice.currency_code)}</td>
@@ -264,7 +266,7 @@ export function InvoiceDetailPage() {
               Balance due: <span className="font-semibold text-foreground">{formatCurrency(invoice.balance_due, invoice.currency_code)}</span>
             </p>
             <div className="space-y-1.5">
-              <Label>Payment Type</Label>
+              <Label required>Payment Type</Label>
               <Select value={paymentTypeId} onValueChange={setPaymentTypeId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select payment type" />
@@ -279,11 +281,11 @@ export function InvoiceDetailPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Amount</Label>
+              <Label required>Amount</Label>
               <Input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Payment Date</Label>
+              <Label required>Payment Date</Label>
               <Input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
             </div>
             {invoice && (

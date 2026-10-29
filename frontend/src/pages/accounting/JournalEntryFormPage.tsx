@@ -19,14 +19,18 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
+import { CodingFields } from '@/components/shared/CodingFields'
+import { EMPTY_CODING, type Coding } from '@/types/grants'
 
-interface Row {
+interface Row extends Coding {
   key: string
   account_id: number | null
   debit: string
   credit: string
   description: string
 }
+
+const emptyRow = (): Row => ({ key: crypto.randomUUID(), account_id: null, debit: '', credit: '', description: '', ...EMPTY_CODING })
 
 export function JournalEntryFormPage() {
   const navigate = useNavigate()
@@ -41,12 +45,9 @@ export function JournalEntryFormPage() {
   const baseCurrency = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
   const [currency, setCurrency] = useState(baseCurrency)
   const [rate, setRate] = useState('1')
-  const [rows, setRows] = useState<Row[]>([
-    { key: crypto.randomUUID(), account_id: null, debit: '', credit: '', description: '' },
-    { key: crypto.randomUUID(), account_id: null, debit: '', credit: '', description: '' },
-  ])
+  const [rows, setRows] = useState<Row[]>(() => [emptyRow(), emptyRow()])
 
-  const addRow = () => setRows((prev) => [...prev, { key: crypto.randomUUID(), account_id: null, debit: '', credit: '', description: '' }])
+  const addRow = () => setRows((prev) => [...prev, emptyRow()])
   const removeRow = (key: string) => setRows((prev) => prev.filter((row) => row.key !== key))
   const updateRow = (key: string, patch: Partial<Row>) => setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)))
 
@@ -65,7 +66,16 @@ export function JournalEntryFormPage() {
         exchange_rate: Number(rate),
         lines: rows
           .filter((row) => row.account_id)
-          .map((row) => ({ account_id: row.account_id!, debit: Number(row.debit) || 0, credit: Number(row.credit) || 0, description: row.description || null })),
+          .map((row) => ({
+            account_id: row.account_id!,
+            debit: Number(row.debit) || 0,
+            credit: Number(row.credit) || 0,
+            description: row.description || null,
+            grant_id: row.grant_id,
+            dea_id: row.dea_id,
+            project_id: row.project_id,
+            cost_centre_id: row.cost_centre_id,
+          })),
       }),
     onSuccess: (entry) => {
       toast.success('Journal entry created as draft')
@@ -84,11 +94,11 @@ export function JournalEntryFormPage() {
       <Card className="mb-4">
         <CardContent className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
-            <Label>Reference Number</Label>
+            <Label required>Reference Number</Label>
             <Input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} placeholder="JE-001" />
           </div>
           <div className="space-y-1.5">
-            <Label>Entry Date</Label>
+            <Label required>Entry Date</Label>
             <Input type="date" value={entryDate} onChange={(event) => setEntryDate(event.target.value)} />
           </div>
           <div className="space-y-1.5">
@@ -117,9 +127,22 @@ export function JournalEntryFormPage() {
 
       <Card className="mb-4">
         <CardContent className="space-y-3 p-6">
-          <p className="text-sm font-semibold text-foreground">Lines</p>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Lines</p>
+            <p className="text-xs text-muted-foreground">Code each line to a SOF, DEA, project and cost centre where it applies (all optional).</p>
+          </div>
+          <div className="hidden items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+            <span className="flex-1">
+              Account<span className="ml-0.5 text-danger">*</span>
+            </span>
+            <span className="w-28">Debit ({currency})</span>
+            <span className="w-28">Credit ({currency})</span>
+            <span className="w-40">Line memo</span>
+            <span className="w-4" />
+          </div>
           {rows.map((row) => (
-            <div key={row.key} className="flex items-center gap-2">
+            <div key={row.key} className="space-y-2 rounded-lg border border-border p-2">
+            <div className="flex items-center gap-2">
               <div className="flex-1">
                 <SearchableSelect
                   options={(accounts ?? []).map((account) => ({ value: String(account.id), label: `${account.code} — ${account.name}` }))}
@@ -150,6 +173,8 @@ export function JournalEntryFormPage() {
               <button type="button" onClick={() => removeRow(row.key)} className="text-muted-foreground hover:text-destructive">
                 <Trash2 className="h-4 w-4" />
               </button>
+            </div>
+            <CodingFields compact value={row} date={entryDate} onChange={(patch) => updateRow(row.key, patch)} />
             </div>
           ))}
           <Button type="button" variant="outline" size="sm" onClick={addRow}>

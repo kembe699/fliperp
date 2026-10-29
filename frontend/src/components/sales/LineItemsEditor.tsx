@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
+import { CodingFields } from '@/components/shared/CodingFields'
+import { EMPTY_CODING, type Coding } from '@/types/grants'
 
 const PRODUCT_PREFIX = 'product:'
 const SERVICE_PREFIX = 'service:'
@@ -22,6 +24,11 @@ export interface LineItemRow {
   unit_price: number | null
   tax_rate_id: number | null
   discount_amount: number
+  /** SOF / DEA / project / cost centre — only used where the editor shows coding. */
+  grant_id?: number | null
+  dea_id?: number | null
+  project_id?: number | null
+  cost_centre_id?: number | null
 }
 
 export function lineRowTotal(row: LineItemRow): number {
@@ -45,9 +52,24 @@ interface LineItemsEditorProps {
   // rate (1 base = priceMultiplier units). Omitted = base currency, as before.
   currencyCode?: string
   priceMultiplier?: number
+  // Shows a SOF/DEA/project/cost-centre row under each line, offering the SOFs
+  // that cover this date. Omitted = no coding (quotations, platform billing).
+  codingDate?: string
 }
 
-export function LineItemsEditor({ rows, onChange, products, taxRates, priceListItems, disabled, services, onResolveService, currencyCode, priceMultiplier = 1 }: LineItemsEditorProps) {
+export function LineItemsEditor({
+  rows,
+  onChange,
+  products,
+  taxRates,
+  priceListItems,
+  disabled,
+  services,
+  onResolveService,
+  currencyCode,
+  priceMultiplier = 1,
+  codingDate,
+}: LineItemsEditorProps) {
   // A service picked here doesn't become a real Product until onResolveService creates its
   // shadow product (see CrmService::ensureProduct) — kept locally so the row can show it as
   // selected immediately, without waiting for the parent's product list to refetch.
@@ -134,7 +156,8 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
           <p className="p-4 text-sm text-muted-foreground">No line items yet. Add a product or service below.</p>
         ) : (
           rows.map((row) => (
-            <div key={row.key} className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] items-center gap-2 border-b border-border px-3 py-2 last:border-b-0">
+            <div key={row.key} className="border-b border-border last:border-b-0">
+            <div className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] items-center gap-2 px-3 py-2">
               <div className="space-y-1">
                 <SearchableSelect
                   options={pickerOptions}
@@ -207,6 +230,16 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
               >
                 <Trash2 className="h-4 w-4" />
               </button>
+            </div>
+            {codingDate !== undefined && (
+              <CodingFields
+                compact
+                className="px-3 pb-2"
+                date={codingDate || undefined}
+                value={{ ...EMPTY_CODING, ...row } as Coding}
+                onChange={(patch) => updateRow(row.key, patch)}
+              />
+            )}
             </div>
           ))
         )}

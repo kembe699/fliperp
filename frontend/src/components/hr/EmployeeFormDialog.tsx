@@ -156,21 +156,21 @@ export function EmployeeFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>First Name</Label>
+              <Label required>First Name</Label>
               <Input value={firstName} onChange={(event) => setFirstName(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Last Name</Label>
+              <Label required>Last Name</Label>
               <Input value={lastName} onChange={(event) => setLastName(event.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Employee Code</Label>
+              <Label required>Employee Code</Label>
               <Input value={employeeCode} onChange={(event) => setEmployeeCode(event.target.value)} placeholder="EMP-006" />
             </div>
             <div className="space-y-1.5">
-              <Label>Branch</Label>
+              <Label required>Branch</Label>
               <Select value={branchId} onValueChange={setBranchId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
@@ -187,7 +187,7 @@ export function EmployeeFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Department</Label>
+              <Label required>Department</Label>
               <Select value={departmentId} onValueChange={(value) => { setDepartmentId(value); setPositionId('') }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select department" />
@@ -202,7 +202,7 @@ export function EmployeeFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Position</Label>
+              <Label required>Position</Label>
               <Select value={positionId} onValueChange={setPositionId} disabled={!departmentId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select position" />
@@ -229,11 +229,11 @@ export function EmployeeFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Hire Date</Label>
+              <Label required>Hire Date</Label>
               <Input type="date" value={hireDate} onChange={(event) => setHireDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Employment Type</Label>
+              <Label required>Employment Type</Label>
               <Select value={employmentType} onValueChange={(value) => setEmploymentType(value as EmploymentType)}>
                 <SelectTrigger>
                   <SelectValue />

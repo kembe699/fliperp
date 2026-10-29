@@ -190,7 +190,7 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="deal-title">Title</Label>
+            <Label htmlFor="deal-title" required>Title</Label>
             <Input id="deal-title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
 
@@ -201,7 +201,7 @@ export function CrmDealFormDialog({ open, onOpenChange, stages, defaultStageId }
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Pipeline Stage</Label>
+              <Label required>Pipeline Stage</Label>
               <Select value={pipelineStageId} onValueChange={setPipelineStageId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a stage" />

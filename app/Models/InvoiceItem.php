@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasDimensions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceItem extends Model
 {
+    use HasDimensions;
+
     protected $fillable = [
         'invoice_id',
         'product_id',
@@ -17,6 +20,10 @@ class InvoiceItem extends Model
         'tax_rate_id',
         'discount_amount',
         'line_total',
+        'grant_id',
+        'dea_id',
+        'project_id',
+        'cost_centre_id',
     ];
 
     protected function casts(): array

@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CodingFields } from '@/components/shared/CodingFields'
+import { EMPTY_CODING, type Coding } from '@/types/grants'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
 
@@ -67,6 +69,7 @@ export function SupplierBillFormPage() {
   const baseCurrency = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
   const [currency, setCurrency] = useState(baseCurrency)
   const [rate, setRate] = useState('1')
+  const [coding, setCoding] = useState<Coding>(EMPTY_CODING)
 
   const mutation = useMutation({
     mutationFn: (values: BillFormSchema) =>
@@ -80,6 +83,7 @@ export function SupplierBillFormPage() {
         currency_code: currency,
         exchange_rate: Number(rate),
         expense_account_id: selectedExpenseAccountId ? Number(selectedExpenseAccountId) : null,
+        ...coding,
       }),
     onSuccess: (bill) => {
       toast.success('Supplier bill created')
@@ -105,7 +109,7 @@ export function SupplierBillFormPage() {
         <Card className="mb-4">
           <CardContent className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
-              <Label>Supplier</Label>
+              <Label required>Supplier</Label>
               <Controller
                 control={control}
                 name="supplier_id"
@@ -122,7 +126,7 @@ export function SupplierBillFormPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="reference_number">Reference Number</Label>
+              <Label htmlFor="reference_number" required>Reference Number</Label>
               <Input id="reference_number" placeholder="e.g. RENT-2026-08" {...register('reference_number')} />
               {errors.reference_number && <p className="text-xs text-destructive">{errors.reference_number.message}</p>}
             </div>
@@ -130,12 +134,12 @@ export function SupplierBillFormPage() {
             <div />
 
             <div className="space-y-1.5">
-              <Label htmlFor="bill_date">Bill Date</Label>
+              <Label htmlFor="bill_date" required>Bill Date</Label>
               <Input id="bill_date" type="date" {...register('bill_date')} />
               {errors.bill_date && <p className="text-xs text-destructive">{errors.bill_date.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="due_date">Due Date</Label>
+              <Label htmlFor="due_date" required>Due Date</Label>
               <Input id="due_date" type="date" {...register('due_date')} />
               {errors.due_date && <p className="text-xs text-destructive">{errors.due_date.message}</p>}
             </div>
@@ -150,9 +154,14 @@ export function SupplierBillFormPage() {
               />
               <p className="text-xs text-muted-foreground">The bill is posted to this account and to Accounts Payable.</p>
             </div>
+            <div className="space-y-2 sm:col-span-2">
+              <p className="text-sm font-medium">Coding</p>
+              <CodingFields value={coding} date={billDate} onChange={(patch) => setCoding((prev) => ({ ...prev, ...patch }))} className="lg:grid-cols-2" />
+              <p className="text-xs text-muted-foreground">The expense line carries this coding into the SOF, project and cost-centre reports.</p>
+            </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="subtotal">Subtotal</Label>
+              <Label htmlFor="subtotal" required>Subtotal</Label>
               <Input id="subtotal" type="number" min="0" step="0.01" {...register('subtotal', { valueAsNumber: true })} />
               {errors.subtotal && <p className="text-xs text-destructive">{errors.subtotal.message}</p>}
             </div>

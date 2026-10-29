@@ -64,7 +64,7 @@ export function CashDrawerRecoveryDialog({ session, onOpenChange }: CashDrawerRe
             </p>
 
             <div className="space-y-1.5">
-              <Label>Amount Received</Label>
+              <Label required>Amount Received</Label>
               <Input
                 type="number"
                 step="0.01"

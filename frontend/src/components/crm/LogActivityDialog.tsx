@@ -71,7 +71,7 @@ export function LogActivityDialog({ open, onOpenChange, customerId, leadId, deal
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Type</Label>
+              <Label required>Type</Label>
               <Select value={type} onValueChange={(value) => setType(value as CrmActivityType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -86,13 +86,13 @@ export function LogActivityDialog({ open, onOpenChange, customerId, leadId, deal
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="activity-date">Date</Label>
+              <Label htmlFor="activity-date" required>Date</Label>
               <Input id="activity-date" type="date" value={activityDate} onChange={(e) => setActivityDate(e.target.value)} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="activity-subject">Subject</Label>
+            <Label htmlFor="activity-subject" required>Subject</Label>
             <Input id="activity-subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
 

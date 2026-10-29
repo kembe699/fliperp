@@ -52,7 +52,7 @@ export function AssignStaffDialog({ open, onOpenChange, customerId }: AssignStaf
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Staff Member</Label>
+            <Label required>Staff Member</Label>
             <Select value={userId} onValueChange={setUserId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a staff member" />

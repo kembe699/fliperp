@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\PurchaseOrder;
 
+use App\Services\Grants\DimensionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -33,6 +34,7 @@ class UpdatePurchaseOrderRequest extends FormRequest
             'items.*.product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'items.*.quantity_ordered' => ['required_with:items', 'numeric', 'gt:0'],
             'items.*.unit_cost' => ['required_with:items', 'numeric', 'min:0'],
+            ...DimensionService::lineRules('items.*'),
         ];
     }
 }

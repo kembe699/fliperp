@@ -53,7 +53,7 @@ export function CurrencyRateFields({ currency, onCurrencyChange, date, rate, onR
   return (
     <>
       <div className="space-y-1.5">
-        <Label>Currency</Label>
+        <Label required>Currency</Label>
         {onCurrencyChange ? (
           <Select
             value={currency}
@@ -80,7 +80,7 @@ export function CurrencyRateFields({ currency, onCurrencyChange, date, rate, onR
       </div>
       {!isBase && (
         <div className="space-y-1.5">
-          <Label>
+          <Label required>
             Exchange rate <span className="font-normal text-muted-foreground">(1 {base} = ? {currency})</span>
           </Label>
           <Input

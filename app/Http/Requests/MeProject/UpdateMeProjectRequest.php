@@ -16,6 +16,7 @@ class UpdateMeProjectRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'code' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
             'start_date' => ['sometimes', 'required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],

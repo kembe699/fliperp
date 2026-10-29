@@ -51,7 +51,7 @@ it('compares budgeted amounts against actual posted journal activity', function 
 
     $response->assertOk();
 
-    $line = collect($response->json('data'))->firstWhere('account_id', $this->accounts['5200']->id);
+    $line = collect($response->json('data.lines'))->firstWhere('account_id', $this->accounts['5200']->id);
 
     expect((float) $line['budgeted_amount'])->toBe(1000.0);
     expect((float) $line['actual_amount'])->toBe(700.0);

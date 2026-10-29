@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\DimensionFields;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class SupplierBillResource extends JsonResource
 {
+    use DimensionFields;
+
     public function toArray(Request $request): array
     {
         return [
@@ -25,6 +28,7 @@ class SupplierBillResource extends JsonResource
             'currency_code' => $this->currency_code,
             'exchange_rate' => (float) $this->exchange_rate,
             'expense_account_id' => $this->expense_account_id,
+            ...$this->dimensionFields(),
             'balance_due' => round((float) $this->total_amount - (float) $this->amount_paid, 2),
             'status' => $this->status,
             'journal_entry_id' => $this->journal_entry_id,

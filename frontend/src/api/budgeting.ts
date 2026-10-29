@@ -1,6 +1,6 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
-import type { BudgetLine, BudgetPeriod, BudgetPeriodStatus, BudgetVsActualLine } from '@/types/budgeting'
+import type { BudgetLine, BudgetPeriod, BudgetPeriodStatus, BudgetVsActualReport } from '@/types/budgeting'
 
 export async function fetchBudgetPeriods(params: { page?: number; per_page?: number } = {}): Promise<PaginatedResponse<BudgetPeriod>> {
   const { data } = await api.get<PaginatedResponse<BudgetPeriod>>('/budget-periods', { params })
@@ -29,8 +29,12 @@ export async function updateBudgetPeriod(id: number, values: Partial<BudgetPerio
   return data.data
 }
 
-export async function fetchBudgetVsActual(id: number): Promise<BudgetVsActualLine[]> {
-  const { data } = await api.get<ApiResponse<BudgetVsActualLine[]>>(`/budget-periods/${id}/vs-actual`)
+/** Budget vs actual; optionally only lines coded to a SOF/project/cost centre, and shown in another currency. */
+export async function fetchBudgetVsActual(
+  id: number,
+  params: { grant_id?: number; project_id?: number; cost_centre_id?: number; currency?: string } = {},
+): Promise<BudgetVsActualReport> {
+  const { data } = await api.get<ApiResponse<BudgetVsActualReport>>(`/budget-periods/${id}/vs-actual`, { params })
   return data.data
 }
 
@@ -45,6 +49,9 @@ export interface BudgetLineInput {
   department_id?: number | null
   account_id: number
   budgeted_amount: number
+  grant_id?: number | null
+  project_id?: number | null
+  cost_centre_id?: number | null
 }
 
 export async function createBudgetLine(values: BudgetLineInput): Promise<BudgetLine> {

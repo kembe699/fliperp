@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Invoice;
 
+use App\Services\Grants\DimensionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,6 +33,7 @@ class UpdateInvoiceRequest extends FormRequest
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'items.*.tax_rate_id' => ['nullable', Rule::exists('tax_rates', 'id')->where('company_id', $companyId)],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
+            ...DimensionService::lineRules('items.*'),
         ];
     }
 }

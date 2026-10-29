@@ -153,7 +153,7 @@ export function ExchangeRatesPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Currency</Label>
+                <Label required>Currency</Label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select currency" />
@@ -168,12 +168,12 @@ export function ExchangeRatesPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Effective date</Label>
+                <Label required>Effective date</Label>
                 <Input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>
+              <Label required>
                 Rate <span className="font-normal text-muted-foreground">(1 {base} = ? {currency || 'currency'})</span>
               </Label>
               <Input type="number" min="0" step="any" value={rate} onChange={(event) => setRate(event.target.value)} placeholder="e.g. 7800" />

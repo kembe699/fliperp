@@ -58,11 +58,11 @@ export function ContactSupportModal({ open, onOpenChange }: { open: boolean; onO
           <>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Subject</Label>
+                <Label required>Subject</Label>
                 <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Briefly describe the issue" />
               </div>
               <div className="space-y-1.5">
-                <Label>Description</Label>
+                <Label required>Description</Label>
                 <Textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}

@@ -4,7 +4,9 @@ namespace App\Services\Finance;
 
 use App\Models\AccountingPeriod;
 use App\Models\JournalEntry;
+use App\Services\Grants\DimensionService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -19,10 +21,18 @@ use Illuminate\Validation\ValidationException;
  * (used for realised FX gain/loss, a base-only line with no transaction
  * amount). With no currency given, an entry is in the base currency at rate 1
  * — so every existing caller posts exactly as before.
+ *
+ * Coding: any line may carry a SOF/DEA/project/cost centre (see
+ * DimensionService), validated against the entry date. The coding sits on
+ * the line next to its transaction and base amounts, and the line's entry
+ * holds the currency and rate, so every coded line keeps all three.
  */
 class JournalEntryService
 {
-    public function __construct(protected ExchangeRateService $exchangeRateService) {}
+    public function __construct(
+        protected ExchangeRateService $exchangeRateService,
+        protected DimensionService $dimensionService,
+    ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
@@ -41,6 +51,9 @@ class JournalEntryService
         [$currency, $rate] = $companyId
             ? $this->exchangeRateService->resolve($companyId, $data['currency_code'] ?? null, $data['entry_date'], $data['exchange_rate'] ?? null)
             : [$data['currency_code'] ?? null, 1.0];
+        if ($companyId) {
+            $this->dimensionService->validate($companyId, $data['lines'], Carbon::parse($data['entry_date'])->toDateString());
+        }
         $lines = $this->normalizeLines($data['lines'], $rate);
 
         return DB::transaction(function () use ($data, $currency, $rate, $lines) {
@@ -94,7 +107,15 @@ class JournalEntryService
                 'debit' => (float) $line->transaction_debit,
                 'credit' => (float) $line->transaction_credit,
                 'description' => $line->description,
-            ])->all(), $rate) : null);
+            ] + $line->only(DimensionService::KEYS))->all(), $rate) : null);
+
+        if (isset($data['lines']) || isset($data['entry_date'])) {
+            $this->dimensionService->validate(
+                $entry->company_id,
+                $data['lines'] ?? $entry->lines->map(fn ($line) => $line->only(DimensionService::KEYS))->all(),
+                Carbon::parse($data['entry_date'] ?? $entry->entry_date)->toDateString(),
+            );
+        }
 
         return DB::transaction(function () use ($entry, $data, $currency, $rate, $lines) {
             $entry->update(array_filter([
@@ -191,7 +212,7 @@ class JournalEntryService
                     'transaction_debit' => $line->transaction_credit,
                     'transaction_credit' => $line->transaction_debit,
                     'description' => $line->description,
-                ]);
+                ] + $line->only(DimensionService::KEYS));
             }
 
             $entry->update(['status' => 'reversed']);
@@ -236,7 +257,7 @@ class JournalEntryService
                 'transaction_debit' => $transactionDebit,
                 'transaction_credit' => $transactionCredit,
                 'description' => $line['description'] ?? null,
-            ];
+            ] + DimensionService::of($line);
         }, array_values($lines));
 
         $differenceCents = (int) round(array_sum(array_column($normalized, 'debit')) * 100) - (int) round(array_sum(array_column($normalized, 'credit')) * 100);

@@ -108,7 +108,7 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
               }}
             >
               <div className="space-y-1">
-                <Label htmlFor="company_name">Company Name</Label>
+                <Label htmlFor="company_name" required>Company Name</Label>
                 <Input
                   id="company_name"
                   required
@@ -134,7 +134,7 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="admin_name">Admin Name</Label>
+                  <Label htmlFor="admin_name" required>Admin Name</Label>
                   <Input
                     id="admin_name"
                     required
@@ -143,7 +143,7 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="admin_email">Admin Email</Label>
+                  <Label htmlFor="admin_email" required>Admin Email</Label>
                   <Input
                     id="admin_email"
                     type="email"

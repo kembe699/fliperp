@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\DimensionFields;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class InvoiceItemResource extends JsonResource
 {
+    use DimensionFields;
+
     public function toArray(Request $request): array
     {
         return [
@@ -20,6 +23,7 @@ class InvoiceItemResource extends JsonResource
             'tax_rate_id' => $this->tax_rate_id,
             'discount_amount' => (float) $this->discount_amount,
             'line_total' => (float) $this->line_total,
+            ...$this->dimensionFields(),
         ];
     }
 }

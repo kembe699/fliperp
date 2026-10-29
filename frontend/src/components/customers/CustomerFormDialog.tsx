@@ -117,12 +117,12 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: CustomerFor
         <form onSubmit={handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name" required>Name</Label>
               <Input id="name" {...register('name')} />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone" required>Phone</Label>
               <Input id="phone" {...register('phone')} />
               {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>

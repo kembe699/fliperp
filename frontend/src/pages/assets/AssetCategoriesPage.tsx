@@ -148,12 +148,12 @@ export function AssetCategoriesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Depreciation Method</Label>
+                <Label required>Depreciation Method</Label>
                 <Select value={method} onValueChange={(value) => setMethod(value as DepreciationMethod)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -168,7 +168,7 @@ export function AssetCategoriesPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Useful Life (years)</Label>
+                <Label required>Useful Life (years)</Label>
                 <Input type="number" min="1" value={usefulLife} onChange={(event) => setUsefulLife(event.target.value)} />
               </div>
             </div>

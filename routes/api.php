@@ -81,6 +81,10 @@ use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\TaxRateController;
 use App\Http\Controllers\Api\ExchangeRateController;
+use App\Http\Controllers\Api\CostCentreController;
+use App\Http\Controllers\Api\DimensionController;
+use App\Http\Controllers\Api\DonorController;
+use App\Http\Controllers\Api\GrantController;
 use App\Http\Controllers\Api\UnitOfMeasureController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
@@ -240,6 +244,20 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('budget-periods', BudgetPeriodController::class);
         Route::get('budget-periods/{budget_period}/vs-actual', [BudgetPeriodController::class, 'vsActual']);
         Route::apiResource('budget-lines', BudgetLineController::class);
+
+        // Grants & dimensions (Save the Children coding: SOF, DEA, project, cost centre)
+        Route::get('dimensions/options', [DimensionController::class, 'options']);
+        Route::apiResource('donors', DonorController::class);
+        Route::apiResource('cost-centres', CostCentreController::class);
+        // Declared before the resource so 'summary' isn't read as a {grant} id.
+        Route::get('grants/summary', [GrantController::class, 'summary']);
+        Route::apiResource('grants', GrantController::class);
+        Route::get('grants/{grant}/report', [GrantController::class, 'report'])->middleware('permission:reports.view');
+        Route::post('grants/{grant}/deas', [GrantController::class, 'storeDea']);
+        Route::put('grant-deas/{dea}', [GrantController::class, 'updateDea']);
+        Route::delete('grant-deas/{dea}', [GrantController::class, 'destroyDea']);
+        Route::post('grants/{grant}/budget-lines', [GrantController::class, 'storeBudgetLine']);
+        Route::delete('grant-budget-lines/{budgetLine}', [GrantController::class, 'destroyBudgetLine']);
 
         // M&E
         Route::apiResource('me-projects', MeProjectController::class);

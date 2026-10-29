@@ -8,6 +8,8 @@ import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { useBaseCurrency } from '@/hooks/use-base-currency'
 import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
+import { DimensionFilters } from '@/components/shared/CodingFields'
+import { codingSummary, type DimensionFilterValue } from '@/lib/coding'
 import { startOfMonth, toISODate } from '@/lib/format'
 import { sourceRecordLink } from '@/lib/journal-source-links'
 
@@ -26,11 +28,12 @@ export function GeneralLedgerReportPage() {
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
   const [downloading, setDownloading] = useState(false)
+  const [dimensions, setDimensions] = useState<DimensionFilterValue>({})
 
   const { data: accounts } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts })
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['general-ledger', accountId, from, to, showIn],
-    queryFn: () => fetchGeneralLedger({ account_id: Number(accountId), from, to, currency: currencyParam }),
+    queryKey: ['general-ledger', accountId, from, to, showIn, dimensions],
+    queryFn: () => fetchGeneralLedger({ account_id: Number(accountId), from, to, currency: currencyParam, ...dimensions }),
     enabled: !!accountId,
   })
   const currencyCode = data?.currency?.code
@@ -45,7 +48,7 @@ export function GeneralLedgerReportPage() {
     if (!accountId) return
     setDownloading(true)
     try {
-      await downloadGeneralLedger(Number(accountId), from, to, currencyParam)
+      await downloadGeneralLedger(Number(accountId), from, to, currencyParam, dimensions)
     } finally {
       setDownloading(false)
     }
@@ -71,7 +74,7 @@ export function GeneralLedgerReportPage() {
       />
 
       <Card className="mb-4">
-        <CardContent className="flex items-end gap-4 p-4">
+        <CardContent className="flex flex-wrap items-end gap-4 p-4">
           <div className="w-64 space-y-1.5">
             <Label>Account</Label>
             <SearchableSelect
@@ -90,6 +93,7 @@ export function GeneralLedgerReportPage() {
             <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
           <ReportCurrencySelect value={showIn} onChange={setShowIn} />
+          <DimensionFilters value={dimensions} onChange={setDimensions} />
         </CardContent>
       </Card>
 
@@ -126,6 +130,8 @@ export function GeneralLedgerReportPage() {
                       <th className="py-2">Reference</th>
                       <th className="py-2">Description</th>
                       <th className="py-2">Source</th>
+                      <th className="py-2">Coding</th>
+                      <th className="py-2 text-right">As transacted</th>
                       <th className="py-2 text-right">Debit</th>
                       <th className="py-2 text-right">Credit</th>
                       <th className="py-2 text-right">Balance</th>
@@ -152,6 +158,12 @@ export function GeneralLedgerReportPage() {
                               '—'
                             )}
                           </td>
+                          <td className="py-2 text-xs text-muted-foreground">{codingSummary(line) ?? '—'}</td>
+                          <td className="py-2 text-right text-xs text-muted-foreground">
+                            {line.currency_code && line.currency_code !== data.currency?.base_currency
+                              ? `${formatCurrency((line.transaction_debit ?? 0) - (line.transaction_credit ?? 0), line.currency_code)} @ ${line.exchange_rate}`
+                              : '—'}
+                          </td>
                           <td className="py-2 text-right text-foreground">{line.debit > 0 ? formatCurrency(line.debit, currencyCode) : '—'}</td>
                           <td className="py-2 text-right text-foreground">{line.credit > 0 ? formatCurrency(line.credit, currencyCode) : '—'}</td>
                           <td className="py-2 text-right font-medium text-foreground">{formatCurrency(line.balance, currencyCode)}</td>
@@ -160,7 +172,7 @@ export function GeneralLedgerReportPage() {
                     })}
                     {data.lines.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-muted-foreground">
+                        <td colSpan={9} className="py-6 text-center text-muted-foreground">
                           No activity in this period.
                         </td>
                       </tr>

@@ -178,7 +178,7 @@ export function CompanySettingsPage() {
                 </div>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>Company Name</Label>
+                <Label required>Company Name</Label>
                 <Input value={name} onChange={(event) => setName(event.target.value)} disabled={!canEdit} />
               </div>
               <div className="space-y-1.5 sm:col-span-2">

@@ -135,21 +135,21 @@ export function AttendanceGeofencesSection({ branchId }: { branchId: number }) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Main Office" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Latitude</Label>
+                <Label required>Latitude</Label>
                 <Input type="number" step="any" value={form.latitude} onChange={(event) => setForm({ ...form, latitude: event.target.value })} placeholder="0.3476" />
               </div>
               <div className="space-y-1.5">
-                <Label>Longitude</Label>
+                <Label required>Longitude</Label>
                 <Input type="number" step="any" value={form.longitude} onChange={(event) => setForm({ ...form, longitude: event.target.value })} placeholder="32.5825" />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Radius (meters)</Label>
+              <Label required>Radius (meters)</Label>
               <Input type="number" min="10" value={form.radiusMeters} onChange={(event) => setForm({ ...form, radiusMeters: event.target.value })} />
             </div>
             <label className="flex items-center gap-2 text-sm text-foreground">

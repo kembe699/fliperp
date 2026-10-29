@@ -203,12 +203,12 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         <form onSubmit={handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name" required>Name</Label>
               <Input id="name" {...register('name')} />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sku">SKU</Label>
+              <Label htmlFor="sku" required>SKU</Label>
               <Input id="sku" {...register('sku')} />
               {errors.sku && <p className="text-xs text-destructive">{errors.sku.message}</p>}
             </div>
@@ -290,7 +290,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
               <Input id="barcode" {...register('barcode')} />
             </div>
             <div className="space-y-1.5">
-              <Label>Category</Label>
+              <Label required>Category</Label>
               <Controller
                 control={control}
                 name="category_id"
@@ -320,7 +320,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label>Unit of Measure</Label>
+              <Label required>Unit of Measure</Label>
               <Controller
                 control={control}
                 name="unit_of_measure_id"
@@ -371,12 +371,12 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="cost_price">Cost Price</Label>
+              <Label htmlFor="cost_price" required>Cost Price</Label>
               <Input id="cost_price" type="number" step="0.01" min="0" {...register('cost_price', { valueAsNumber: true })} />
               {errors.cost_price && <p className="text-xs text-destructive">{errors.cost_price.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="selling_price">Selling Price</Label>
+              <Label htmlFor="selling_price" required>Selling Price</Label>
               <Input id="selling_price" type="number" step="0.01" min="0" {...register('selling_price', { valueAsNumber: true })} />
               {errors.selling_price && <p className="text-xs text-destructive">{errors.selling_price.message}</p>}
             </div>

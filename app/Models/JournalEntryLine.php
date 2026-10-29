@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasDimensions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalEntryLine extends Model
 {
+    use HasDimensions;
+
     protected $fillable = [
         'journal_entry_id',
         'account_id',
@@ -15,6 +18,10 @@ class JournalEntryLine extends Model
         'transaction_debit',
         'transaction_credit',
         'description',
+        'grant_id',
+        'dea_id',
+        'project_id',
+        'cost_centre_id',
     ];
 
     protected function casts(): array

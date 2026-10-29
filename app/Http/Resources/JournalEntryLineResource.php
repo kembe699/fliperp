@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\DimensionFields;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class JournalEntryLineResource extends JsonResource
 {
+    use DimensionFields;
+
     public function toArray(Request $request): array
     {
         return [
@@ -19,6 +22,7 @@ class JournalEntryLineResource extends JsonResource
             'transaction_debit' => (float) $this->transaction_debit,
             'transaction_credit' => (float) $this->transaction_credit,
             'description' => $this->description,
+            ...$this->dimensionFields(),
         ];
     }
 }

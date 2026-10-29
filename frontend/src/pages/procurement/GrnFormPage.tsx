@@ -125,7 +125,7 @@ export function GrnFormPage() {
       <Card className="mb-4">
         <CardContent className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5 lg:col-span-2">
-            <Label>Supplier</Label>
+            <Label required>Supplier</Label>
             <SearchableSelect
               options={(suppliers?.data ?? []).map((supplier) => ({ value: String(supplier.id), label: supplier.name }))}
               value={supplierId}
@@ -135,7 +135,7 @@ export function GrnFormPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Warehouse</Label>
+            <Label required>Warehouse</Label>
             <Select value={warehouseId} onValueChange={setWarehouseId} disabled={!!purchaseOrderId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select warehouse" />
@@ -150,11 +150,11 @@ export function GrnFormPage() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Reference Number</Label>
+            <Label required>Reference Number</Label>
             <Input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} placeholder="GRN-001" />
           </div>
           <div className="space-y-1.5">
-            <Label>Received Date</Label>
+            <Label required>Received Date</Label>
             <Input type="date" value={receivedDate} onChange={(event) => setReceivedDate(event.target.value)} />
           </div>
           <div className="space-y-1.5 lg:col-span-3">

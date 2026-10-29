@@ -198,7 +198,7 @@ export function ContractFlowDialog({ open, onOpenChange, employee, resumeContrac
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Contract Type</Label>
+                <Label required>Contract Type</Label>
                 <Input value={details.contractType} onChange={(event) => setDetails({ ...details, contractType: event.target.value })} placeholder="Permanent, Fixed-term, etc." />
               </div>
               <div className="space-y-1.5">
@@ -208,7 +208,7 @@ export function ContractFlowDialog({ open, onOpenChange, employee, resumeContrac
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Start Date</Label>
+                <Label required>Start Date</Label>
                 <Input type="date" value={details.startDate} onChange={(event) => setDetails({ ...details, startDate: event.target.value })} />
               </div>
               <div className="space-y-1.5">
@@ -217,7 +217,7 @@ export function ContractFlowDialog({ open, onOpenChange, employee, resumeContrac
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Base Salary</Label>
+              <Label required>Base Salary</Label>
               <Input type="number" min="0" step="0.01" value={details.baseSalary} onChange={(event) => setDetails({ ...details, baseSalary: event.target.value })} />
             </div>
 

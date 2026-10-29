@@ -11,6 +11,7 @@ import {
   Calculator,
   Settings,
   Contact,
+  HandCoins,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -118,6 +119,16 @@ export const navConfig: NavItem[] = [
   },
   { label: 'Budgeting', path: '/budget-periods', icon: PiggyBank, requiredPermission: 'budget-periods.view' },
   { label: 'M&E', path: '/me-projects', icon: BarChart3, requiredPermission: 'me-projects.view' },
+  {
+    label: 'Grants',
+    path: '/grants',
+    icon: HandCoins,
+    children: [
+      { label: 'SOFs', path: '/grants', requiredPermission: 'grants.view' },
+      { label: 'Donors', path: '/donors', requiredPermission: 'donors.view' },
+      { label: 'Cost Centres', path: '/cost-centres', requiredPermission: 'cost-centres.view' },
+    ],
+  },
   {
     label: 'Accounting',
     path: '/accounting',

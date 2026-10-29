@@ -165,11 +165,11 @@ export function VehiclesPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Registration Number</Label>
+                <Label required>Registration Number</Label>
                 <Input value={registrationNumber} onChange={(event) => setRegistrationNumber(event.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Branch</Label>
+                <Label required>Branch</Label>
                 <Select value={branchId} onValueChange={setBranchId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select branch" />

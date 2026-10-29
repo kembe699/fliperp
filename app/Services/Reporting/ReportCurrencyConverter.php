@@ -22,6 +22,7 @@ class ReportCurrencyConverter
         'total_debit', 'total_credit', 'opening_balance', 'closing_balance',
         'gross_profit', 'net_profit', 'net_income', 'total_liabilities_and_equity',
         'cash_in', 'cash_out', 'net', 'net_cash_movement',
+        'budgeted_amount', 'actual_amount', 'variance', 'actual_base', 'income_base',
     ];
 
     public function __construct(protected ExchangeRateService $exchangeRateService) {}

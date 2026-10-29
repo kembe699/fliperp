@@ -1,6 +1,7 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
 import type { AccountingPeriod, AccountingPeriodStatus, ChartOfAccount, ChartOfAccountType, JournalEntry, JournalEntryStatus } from '@/types/accounting'
+import type { Coding } from '@/types/grants'
 
 // Chart of Accounts
 export interface ChartOfAccountInput {
@@ -54,7 +55,7 @@ export interface JournalEntryInput {
   description?: string | null
   currency_code?: string
   exchange_rate?: number
-  lines: { account_id: number; debit?: number; credit?: number; description?: string | null }[]
+  lines: ({ account_id: number; debit?: number; credit?: number; description?: string | null } & Partial<Coding>)[]
 }
 
 export async function createJournalEntry(values: JournalEntryInput): Promise<JournalEntry> {

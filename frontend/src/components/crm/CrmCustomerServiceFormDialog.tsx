@@ -64,7 +64,7 @@ export function CrmCustomerServiceFormDialog({ open, onOpenChange, customerId }:
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Service</Label>
+            <Label required>Service</Label>
             <Select value={serviceId} onValueChange={setServiceId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a service" />
@@ -81,11 +81,11 @@ export function CrmCustomerServiceFormDialog({ open, onOpenChange, customerId }:
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="cs-price">Price Charged</Label>
+              <Label htmlFor="cs-price" required>Price Charged</Label>
               <Input id="cs-price" type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cs-start">Start Date</Label>
+              <Label htmlFor="cs-start" required>Start Date</Label>
               <Input id="cs-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
           </div>

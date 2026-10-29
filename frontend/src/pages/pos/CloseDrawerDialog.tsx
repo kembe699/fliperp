@@ -125,7 +125,7 @@ export function CloseDrawerDialog({ open, onOpenChange, session }: CloseDrawerDi
                 <p className="text-xs text-muted-foreground">Opening float plus all cash payments taken this shift. Count your drawer against this before entering below.</p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="closing_float">Counted Closing Float</Label>
+                <Label htmlFor="closing_float" required>Counted Closing Float</Label>
                 <Input
                   id="closing_float"
                   type="number"

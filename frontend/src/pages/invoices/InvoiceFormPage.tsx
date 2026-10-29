@@ -95,6 +95,10 @@ export function InvoiceFormPage() {
           unit_price: Number(item.unit_price),
           tax_rate_id: item.tax_rate_id,
           discount_amount: Number(item.discount_amount),
+          grant_id: item.grant_id ?? null,
+          dea_id: item.dea_id ?? null,
+          project_id: item.project_id ?? null,
+          cost_centre_id: item.cost_centre_id ?? null,
         })),
       )
     }
@@ -120,6 +124,10 @@ export function InvoiceFormPage() {
         unit_price: row.unit_price,
         tax_rate_id: row.tax_rate_id,
         discount_amount: row.discount_amount,
+        grant_id: row.grant_id ?? null,
+        dea_id: row.dea_id ?? null,
+        project_id: row.project_id ?? null,
+        cost_centre_id: row.cost_centre_id ?? null,
       })),
   })
 
@@ -173,7 +181,7 @@ export function InvoiceFormPage() {
       <Card className="mb-4">
         <CardContent className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5 lg:col-span-2">
-            <Label>Customer</Label>
+            <Label required>Customer</Label>
             <SearchableSelect
               options={(customersPage?.data ?? []).map((customer) => ({ value: String(customer.id), label: customer.name, sublabel: customer.phone }))}
               value={customerId}
@@ -182,7 +190,7 @@ export function InvoiceFormPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Branch</Label>
+            <Label required>Branch</Label>
             <Select value={branchId} onValueChange={setBranchId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select branch" />
@@ -217,7 +225,7 @@ export function InvoiceFormPage() {
             <Input type="date" value={invoiceDate} onChange={(event) => setInvoiceDate(event.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Due Date</Label>
+            <Label required>Due Date</Label>
             <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} required />
           </div>
           <CurrencyRateFields currency={currency} onCurrencyChange={setCurrency} date={invoiceDate} rate={rate} onRateChange={setRate} />
@@ -240,6 +248,7 @@ export function InvoiceFormPage() {
           onResolveService={canUseCrmServices ? resolveService : undefined}
           currencyCode={currency}
           priceMultiplier={Number(rate) || 1}
+          codingDate={invoiceDate || new Date().toISOString().slice(0, 10)}
         />
       </div>
 

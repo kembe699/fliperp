@@ -26,6 +26,14 @@ export interface JournalEntryLine {
   transaction_debit: number
   transaction_credit: number
   description: string | null
+  grant_id?: number | null
+  grant_code?: string | null
+  dea_id?: number | null
+  dea_code?: string | null
+  project_id?: number | null
+  project_code?: string | null
+  cost_centre_id?: number | null
+  cost_centre_code?: string | null
 }
 
 export interface JournalEntry {

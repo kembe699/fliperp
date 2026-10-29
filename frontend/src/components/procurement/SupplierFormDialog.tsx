@@ -72,7 +72,7 @@ export function SupplierFormDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             <div className="space-y-1.5">

@@ -5,6 +5,7 @@ namespace App\Services\Reporting;
 use App\Models\ChartOfAccount;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Services\Grants\DimensionService;
 use Illuminate\Support\Collection;
 
 /**
@@ -22,10 +23,10 @@ class ProfitAndLossService
 {
     public const COGS_ACCOUNT_CODE = '5300';
 
-    public function generate(int $companyId, string $from, string $to, ?int $branchId = null): array
+    public function generate(int $companyId, string $from, string $to, ?int $branchId = null, array $dimensions = []): array
     {
-        $revenueAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'revenue');
-        $expenseAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'expense');
+        $revenueAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'revenue', $dimensions);
+        $expenseAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'expense', $dimensions);
 
         $cogsAccounts = $expenseAccounts->filter(fn ($row) => $row['code'] === self::COGS_ACCOUNT_CODE)->values();
         $operatingExpenseAccounts = $expenseAccounts->filter(fn ($row) => $row['code'] !== self::COGS_ACCOUNT_CODE)->values();
@@ -50,7 +51,7 @@ class ProfitAndLossService
     /**
      * @return Collection<int, array{account_id:int,code:string,name:string,amount:float}>
      */
-    protected function accountBalances(int $companyId, string $from, string $to, ?int $branchId, string $type): Collection
+    protected function accountBalances(int $companyId, string $from, string $to, ?int $branchId, string $type, array $dimensions = []): Collection
     {
         $rows = JournalEntryLine::query()
             ->selectRaw('journal_entry_lines.account_id, SUM(journal_entry_lines.debit) as total_debit, SUM(journal_entry_lines.credit) as total_credit')
@@ -59,6 +60,7 @@ class ProfitAndLossService
             ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$from, $to])
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))
+            ->tap(fn ($query) => DimensionService::filter($query, $dimensions))
             ->groupBy('journal_entry_lines.account_id')
             ->get()
             ->keyBy('account_id');

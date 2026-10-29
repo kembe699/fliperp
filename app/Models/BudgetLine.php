@@ -13,6 +13,9 @@ class BudgetLine extends Model
         'department_id',
         'account_id',
         'budgeted_amount',
+        'grant_id',
+        'project_id',
+        'cost_centre_id',
     ];
 
     protected function casts(): array
@@ -40,5 +43,20 @@ class BudgetLine extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(ChartOfAccount::class, 'account_id');
+    }
+
+    public function grant(): BelongsTo
+    {
+        return $this->belongsTo(Grant::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(MeProject::class, 'project_id');
+    }
+
+    public function costCentre(): BelongsTo
+    {
+        return $this->belongsTo(CostCentre::class);
     }
 }

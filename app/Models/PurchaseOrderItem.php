@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasDimensions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrderItem extends Model
 {
+    use HasDimensions;
+
     protected $fillable = [
         'purchase_order_id',
         'product_id',
@@ -15,6 +18,10 @@ class PurchaseOrderItem extends Model
         'quantity_ordered',
         'unit_cost',
         'quantity_received',
+        'grant_id',
+        'dea_id',
+        'project_id',
+        'cost_centre_id',
     ];
 
     protected function casts(): array

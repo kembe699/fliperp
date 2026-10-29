@@ -83,11 +83,11 @@ export function DispatchFormDialog({ open, onOpenChange }: { open: boolean; onOp
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Reference Number</Label>
+              <Label required>Reference Number</Label>
               <Input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} placeholder="DSP-001" />
             </div>
             <div className="space-y-1.5">
-              <Label>Branch</Label>
+              <Label required>Branch</Label>
               <Select value={branchId} onValueChange={setBranchId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
@@ -120,7 +120,7 @@ export function DispatchFormDialog({ open, onOpenChange }: { open: boolean; onOp
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Source Module</Label>
+              <Label required>Source Module</Label>
               <Select value={sourceModule} onValueChange={(value) => setSourceModule(value as DispatchSourceModule)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -136,7 +136,7 @@ export function DispatchFormDialog({ open, onOpenChange }: { open: boolean; onOp
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Dispatch Date</Label>
+            <Label required>Dispatch Date</Label>
             <Input type="date" value={dispatchDate} onChange={(event) => setDispatchDate(event.target.value)} />
           </div>
 

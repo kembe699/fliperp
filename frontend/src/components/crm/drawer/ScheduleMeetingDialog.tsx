@@ -118,7 +118,7 @@ export function ScheduleMeetingDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="meeting-title">Title</Label>
+            <Label htmlFor="meeting-title" required>Title</Label>
             <Input id="meeting-title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
 
@@ -129,7 +129,7 @@ export function ScheduleMeetingDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="meeting-datetime">Date &amp; Time</Label>
+              <Label htmlFor="meeting-datetime" required>Date &amp; Time</Label>
               <Input
                 id="meeting-datetime"
                 type="datetime-local"

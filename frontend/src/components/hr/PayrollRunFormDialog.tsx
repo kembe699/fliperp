@@ -74,11 +74,11 @@ export function PayrollRunFormDialog({ open, onOpenChange }: { open: boolean; on
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Period Start</Label>
+              <Label required>Period Start</Label>
               <Input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Period End</Label>
+              <Label required>Period End</Label>
               <Input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} />
             </div>
           </div>

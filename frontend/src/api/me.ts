@@ -14,6 +14,7 @@ export async function fetchMeProject(id: number): Promise<MeProject> {
 }
 
 export interface MeProjectInput {
+  code?: string | null
   name: string
   description?: string | null
   start_date: string

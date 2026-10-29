@@ -95,11 +95,11 @@ export function ProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Name</Label>
+                <Label required>Name</Label>
                 <Input value={name} onChange={(event) => setName(event.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Email</Label>
+                <Label required>Email</Label>
                 <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
               </div>
               <div className="space-y-1.5">
@@ -122,15 +122,15 @@ export function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Current Password</Label>
+                <Label required>Current Password</Label>
                 <Input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>New Password</Label>
+                <Label required>New Password</Label>
                 <Input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Min 8 characters, upper/lowercase and a number" />
               </div>
               <div className="space-y-1.5">
-                <Label>Confirm New Password</Label>
+                <Label required>Confirm New Password</Label>
                 <Input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
                 {confirmPassword.length > 0 && newPassword !== confirmPassword && (
                   <p className="text-xs text-destructive">Passwords do not match.</p>

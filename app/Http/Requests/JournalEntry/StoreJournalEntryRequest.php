@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\JournalEntry;
 
+use App\Services\Grants\DimensionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -37,6 +38,7 @@ class StoreJournalEntryRequest extends FormRequest
             'lines.*.debit' => ['nullable', 'numeric', 'min:0'],
             'lines.*.credit' => ['nullable', 'numeric', 'min:0'],
             'lines.*.description' => ['nullable', 'string', 'max:255'],
+            ...DimensionService::lineRules('lines.*'),
         ];
     }
 }

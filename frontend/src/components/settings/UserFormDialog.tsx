@@ -81,17 +81,17 @@ export function UserFormDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Email</Label>
+              <Label required>Email</Label>
               <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>{user ? 'New Password (optional)' : 'Password'}</Label>
+              <Label required={!user}>{user ? 'New Password (optional)' : 'Password'}</Label>
               <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Min 8 characters" />
             </div>
             <div className="space-y-1.5">

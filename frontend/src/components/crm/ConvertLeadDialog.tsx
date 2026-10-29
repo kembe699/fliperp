@@ -67,7 +67,7 @@ export function ConvertLeadDialog({ open, onOpenChange, lead }: ConvertLeadDialo
 
           {needsPhone && (
             <div className="space-y-1.5">
-              <Label htmlFor="convert-phone">Phone number</Label>
+              <Label htmlFor="convert-phone" required>Phone number</Label>
               <Input
                 id="convert-phone"
                 value={phone}

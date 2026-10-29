@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\TaxRate;
 use App\Services\Finance\ExchangeRateService;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Grants\DimensionService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,7 @@ class InvoiceService
         protected PromotionService $promotionService,
         protected JournalEntryService $journalEntryService,
         protected ExchangeRateService $exchangeRateService,
+        protected DimensionService $dimensionService,
     ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -67,6 +69,7 @@ class InvoiceService
                 Auth::user()->company_id, $data['currency_code'] ?? null, $date, $data['exchange_rate'] ?? null,
             );
 
+            $this->dimensionService->validate(Auth::user()->company_id, $data['items'], $date, 'items');
             ['subtotal' => $subtotal, 'taxAmount' => $taxAmount, 'items' => $items] = $this->computeTotals(
                 $data['items'], $data['price_list_id'] ?? null, $customer, $date, $rate,
             );
@@ -125,6 +128,7 @@ class InvoiceService
 
             if (isset($data['items'])) {
                 $customer = Customer::find($data['customer_id'] ?? $invoice->customer_id);
+                $this->dimensionService->validate($invoice->company_id, $data['items'], $date, 'items');
 
                 ['subtotal' => $subtotal, 'taxAmount' => $taxAmount, 'items' => $items] = $this->computeTotals(
                     $data['items'], $data['price_list_id'] ?? null, $customer, $date, $rate,
@@ -186,7 +190,7 @@ class InvoiceService
 
             $lines = [
                 ['account_id' => $this->resolveAccount($invoice->company_id, self::ACCOUNTS_RECEIVABLE_ACCOUNT_CODE)->id, 'debit' => $totalAmount, 'credit' => 0, 'description' => 'Amount billed to customer'],
-                ['account_id' => $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id, 'debit' => 0, 'credit' => $revenueAmount, 'description' => 'Sales revenue'],
+                ...$this->revenueLines($invoice, $revenueAmount),
             ];
 
             if ($taxAmount > 0) {
@@ -290,6 +294,39 @@ class InvoiceService
     }
 
     /**
+     * Revenue credit lines, one per distinct coding (SOF/DEA/project/cost
+     * centre) among the invoice's items, so coded income reaches the grant
+     * and project reports. The invoice-level discount is shared across them
+     * in proportion to their totals; any rounding cent goes to the last line,
+     * so they always sum to $revenueAmount.
+     */
+    protected function revenueLines(Invoice $invoice, float $revenueAmount): array
+    {
+        $accountId = $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id;
+        $groups = $invoice->items()->get()
+            ->groupBy(fn ($item) => implode('-', $item->only(DimensionService::KEYS)))
+            ->map(fn ($items) => ['dimensions' => $items->first()->only(DimensionService::KEYS), 'total' => (float) $items->sum('line_total')])
+            ->values();
+        $itemsTotal = (float) $groups->sum('total');
+
+        if ($groups->count() <= 1 || $itemsTotal <= 0) {
+            return [['account_id' => $accountId, 'debit' => 0, 'credit' => $revenueAmount, 'description' => 'Sales revenue'] + ($groups->first()['dimensions'] ?? [])];
+        }
+
+        $lines = [];
+        $allocated = 0.0;
+        foreach ($groups as $index => $group) {
+            $amount = $index === $groups->count() - 1
+                ? round($revenueAmount - $allocated, 2)
+                : round($revenueAmount * $group['total'] / $itemsTotal, 2);
+            $allocated += $amount;
+            $lines[] = ['account_id' => $accountId, 'debit' => 0, 'credit' => $amount, 'description' => 'Sales revenue'] + $group['dimensions'];
+        }
+
+        return $lines;
+    }
+
+    /**
      * $rate converts the defaults that come from the catalogue — product and
      * price-list prices, promotion discounts — which are base-currency
      * figures, into the invoice's currency. Amounts typed on the invoice are
@@ -333,7 +370,7 @@ class InvoiceService
                 'tax_rate_id' => $item['tax_rate_id'] ?? null,
                 'discount_amount' => round($discount, 2),
                 'line_total' => $lineTotal,
-            ];
+            ] + DimensionService::of($item);
         }
 
         return [

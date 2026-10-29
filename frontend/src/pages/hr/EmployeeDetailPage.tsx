@@ -289,11 +289,11 @@ export function EmployeeDetailPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Basic Salary</Label>
+              <Label required>Basic Salary</Label>
               <Input type="number" min="0" step="0.01" value={basicSalary} onChange={(event) => setBasicSalary(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Effective Date</Label>
+              <Label required>Effective Date</Label>
               <Input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} />
             </div>
           </div>

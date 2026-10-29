@@ -8,6 +8,8 @@ import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { useBaseCurrency } from '@/hooks/use-base-currency'
 import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
+import { DimensionFilters } from '@/components/shared/CodingFields'
+import type { DimensionFilterValue } from '@/lib/coding'
 import { startOfMonth, toISODate } from '@/lib/format'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -23,8 +25,9 @@ export function TrialBalanceReportPage() {
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
   const [downloading, setDownloading] = useState(false)
+  const [dimensions, setDimensions] = useState<DimensionFilterValue>({})
 
-  const { data, isLoading, isError } = useQuery({ queryKey: ['trial-balance', from, to, showIn], queryFn: () => fetchTrialBalance({ from, to, currency: currencyParam }) })
+  const { data, isLoading, isError } = useQuery({ queryKey: ['trial-balance', from, to, showIn, dimensions], queryFn: () => fetchTrialBalance({ from, to, currency: currencyParam, ...dimensions }) })
   const currencyCode = data?.currency?.code
 
   const snapshotMutation = useMutation({
@@ -36,7 +39,7 @@ export function TrialBalanceReportPage() {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await downloadReport('trial-balance', from, to, currencyParam)
+      await downloadReport('trial-balance', from, to, currencyParam, dimensions)
     } finally {
       setDownloading(false)
     }
@@ -62,7 +65,7 @@ export function TrialBalanceReportPage() {
       />
 
       <Card className="mb-4">
-        <CardContent className="flex items-end gap-4 p-4">
+        <CardContent className="flex flex-wrap items-end gap-4 p-4">
           <div className="space-y-1.5">
             <Label>From</Label>
             <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
@@ -72,6 +75,7 @@ export function TrialBalanceReportPage() {
             <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
           <ReportCurrencySelect value={showIn} onChange={setShowIn} />
+          <DimensionFilters value={dimensions} onChange={setDimensions} />
         </CardContent>
       </Card>
 

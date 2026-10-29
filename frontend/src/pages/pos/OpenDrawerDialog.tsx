@@ -45,7 +45,7 @@ export function OpenDrawerDialog({ branchId }: { branchId?: number }) {
           className="space-y-4"
         >
           <div className="space-y-1.5">
-            <Label htmlFor="opening_float">Opening Float</Label>
+            <Label htmlFor="opening_float" required>Opening Float</Label>
             <Input
               id="opening_float"
               type="number"

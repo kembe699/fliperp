@@ -57,11 +57,11 @@ export function RecordResultDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Reporting Period</Label>
+            <Label required>Reporting Period</Label>
             <Input value={reportingPeriod} onChange={(event) => setReportingPeriod(event.target.value)} placeholder="Q1 2026" />
           </div>
           <div className="space-y-1.5">
-            <Label>Actual Value{indicator?.unit_of_measure ? ` (${indicator.unit_of_measure})` : ''}</Label>
+            <Label required>Actual Value{indicator?.unit_of_measure ? ` (${indicator.unit_of_measure})` : ''}</Label>
             <Input type="number" step="0.01" value={actualValue} onChange={(event) => setActualValue(event.target.value)} />
           </div>
           <div className="space-y-1.5">

@@ -14,6 +14,7 @@ class MeProject extends TenantModel
 
     protected $fillable = [
         'company_id',
+        'code',
         'name',
         'description',
         'start_date',

@@ -77,7 +77,7 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="clientCode">Client Code</Label>
+            <Label htmlFor="clientCode" required>Client Code</Label>
             {/*
               The `uppercase` class is text-transform — it changes only how the
               value looks, never what is submitted. The field therefore displayed
@@ -107,7 +107,7 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email or Username</Label>
+            <Label htmlFor="email" required>Email or Username</Label>
             {/*
               autoCapitalize is what matters on a phone: without it the keyboard
               capitalises the first letter, turning admin@x.com into Admin@x.com,
@@ -130,7 +130,7 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" required>Password</Label>
             <Input
               id="password"
               type="password"

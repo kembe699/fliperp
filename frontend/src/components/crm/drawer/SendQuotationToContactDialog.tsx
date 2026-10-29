@@ -88,7 +88,7 @@ export function SendQuotationToContactDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="quote-to">To</Label>
+              <Label htmlFor="quote-to" required>To</Label>
               <Input id="quote-to" type="email" value={toEmail} onChange={(e) => setToEmail(e.target.value)} />
             </div>
             <div className="space-y-1.5">
@@ -97,11 +97,11 @@ export function SendQuotationToContactDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="quote-subject">Subject</Label>
+            <Label htmlFor="quote-subject" required>Subject</Label>
             <Input id="quote-subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="quote-body">Message</Label>
+            <Label htmlFor="quote-body" required>Message</Label>
             <Textarea id="quote-body" rows={6} value={body} onChange={(e) => setBody(e.target.value)} />
             <p className="text-xs text-muted-foreground">The quotation PDF will be attached automatically.</p>
           </div>

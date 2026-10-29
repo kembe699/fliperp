@@ -12,6 +12,7 @@ import { usePermissions } from '@/hooks/use-permissions'
 import { sourceRecordLink } from '@/lib/journal-source-links'
 import type { JournalEntryStatus } from '@/types/accounting'
 
+import { codingSummary } from '@/lib/coding'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -143,6 +144,7 @@ export function JournalEntryDetailPage() {
               <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="py-2">Account</th>
                 <th className="py-2">Memo</th>
+                <th className="py-2">Coding</th>
                 <th className="py-2 text-right">Debit{isForeign ? ` (${entry.currency_code})` : ''}</th>
                 <th className="py-2 text-right">Credit{isForeign ? ` (${entry.currency_code})` : ''}</th>
                 {isForeign && <th className="py-2 text-right">Debit ({baseCurrency})</th>}
@@ -156,6 +158,7 @@ export function JournalEntryDetailPage() {
                     {line.account_code} — {line.account_name}
                   </td>
                   <td className="py-2 text-muted-foreground">{line.description ?? '—'}</td>
+                  <td className="py-2 text-xs text-muted-foreground">{codingSummary(line) ?? '—'}</td>
                   {isForeign ? (
                     <>
                       <td className="py-2 text-right text-foreground">{line.transaction_debit > 0 ? formatCurrency(line.transaction_debit, entry.currency_code) : '—'}</td>

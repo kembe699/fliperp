@@ -147,11 +147,11 @@ export function PaymentTypesSettingsPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Kind</Label>
+              <Label required>Kind</Label>
               <Select value={kind} onValueChange={(value) => setKind(value as PaymentTypeKind)}>
                 <SelectTrigger>
                   <SelectValue />

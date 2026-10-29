@@ -12,6 +12,7 @@ class MeProjectResource extends JsonResource
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
+            'code' => $this->code,
             'name' => $this->name,
             'description' => $this->description,
             'start_date' => $this->start_date?->toDateString(),

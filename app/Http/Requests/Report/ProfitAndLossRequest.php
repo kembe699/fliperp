@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Report;
 
+use App\Services\Grants\DimensionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProfitAndLossRequest extends FormRequest
@@ -17,6 +18,8 @@ class ProfitAndLossRequest extends FormRequest
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            // Only lines coded to these (SOF, DEA, project, cost centre).
+            ...DimensionService::filterRules(),
             // Show the (base-currency) figures converted into this currency, for display.
             'currency' => ['nullable', 'string', 'size:3'],
         ];

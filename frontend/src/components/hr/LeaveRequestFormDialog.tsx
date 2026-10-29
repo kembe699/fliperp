@@ -61,7 +61,7 @@ export function LeaveRequestFormDialog({ open, onOpenChange }: { open: boolean; 
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Employee</Label>
+            <Label required>Employee</Label>
             <SearchableSelect
               options={(employees?.data ?? []).map((employee) => ({ value: String(employee.id), label: `${employee.first_name} ${employee.last_name}`, sublabel: employee.employee_code }))}
               value={employeeId}
@@ -70,7 +70,7 @@ export function LeaveRequestFormDialog({ open, onOpenChange }: { open: boolean; 
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Leave Type</Label>
+            <Label required>Leave Type</Label>
             <Select value={leaveTypeId} onValueChange={setLeaveTypeId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select leave type" />
@@ -86,11 +86,11 @@ export function LeaveRequestFormDialog({ open, onOpenChange }: { open: boolean; 
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Start Date</Label>
+              <Label required>Start Date</Label>
               <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>End Date</Label>
+              <Label required>End Date</Label>
               <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
             </div>
           </div>

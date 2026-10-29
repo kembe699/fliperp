@@ -38,6 +38,14 @@ export interface PurchaseOrderItem {
   quantity_ordered: number
   unit_cost: number
   quantity_received: number
+  grant_id?: number | null
+  grant_code?: string | null
+  dea_id?: number | null
+  dea_code?: string | null
+  project_id?: number | null
+  project_code?: string | null
+  cost_centre_id?: number | null
+  cost_centre_code?: string | null
 }
 
 export interface PurchaseOrder {
@@ -123,6 +131,15 @@ export interface SupplierBill {
   balance_due: number
   status: SupplierBillStatus
   journal_entry_id: number | null
+  expense_account_id?: number | null
+  grant_id?: number | null
+  grant_code?: string | null
+  dea_id?: number | null
+  dea_code?: string | null
+  project_id?: number | null
+  project_code?: string | null
+  cost_centre_id?: number | null
+  cost_centre_code?: string | null
   created_at: string
   updated_at: string
 }

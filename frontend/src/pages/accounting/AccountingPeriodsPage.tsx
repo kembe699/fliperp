@@ -178,16 +178,16 @@ export function AccountingPeriodsPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label required>Name</Label>
               <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="January 2026" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Start Date</Label>
+                <Label required>Start Date</Label>
                 <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>End Date</Label>
+                <Label required>End Date</Label>
                 <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
               </div>
             </div>

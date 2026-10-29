@@ -94,12 +94,12 @@ export function StatutoryDeductionRuleFormDialog({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Name</Label>
+            <Label required>Name</Label>
             <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Uganda PAYE" />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label>Type</Label>
+              <Label required>Type</Label>
               <Select value={type} onValueChange={(value) => setType(value as DeductionType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -114,7 +114,7 @@ export function StatutoryDeductionRuleFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Calculation</Label>
+              <Label required>Calculation</Label>
               <Select value={calculationType} onValueChange={(value) => setCalculationType(value as CalculationType)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -129,7 +129,7 @@ export function StatutoryDeductionRuleFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Country Code</Label>
+              <Label required>Country Code</Label>
               <Input value={countryCode} onChange={(event) => setCountryCode(event.target.value.toUpperCase())} placeholder="UGA" maxLength={3} />
             </div>
           </div>

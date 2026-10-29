@@ -170,7 +170,7 @@ export function QuotationFormPage() {
       <Card className="mb-4">
         <CardContent className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5 lg:col-span-2">
-            <Label>Customer</Label>
+            <Label required>Customer</Label>
             <SearchableSelect
               options={(customersPage?.data ?? []).map((customer) => ({ value: String(customer.id), label: customer.name, sublabel: customer.phone }))}
               value={customerId}
@@ -179,7 +179,7 @@ export function QuotationFormPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Branch</Label>
+            <Label required>Branch</Label>
             <Select value={branchId} onValueChange={setBranchId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select branch" />
@@ -214,7 +214,7 @@ export function QuotationFormPage() {
             <Input type="date" value={quotationDate} onChange={(event) => setQuotationDate(event.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Valid Until</Label>
+            <Label required>Valid Until</Label>
             <Input type="date" value={validUntil} onChange={(event) => setValidUntil(event.target.value)} required />
           </div>
           <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">

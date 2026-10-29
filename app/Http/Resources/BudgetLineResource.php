@@ -16,6 +16,9 @@ class BudgetLineResource extends JsonResource
             'department_id' => $this->department_id,
             'account_id' => $this->account_id,
             'budgeted_amount' => (float) $this->budgeted_amount,
+            'grant_id' => $this->grant_id,
+            'project_id' => $this->project_id,
+            'cost_centre_id' => $this->cost_centre_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -5,6 +5,7 @@ namespace App\Services\Reporting;
 use App\Models\ChartOfAccount;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Services\Grants\DimensionService;
 
 /**
  * Shape of generate():
@@ -23,7 +24,7 @@ use App\Models\JournalEntryLine;
  */
 class GeneralLedgerService
 {
-    public function generate(int $companyId, int $accountId, string $from, string $to, ?int $branchId = null): array
+    public function generate(int $companyId, int $accountId, string $from, string $to, ?int $branchId = null, array $dimensions = []): array
     {
         $account = ChartOfAccount::query()->where('company_id', $companyId)->findOrFail($accountId);
         $isDebitNormal = in_array($account->type, ['asset', 'expense'], true);
@@ -36,6 +37,7 @@ class GeneralLedgerService
             ->where('journal_entry_lines.account_id', $accountId)
             ->where('journal_entries.entry_date', '<', $from)
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))
+            ->tap(fn ($query) => DimensionService::filter($query, $dimensions))
             ->first();
 
         $openingDebit = (float) ($openingTotals->total_debit ?? 0);
@@ -44,13 +46,15 @@ class GeneralLedgerService
         $openingBalance = $runningBalance;
 
         $entries = JournalEntryLine::query()
-            ->select('journal_entry_lines.*', 'journal_entries.entry_date', 'journal_entries.reference_number', 'journal_entries.source_module', 'journal_entries.source_id')
+            ->select('journal_entry_lines.*', 'journal_entries.entry_date', 'journal_entries.reference_number', 'journal_entries.source_module', 'journal_entries.source_id', 'journal_entries.currency_code', 'journal_entries.exchange_rate')
+            ->with(['grant:id,code', 'dea:id,code', 'project:id,code,name', 'costCentre:id,code'])
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $companyId)
             ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
             ->where('journal_entry_lines.account_id', $accountId)
             ->whereBetween('journal_entries.entry_date', [$from, $to])
             ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))
+            ->tap(fn ($query) => DimensionService::filter($query, $dimensions))
             ->orderBy('journal_entries.entry_date')
             ->orderBy('journal_entry_lines.id')
             ->get();
@@ -69,6 +73,16 @@ class GeneralLedgerService
                 'balance' => $runningBalance,
                 'source_module' => $line->source_module,
                 'source_id' => $line->source_id,
+                // The line as it was transacted: its own currency, rate and
+                // amounts (debit/credit above are the base-currency figures).
+                'currency_code' => $line->currency_code,
+                'exchange_rate' => (float) $line->exchange_rate,
+                'transaction_debit' => round((float) $line->transaction_debit, 2),
+                'transaction_credit' => round((float) $line->transaction_credit, 2),
+                'grant_code' => $line->grant?->code,
+                'dea_code' => $line->dea?->code,
+                'project_code' => $line->project ? ($line->project->code ?: $line->project->name) : null,
+                'cost_centre_code' => $line->costCentre?->code,
             ];
         })->values()->all();
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\SupplierBill;
 
+use App\Services\Grants\DimensionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -33,6 +34,7 @@ class StoreSupplierBillRequest extends FormRequest
                 'nullable',
                 Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId),
             ],
+            ...DimensionService::lineRules(),
         ];
     }
 }

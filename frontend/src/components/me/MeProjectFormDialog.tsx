@@ -25,6 +25,7 @@ export function MeProjectFormDialog({ open, onOpenChange, project }: { open: boo
   const { data: budgetPeriods } = useQuery({ queryKey: ['budget-periods', 'all'], queryFn: () => fetchBudgetPeriods({ per_page: 100 }), enabled: open })
 
   const [name, setName] = useState('')
+  const [code, setCode] = useState('')
   const [description, setDescription] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -34,6 +35,7 @@ export function MeProjectFormDialog({ open, onOpenChange, project }: { open: boo
   useEffect(() => {
     if (open) {
       setName(project?.name ?? '')
+      setCode(project?.code ?? '')
       setDescription(project?.description ?? '')
       setStartDate(project?.start_date ?? '')
       setEndDate(project?.end_date ?? '')
@@ -46,6 +48,7 @@ export function MeProjectFormDialog({ open, onOpenChange, project }: { open: boo
     mutationFn: () => {
       const values = {
         name,
+        code: code || null,
         description: description || null,
         start_date: startDate,
         end_date: endDate || null,
@@ -76,9 +79,15 @@ export function MeProjectFormDialog({ open, onOpenChange, project }: { open: boo
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Name</Label>
-            <Input value={name} onChange={(event) => setName(event.target.value)} />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2 space-y-1.5">
+              <Label required>Name</Label>
+              <Input value={name} onChange={(event) => setName(event.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Project Code</Label>
+              <Input value={code} onChange={(event) => setCode(event.target.value)} placeholder="PRJ-001" />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Description</Label>
@@ -86,7 +95,7 @@ export function MeProjectFormDialog({ open, onOpenChange, project }: { open: boo
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Start Date</Label>
+              <Label required>Start Date</Label>
               <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
