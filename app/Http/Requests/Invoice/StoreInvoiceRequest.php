@@ -28,6 +28,8 @@ class StoreInvoiceRequest extends FormRequest
             'invoice_date' => ['nullable', 'date'],
             'due_date' => ['required', 'date'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3', 'exists:currencies,code'],
+            'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'items.*.product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],

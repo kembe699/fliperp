@@ -6,6 +6,8 @@ import { Camera, Download } from 'lucide-react'
 import { downloadReport, fetchTrialBalance, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
+import { useBaseCurrency } from '@/hooks/use-base-currency'
+import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
 import { startOfMonth, toISODate } from '@/lib/format'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -15,11 +17,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export function TrialBalanceReportPage() {
+  const baseCurrency = useBaseCurrency()
+  const [showIn, setShowIn] = useState(baseCurrency)
+  const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
   const [downloading, setDownloading] = useState(false)
 
-  const { data, isLoading, isError } = useQuery({ queryKey: ['trial-balance', from, to], queryFn: () => fetchTrialBalance({ from, to }) })
+  const { data, isLoading, isError } = useQuery({ queryKey: ['trial-balance', from, to, showIn], queryFn: () => fetchTrialBalance({ from, to, currency: currencyParam }) })
+  const currencyCode = data?.currency?.code
 
   const snapshotMutation = useMutation({
     mutationFn: () => saveReportSnapshot('trial-balance', { from, to }),
@@ -30,7 +36,7 @@ export function TrialBalanceReportPage() {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await downloadReport('trial-balance', from, to)
+      await downloadReport('trial-balance', from, to, currencyParam)
     } finally {
       setDownloading(false)
     }
@@ -65,8 +71,11 @@ export function TrialBalanceReportPage() {
             <Label>To</Label>
             <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
+          <ReportCurrencySelect value={showIn} onChange={setShowIn} />
         </CardContent>
       </Card>
+
+      <ConversionNotice currency={data?.currency} />
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this report. Please try again.</p>
@@ -92,9 +101,9 @@ export function TrialBalanceReportPage() {
                       <tr key={account.account_id} className="border-b border-border last:border-b-0">
                         <td className="py-2 text-muted-foreground">{account.code}</td>
                         <td className="py-2 text-foreground">{account.name}</td>
-                        <td className="py-2 text-right text-foreground">{account.debit > 0 ? formatCurrency(account.debit) : '—'}</td>
-                        <td className="py-2 text-right text-foreground">{account.credit > 0 ? formatCurrency(account.credit) : '—'}</td>
-                        <td className="py-2 text-right font-medium text-foreground">{formatCurrency(account.balance)}</td>
+                        <td className="py-2 text-right text-foreground">{account.debit > 0 ? formatCurrency(account.debit, currencyCode) : '—'}</td>
+                        <td className="py-2 text-right text-foreground">{account.credit > 0 ? formatCurrency(account.credit, currencyCode) : '—'}</td>
+                        <td className="py-2 text-right font-medium text-foreground">{formatCurrency(account.balance, currencyCode)}</td>
                       </tr>
                     ))}
                     {data.accounts.length === 0 && (
@@ -110,8 +119,8 @@ export function TrialBalanceReportPage() {
                       <td className="py-2" colSpan={2}>
                         Total
                       </td>
-                      <td className="py-2 text-right">{formatCurrency(data.total_debit)}</td>
-                      <td className="py-2 text-right">{formatCurrency(data.total_credit)}</td>
+                      <td className="py-2 text-right">{formatCurrency(data.total_debit, currencyCode)}</td>
+                      <td className="py-2 text-right">{formatCurrency(data.total_credit, currencyCode)}</td>
                       <td className="py-2 text-right" />
                     </tr>
                   </tfoot>

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +9,7 @@ import { toast } from 'sonner'
 import { createSupplierBill, fetchSuppliers } from '@/api/procurement'
 import { applyFieldErrors, getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
+import { useAuthStore } from '@/lib/auth-store'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -15,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
+import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
 
 const billSchema = z.object({
   supplier_id: z.string().min(1, 'Supplier is required'),
@@ -54,6 +57,10 @@ export function SupplierBillFormPage() {
 
   const subtotal = watch('subtotal') || 0
   const taxAmount = watch('tax_amount') || 0
+  const billDate = watch('bill_date')
+  const baseCurrency = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
+  const [currency, setCurrency] = useState(baseCurrency)
+  const [rate, setRate] = useState('1')
 
   const mutation = useMutation({
     mutationFn: (values: BillFormSchema) =>
@@ -64,6 +71,8 @@ export function SupplierBillFormPage() {
         due_date: values.due_date,
         subtotal: values.subtotal,
         tax_amount: values.tax_amount,
+        currency_code: currency,
+        exchange_rate: Number(rate),
       }),
     onSuccess: (bill) => {
       toast.success('Supplier bill created')
@@ -123,6 +132,7 @@ export function SupplierBillFormPage() {
               <Input id="due_date" type="date" {...register('due_date')} />
               {errors.due_date && <p className="text-xs text-destructive">{errors.due_date.message}</p>}
             </div>
+            <CurrencyRateFields currency={currency} onCurrencyChange={setCurrency} date={billDate} rate={rate} onRateChange={setRate} />
 
             <div className="space-y-1.5">
               <Label htmlFor="subtotal">Subtotal</Label>
@@ -137,7 +147,7 @@ export function SupplierBillFormPage() {
 
             <div className="flex items-center justify-between border-t border-border pt-4 text-base font-bold text-foreground sm:col-span-2">
               <span>Total</span>
-              <span>{formatCurrency(subtotal + taxAmount)}</span>
+              <span>{formatCurrency(subtotal + taxAmount, currency)}</span>
             </div>
           </CardContent>
         </Card>

@@ -6,6 +6,8 @@ import { Camera, Download } from 'lucide-react'
 import { downloadReport, fetchCashFlow, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
+import { useBaseCurrency } from '@/hooks/use-base-currency'
+import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
 import { startOfMonth, toISODate } from '@/lib/format'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -22,11 +24,15 @@ const CATEGORY_LABEL: Record<string, string> = {
 }
 
 export function CashFlowReportPage() {
+  const baseCurrency = useBaseCurrency()
+  const [showIn, setShowIn] = useState(baseCurrency)
+  const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
   const [downloading, setDownloading] = useState(false)
 
-  const { data, isLoading, isError } = useQuery({ queryKey: ['cash-flow', from, to], queryFn: () => fetchCashFlow({ from, to }) })
+  const { data, isLoading, isError } = useQuery({ queryKey: ['cash-flow', from, to, showIn], queryFn: () => fetchCashFlow({ from, to, currency: currencyParam }) })
+  const currencyCode = data?.currency?.code
 
   const snapshotMutation = useMutation({
     mutationFn: () => saveReportSnapshot('cash-flow', { from, to }),
@@ -37,7 +43,7 @@ export function CashFlowReportPage() {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await downloadReport('cash-flow', from, to)
+      await downloadReport('cash-flow', from, to, currencyParam)
     } finally {
       setDownloading(false)
     }
@@ -72,8 +78,11 @@ export function CashFlowReportPage() {
             <Label>To</Label>
             <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
+          <ReportCurrencySelect value={showIn} onChange={setShowIn} />
         </CardContent>
       </Card>
+
+      <ConversionNotice currency={data?.currency} />
 
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this report. Please try again.</p>
@@ -97,16 +106,16 @@ export function CashFlowReportPage() {
                     {data.categories.map((category) => (
                       <tr key={category.source_module} className="border-b border-border last:border-b-0">
                         <td className="py-2 text-foreground">{CATEGORY_LABEL[category.source_module] ?? category.source_module}</td>
-                        <td className="py-2 text-right text-success">{formatCurrency(category.cash_in)}</td>
-                        <td className="py-2 text-right text-danger">{formatCurrency(category.cash_out)}</td>
-                        <td className={`py-2 text-right font-medium ${category.net >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(category.net)}</td>
+                        <td className="py-2 text-right text-success">{formatCurrency(category.cash_in, currencyCode)}</td>
+                        <td className="py-2 text-right text-danger">{formatCurrency(category.cash_out, currencyCode)}</td>
+                        <td className={`py-2 text-right font-medium ${category.net >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(category.net, currencyCode)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className="mt-4 flex justify-between border-t-2 border-border pt-2 text-base font-bold text-foreground">
                   <span>Net Cash Movement</span>
-                  <span className={data.net_cash_movement >= 0 ? 'text-success' : 'text-danger'}>{formatCurrency(data.net_cash_movement)}</span>
+                  <span className={data.net_cash_movement >= 0 ? 'text-success' : 'text-danger'}>{formatCurrency(data.net_cash_movement, currencyCode)}</span>
                 </div>
               </>
             )}

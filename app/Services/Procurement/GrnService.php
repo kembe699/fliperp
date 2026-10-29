@@ -3,6 +3,7 @@
 namespace App\Services\Procurement;
 
 use App\Models\ChartOfAccount;
+use App\Models\Company;
 use App\Models\GoodsReceivedNote;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
@@ -199,6 +200,9 @@ class GrnService
             'tax_amount' => 0,
             'total_amount' => $totalAmount,
             'status' => 'unpaid',
+            // Goods are received at base-currency cost, so the bill is too.
+            'currency_code' => Company::query()->whereKey($grn->company_id)->value('currency_code'),
+            'exchange_rate' => 1,
         ]);
 
         $inventoryAccount = $this->resolveAccount($grn->company_id, self::INVENTORY_ACCOUNT_CODE);

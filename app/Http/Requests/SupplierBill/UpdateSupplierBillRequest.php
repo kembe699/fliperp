@@ -26,6 +26,8 @@ class UpdateSupplierBillRequest extends FormRequest
             'due_date' => ['sometimes', 'required', 'date', 'after_or_equal:bill_date'],
             'subtotal' => ['sometimes', 'required', 'numeric', 'min:0'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3', 'exists:currencies,code'],
+            'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
         ];
     }
 }

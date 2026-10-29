@@ -57,9 +57,9 @@ export function SupplierBillsListPage() {
     { key: 'supplier_id', header: 'Supplier', render: (row) => supplierName(row.supplier_id) },
     { key: 'bill_date', header: 'Bill Date', accessor: (row) => row.bill_date, sortable: true, render: (row) => formatDate(row.bill_date) },
     { key: 'due_date', header: 'Due Date', accessor: (row) => row.due_date, sortable: true, render: (row) => formatDate(row.due_date) },
-    { key: 'total_amount', header: 'Total Amount', accessor: (row) => row.total_amount, sortable: true, render: (row) => formatCurrency(row.total_amount) },
-    { key: 'amount_paid', header: 'Amount Paid', accessor: (row) => row.amount_paid, render: (row) => formatCurrency(row.amount_paid) },
-    { key: 'balance_due', header: 'Balance', accessor: (row) => row.balance_due, render: (row) => formatCurrency(row.balance_due) },
+    { key: 'total_amount', header: 'Total Amount', accessor: (row) => row.total_amount, sortable: true, render: (row) => formatCurrency(row.total_amount, row.currency_code) },
+    { key: 'amount_paid', header: 'Amount Paid', accessor: (row) => row.amount_paid, render: (row) => formatCurrency(row.amount_paid, row.currency_code) },
+    { key: 'balance_due', header: 'Balance', accessor: (row) => row.balance_due, render: (row) => formatCurrency(row.balance_due, row.currency_code) },
     {
       key: 'status',
       header: 'Status',

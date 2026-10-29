@@ -12,6 +12,8 @@ class JournalEntryLine extends Model
         'account_id',
         'debit',
         'credit',
+        'transaction_debit',
+        'transaction_credit',
         'description',
     ];
 
@@ -20,6 +22,8 @@ class JournalEntryLine extends Model
         return [
             'debit' => 'decimal:2',
             'credit' => 'decimal:2',
+            'transaction_debit' => 'decimal:2',
+            'transaction_credit' => 'decimal:2',
         ];
     }
 

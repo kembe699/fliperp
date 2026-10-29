@@ -17,6 +17,8 @@ class CustomerPaymentResource extends JsonResource
             'payment_type_id' => $this->payment_type_id,
             'payment_date' => $this->payment_date?->toDateString(),
             'amount' => (float) $this->amount,
+            'currency_code' => $this->currency_code,
+            'exchange_rate' => (float) $this->exchange_rate,
             'reference_number' => $this->reference_number,
             'received_by' => $this->received_by,
             'journal_entry_id' => $this->journal_entry_id,

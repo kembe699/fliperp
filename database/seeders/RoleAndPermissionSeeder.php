@@ -24,6 +24,7 @@ class RoleAndPermissionSeeder extends Seeder
         // Finance core
         'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
         'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],
+        'exchange-rates' => ['view', 'create', 'update', 'delete'],
 
         // HR & Payroll
         'departments' => ['view', 'create', 'update', 'delete'],
@@ -151,6 +152,7 @@ class RoleAndPermissionSeeder extends Seeder
             'audit-logs' => ['view'],
             'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
             'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],
+            'exchange-rates' => ['view', 'create', 'update', 'delete'],
             'departments' => ['view', 'create', 'update', 'delete'],
             'positions' => ['view', 'create', 'update', 'delete'],
             'employees' => ['view', 'create', 'update', 'delete'],
@@ -227,6 +229,7 @@ class RoleAndPermissionSeeder extends Seeder
             'audit-logs' => ['view'],
             'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
             'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],
+            'exchange-rates' => ['view', 'create', 'update', 'delete'],
             'departments' => ['view', 'create', 'update', 'delete'],
             'positions' => ['view', 'create', 'update', 'delete'],
             'employees' => ['view', 'create', 'update', 'delete'],
@@ -368,6 +371,7 @@ class RoleAndPermissionSeeder extends Seeder
             'audit-logs' => ['view'],
             'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
             'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],
+            'exchange-rates' => ['view', 'create', 'update', 'delete'],
             'payroll-runs' => ['view', 'process'],
             'salary-structures' => ['view'],
             'statutory-deduction-rules' => ['view', 'create', 'update', 'delete'],

@@ -5,6 +5,7 @@ namespace App\Services\Sales;
 use App\Models\ChartOfAccount;
 use App\Models\CustomerPayment;
 use App\Models\Invoice;
+use App\Services\Finance\ExchangeRateService;
 use App\Services\Finance\JournalEntryService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class CustomerPaymentService
     public function __construct(
         protected InvoiceService $invoiceService,
         protected JournalEntryService $journalEntryService,
+        protected ExchangeRateService $exchangeRateService,
     ) {}
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
@@ -48,6 +50,17 @@ class CustomerPaymentService
             $receivableAccount = $this->resolveAccount($invoice->company_id, self::ACCOUNTS_RECEIVABLE_ACCOUNT_CODE);
             $cashAccount = $this->resolveAccount($invoice->company_id, self::CASH_ACCOUNT_CODE);
 
+            // Paid in the invoice's currency, at the rate for the payment date
+            // (or one typed on the payment). Receivable is relieved at the
+            // invoice's own rate — what it was booked at — and cash comes in
+            // at today's; the base difference is the realised FX gain/loss.
+            [$currency, $paymentRate] = $this->exchangeRateService->resolve(
+                $invoice->company_id, $invoice->currency_code, $data['payment_date'], $data['exchange_rate'] ?? null,
+            );
+            $cashBase = round($amount / $paymentRate, 2);
+            $receivableBase = round($amount / (float) $invoice->exchange_rate, 2);
+            $fxLine = $this->exchangeRateService->realisedFxLine($invoice->company_id, $cashBase - $receivableBase);
+
             $journalReferenceNumber = 'CPMT-'.$invoice->reference_number.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
 
             $journalEntry = $this->journalEntryService->postModuleEntry([
@@ -56,10 +69,13 @@ class CustomerPaymentService
                 'description' => "Payment received from customer for invoice {$invoice->reference_number}",
                 'source_module' => 'sales',
                 'source_id' => $invoice->id,
-                'lines' => [
-                    ['account_id' => $cashAccount->id, 'debit' => $amount, 'credit' => 0, 'description' => 'Cash received from customer'],
-                    ['account_id' => $receivableAccount->id, 'debit' => 0, 'credit' => $amount, 'description' => 'Accounts receivable settled'],
-                ],
+                'currency_code' => $currency,
+                'exchange_rate' => $paymentRate,
+                'lines' => array_values(array_filter([
+                    ['account_id' => $cashAccount->id, 'debit' => $amount, 'credit' => 0, 'base_debit' => $cashBase, 'description' => 'Cash received from customer'],
+                    ['account_id' => $receivableAccount->id, 'debit' => 0, 'credit' => $amount, 'base_credit' => $receivableBase, 'description' => 'Accounts receivable settled'],
+                    $fxLine,
+                ])),
             ]);
 
             return CustomerPayment::create([
@@ -68,6 +84,8 @@ class CustomerPaymentService
                 'payment_type_id' => $data['payment_type_id'],
                 'payment_date' => $data['payment_date'],
                 'amount' => $amount,
+                'currency_code' => $currency,
+                'exchange_rate' => $paymentRate,
                 'reference_number' => $data['reference_number'] ?? null,
                 'received_by' => Auth::id(),
                 'journal_entry_id' => $journalEntry->id,

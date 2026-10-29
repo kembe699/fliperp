@@ -25,11 +25,14 @@ class SupplierBill extends TenantModel
         'amount_paid',
         'status',
         'journal_entry_id',
+        'currency_code',
+        'exchange_rate',
     ];
 
     protected function casts(): array
     {
         return [
+            'exchange_rate' => 'decimal:10',
             'bill_date' => 'date',
             'due_date' => 'date',
             'subtotal' => 'decimal:2',

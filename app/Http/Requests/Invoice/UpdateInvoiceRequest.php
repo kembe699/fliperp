@@ -22,6 +22,8 @@ class UpdateInvoiceRequest extends FormRequest
             'invoice_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['nullable', 'string', 'size:3', 'exists:currencies,code'],
+            'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
             'items' => ['sometimes', 'array', 'min:1'],
             'items.*.product_id' => ['required_with:items', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'items.*.product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],

@@ -5,6 +5,7 @@ import { RotateCcw, Send } from 'lucide-react'
 
 import { fetchJournalEntry, postJournalEntry, reverseJournalEntry } from '@/api/accounting'
 import { formatCurrency } from '@/lib/currency'
+import { useAuthStore } from '@/lib/auth-store'
 import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
@@ -28,6 +29,7 @@ export function JournalEntryDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermissions()
+  const baseCurrency = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
 
   const { data: entry, isLoading } = useQuery({ queryKey: ['journal-entry', entryId], queryFn: () => fetchJournalEntry(entryId), enabled: !!entryId })
 
@@ -62,6 +64,8 @@ export function JournalEntryDetailPage() {
   const totalDebit = entry.total_debit ?? entry.lines.reduce((sum, l) => sum + l.debit, 0)
   const totalCredit = entry.total_credit ?? entry.lines.reduce((sum, l) => sum + l.credit, 0)
   const isBalanced = Math.round(totalDebit * 100) === Math.round(totalCredit * 100)
+  // A foreign-currency entry shows each line in its own currency and in the base currency the ledger uses.
+  const isForeign = entry.currency_code !== baseCurrency
   const canPost = can('journal-entries.post') && entry.status === 'draft'
   const canReverse = can('journal-entries.reverse') && entry.status === 'posted'
   const sourceLink = sourceRecordLink(entry.source_module, entry.source_id)
@@ -117,6 +121,15 @@ export function JournalEntryDetailPage() {
                   )}
                 </p>
               </div>
+              {isForeign && (
+                <div>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Currency</p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {entry.currency_code} at 1 {baseCurrency} = {new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(entry.exchange_rate)}{' '}
+                    {entry.currency_code}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-xs font-semibold uppercase text-muted-foreground">Balance Check</p>
                 <p className={`mt-1 text-sm font-semibold ${isBalanced ? 'text-success' : 'text-danger'}`}>{isBalanced ? 'Balanced' : 'Not Balanced'}</p>
@@ -130,8 +143,10 @@ export function JournalEntryDetailPage() {
               <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="py-2">Account</th>
                 <th className="py-2">Memo</th>
-                <th className="py-2 text-right">Debit</th>
-                <th className="py-2 text-right">Credit</th>
+                <th className="py-2 text-right">Debit{isForeign ? ` (${entry.currency_code})` : ''}</th>
+                <th className="py-2 text-right">Credit{isForeign ? ` (${entry.currency_code})` : ''}</th>
+                {isForeign && <th className="py-2 text-right">Debit ({baseCurrency})</th>}
+                {isForeign && <th className="py-2 text-right">Credit ({baseCurrency})</th>}
               </tr>
             </thead>
             <tbody>
@@ -141,8 +156,19 @@ export function JournalEntryDetailPage() {
                     {line.account_code} — {line.account_name}
                   </td>
                   <td className="py-2 text-muted-foreground">{line.description ?? '—'}</td>
-                  <td className="py-2 text-right text-foreground">{line.debit > 0 ? formatCurrency(line.debit) : '—'}</td>
-                  <td className="py-2 text-right text-foreground">{line.credit > 0 ? formatCurrency(line.credit) : '—'}</td>
+                  {isForeign ? (
+                    <>
+                      <td className="py-2 text-right text-foreground">{line.transaction_debit > 0 ? formatCurrency(line.transaction_debit, entry.currency_code) : '—'}</td>
+                      <td className="py-2 text-right text-foreground">{line.transaction_credit > 0 ? formatCurrency(line.transaction_credit, entry.currency_code) : '—'}</td>
+                      <td className="py-2 text-right text-muted-foreground">{line.debit > 0 ? formatCurrency(line.debit, baseCurrency) : '—'}</td>
+                      <td className="py-2 text-right text-muted-foreground">{line.credit > 0 ? formatCurrency(line.credit, baseCurrency) : '—'}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="py-2 text-right text-foreground">{line.debit > 0 ? formatCurrency(line.debit) : '—'}</td>
+                      <td className="py-2 text-right text-foreground">{line.credit > 0 ? formatCurrency(line.credit) : '—'}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -150,12 +176,12 @@ export function JournalEntryDetailPage() {
 
           <div className="ml-auto w-full max-w-xs space-y-1.5 border-t border-border pt-3">
             <div className="flex justify-between text-sm font-semibold text-foreground">
-              <span>Total Debit</span>
-              <span>{formatCurrency(totalDebit)}</span>
+              <span>Total Debit{isForeign ? ` (${baseCurrency})` : ''}</span>
+              <span>{formatCurrency(totalDebit, baseCurrency)}</span>
             </div>
             <div className="flex justify-between text-sm font-semibold text-foreground">
-              <span>Total Credit</span>
-              <span>{formatCurrency(totalCredit)}</span>
+              <span>Total Credit{isForeign ? ` (${baseCurrency})` : ''}</span>
+              <span>{formatCurrency(totalCredit, baseCurrency)}</span>
             </div>
           </div>
         </CardContent>

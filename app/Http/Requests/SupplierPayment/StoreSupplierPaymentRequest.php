@@ -21,6 +21,8 @@ class StoreSupplierPaymentRequest extends FormRequest
             'supplier_bill_id' => ['required', Rule::exists('supplier_bills', 'id')->where('company_id', $companyId)],
             'payment_date' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'gt:0'],
+            // The payment is in its document's currency; only the rate can be set.
+            'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
             'payment_type_id' => ['nullable', 'integer'],
             'reference_number' => ['nullable', 'string', 'max:255'],
         ];

@@ -19,11 +19,14 @@ class CustomerPayment extends TenantModel
         'reference_number',
         'received_by',
         'journal_entry_id',
+        'currency_code',
+        'exchange_rate',
     ];
 
     protected function casts(): array
     {
         return [
+            'exchange_rate' => 'decimal:10',
             'payment_date' => 'date',
             'amount' => 'decimal:2',
         ];

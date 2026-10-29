@@ -17,6 +17,8 @@ class TrialBalanceRequest extends FormRequest
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            // Show the (base-currency) figures converted into this currency, for display.
+            'currency' => ['nullable', 'string', 'size:3'],
         ];
     }
 }

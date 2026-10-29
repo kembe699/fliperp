@@ -40,9 +40,14 @@ interface LineItemsEditorProps {
   // products, same as before.
   services?: CrmService[]
   onResolveService?: (serviceId: number) => Promise<Product>
+  // A document in another currency: line totals show in it, and a picked
+  // product's (base-currency) price is suggested converted at the document's
+  // rate (1 base = priceMultiplier units). Omitted = base currency, as before.
+  currencyCode?: string
+  priceMultiplier?: number
 }
 
-export function LineItemsEditor({ rows, onChange, products, taxRates, priceListItems, disabled, services, onResolveService }: LineItemsEditorProps) {
+export function LineItemsEditor({ rows, onChange, products, taxRates, priceListItems, disabled, services, onResolveService, currencyCode, priceMultiplier = 1 }: LineItemsEditorProps) {
   // A service picked here doesn't become a real Product until onResolveService creates its
   // shadow product (see CrmService::ensureProduct) — kept locally so the row can show it as
   // selected immediately, without waiting for the parent's product list to refetch.
@@ -76,7 +81,8 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
   const applyProduct = (key: string, productId: number | null) => {
     const product = allProducts.find((p) => p.id === productId)
     const priceListPrice = priceListItems?.find((item) => item.product_id === productId && !item.product_variant_id)?.price
-    const unitPrice = priceListPrice ?? (product ? Number(product.selling_price) : null)
+    const basePrice = priceListPrice ?? (product ? Number(product.selling_price) : null)
+    const unitPrice = basePrice == null ? null : Math.round(Number(basePrice) * priceMultiplier * 100) / 100
     // Suggest the product/service's own description as a starting point, but never
     // overwrite something the user already typed for this line.
     const existingDescription = rows.find((row) => row.key === key)?.description
@@ -191,7 +197,7 @@ export function LineItemsEditor({ rows, onChange, products, taxRates, priceListI
                 onChange={(event) => updateRow(row.key, { discount_amount: Number(event.target.value) })}
                 className="h-9"
               />
-              <span className="text-right text-sm font-medium">{formatCurrency(lineRowTotal(row))}</span>
+              <span className="text-right text-sm font-medium">{formatCurrency(lineRowTotal(row), currencyCode)}</span>
               <button
                 type="button"
                 onClick={() => removeRow(row.key)}

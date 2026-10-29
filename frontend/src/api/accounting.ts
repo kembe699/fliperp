@@ -52,6 +52,8 @@ export interface JournalEntryInput {
   reference_number: string
   entry_date: string
   description?: string | null
+  currency_code?: string
+  exchange_rate?: number
   lines: { account_id: number; debit?: number; credit?: number; description?: string | null }[]
 }
 

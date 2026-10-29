@@ -118,6 +118,8 @@ export interface SupplierBill {
   tax_amount: number
   total_amount: number
   amount_paid: number
+  currency_code: string
+  exchange_rate: number
   balance_due: number
   status: SupplierBillStatus
   journal_entry_id: number | null
@@ -132,6 +134,8 @@ export interface SupplierPayment {
   supplier_bill_id: number
   payment_date: string
   amount: number
+  currency_code: string
+  exchange_rate: number
   payment_type_id: number | null
   reference_number: string | null
   paid_by: number | null

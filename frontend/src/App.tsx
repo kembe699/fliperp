@@ -83,6 +83,7 @@ import { MeProjectsListPage } from '@/pages/me/MeProjectsListPage'
 import { MeProjectDetailPage } from '@/pages/me/MeProjectDetailPage'
 
 import { ChartOfAccountsPage } from '@/pages/accounting/ChartOfAccountsPage'
+import { ExchangeRatesPage } from '@/pages/accounting/ExchangeRatesPage'
 import { JournalEntriesListPage } from '@/pages/accounting/JournalEntriesListPage'
 import { JournalEntryFormPage } from '@/pages/accounting/JournalEntryFormPage'
 import { JournalEntryDetailPage } from '@/pages/accounting/JournalEntryDetailPage'
@@ -157,6 +158,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/chart-of-accounts',
   '/journal-entries',
   '/accounting-periods',
+  '/exchange-rates',
   '/reports/trial-balance',
   '/reports/profit-and-loss',
   '/reports/balance-sheet',
@@ -286,6 +288,7 @@ function App() {
           <Route path="/me-projects/:id" element={<MeProjectDetailPage />} />
 
           <Route path="/chart-of-accounts" element={<ChartOfAccountsPage />} />
+          <Route path="/exchange-rates" element={<ExchangeRatesPage />} />
           <Route path="/journal-entries" element={<JournalEntriesListPage />} />
           <Route path="/journal-entries/new" element={<JournalEntryFormPage />} />
           <Route path="/journal-entries/:id" element={<JournalEntryDetailPage />} />

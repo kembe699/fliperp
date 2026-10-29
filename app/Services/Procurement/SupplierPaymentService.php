@@ -5,6 +5,7 @@ namespace App\Services\Procurement;
 use App\Models\ChartOfAccount;
 use App\Models\SupplierBill;
 use App\Models\SupplierPayment;
+use App\Services\Finance\ExchangeRateService;
 use App\Services\Finance\JournalEntryService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class SupplierPaymentService
     public function __construct(
         protected SupplierBillService $supplierBillService,
         protected JournalEntryService $journalEntryService,
+        protected ExchangeRateService $exchangeRateService,
     ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -52,6 +54,16 @@ class SupplierPaymentService
             $payableAccount = $this->resolveAccount($bill->company_id, self::ACCOUNTS_PAYABLE_ACCOUNT_CODE);
             $cashAccount = $this->resolveAccount($bill->company_id, self::CASH_ACCOUNT_CODE);
 
+            // Paid in the bill's currency at the payment date's rate (or one
+            // typed on the payment). Payable is cleared at the bill's own rate;
+            // paying out less base than it was carried at is a gain.
+            [$currency, $paymentRate] = $this->exchangeRateService->resolve(
+                $bill->company_id, $bill->currency_code, $data['payment_date'], $data['exchange_rate'] ?? null,
+            );
+            $cashBase = round($amount / $paymentRate, 2);
+            $payableBase = round($amount / (float) $bill->exchange_rate, 2);
+            $fxLine = $this->exchangeRateService->realisedFxLine($bill->company_id, $payableBase - $cashBase);
+
             // Always generated, never the caller's own payment reference:
             // journal_entries.reference_number is unique per company, and the
             // same payment reference (a cheque/receipt number) could
@@ -66,10 +78,13 @@ class SupplierPaymentService
                 'description' => "Payment to supplier for bill {$bill->reference_number}",
                 'source_module' => 'procurement',
                 'source_id' => $bill->id,
-                'lines' => [
-                    ['account_id' => $payableAccount->id, 'debit' => $amount, 'credit' => 0, 'description' => 'Accounts payable settled'],
-                    ['account_id' => $cashAccount->id, 'debit' => 0, 'credit' => $amount, 'description' => 'Cash paid to supplier'],
-                ],
+                'currency_code' => $currency,
+                'exchange_rate' => $paymentRate,
+                'lines' => array_values(array_filter([
+                    ['account_id' => $payableAccount->id, 'debit' => $amount, 'credit' => 0, 'base_debit' => $payableBase, 'description' => 'Accounts payable settled'],
+                    ['account_id' => $cashAccount->id, 'debit' => 0, 'credit' => $amount, 'base_credit' => $cashBase, 'description' => 'Cash paid to supplier'],
+                    $fxLine,
+                ])),
             ]);
 
             return SupplierPayment::create([
@@ -77,6 +92,8 @@ class SupplierPaymentService
                 'supplier_bill_id' => $bill->id,
                 'payment_date' => $data['payment_date'],
                 'amount' => $amount,
+                'currency_code' => $currency,
+                'exchange_rate' => $paymentRate,
                 'payment_type_id' => $data['payment_type_id'] ?? null,
                 'reference_number' => $data['reference_number'] ?? null,
                 'paid_by' => Auth::id(),

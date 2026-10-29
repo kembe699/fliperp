@@ -182,6 +182,8 @@ export interface SupplierBillInput {
   due_date: string
   subtotal: number
   tax_amount?: number
+  currency_code?: string
+  exchange_rate?: number
 }
 
 export async function createSupplierBill(values: SupplierBillInput): Promise<SupplierBill> {
@@ -200,6 +202,8 @@ export interface SupplierPaymentInput {
   supplier_bill_id: number
   payment_date: string
   amount: number
+  /** The bill's currency is always used; only the rate can be set (defaults to the rate for payment_date). */
+  exchange_rate?: number
   payment_type_id?: number | null
   reference_number?: string | null
 }

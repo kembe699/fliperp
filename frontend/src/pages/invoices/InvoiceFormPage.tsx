@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { LineItemsEditor, type LineItemRow } from '@/components/sales/LineItemsEditor'
 import { TotalsFooter } from '@/components/sales/TotalsFooter'
+import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
 
 export function InvoiceFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -60,6 +61,9 @@ export function InvoiceFormPage() {
   const [dueDate, setDueDate] = useState('')
   const [orderDiscount, setOrderDiscount] = useState(0)
   const [rows, setRows] = useState<LineItemRow[]>([])
+  const baseCurrency = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
+  const [currency, setCurrency] = useState(baseCurrency)
+  const [rate, setRate] = useState('1')
 
   const { data: priceListItems } = useQuery({
     queryKey: ['price-list-items', priceListId],
@@ -80,6 +84,8 @@ export function InvoiceFormPage() {
       setInvoiceDate(existingInvoice.invoice_date)
       setDueDate(existingInvoice.due_date)
       setOrderDiscount(Number(existingInvoice.discount_amount))
+      setCurrency(existingInvoice.currency_code)
+      setRate(String(existingInvoice.exchange_rate))
       setRows(
         existingInvoice.items.map((item) => ({
           key: crypto.randomUUID(),
@@ -103,6 +109,8 @@ export function InvoiceFormPage() {
     invoice_date: invoiceDate || undefined,
     due_date: dueDate,
     discount_amount: orderDiscount,
+    currency_code: currency,
+    exchange_rate: Number(rate),
     items: rows
       .filter((row) => row.product_id)
       .map((row) => ({
@@ -212,6 +220,7 @@ export function InvoiceFormPage() {
             <Label>Due Date</Label>
             <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} required />
           </div>
+          <CurrencyRateFields currency={currency} onCurrencyChange={setCurrency} date={invoiceDate} rate={rate} onRateChange={setRate} />
           {existingInvoice?.quotation_id && (
             <div className="space-y-1.5 self-end">
               <p className="text-xs text-muted-foreground">Converted from quotation #{existingInvoice.quotation_id}</p>
@@ -229,11 +238,13 @@ export function InvoiceFormPage() {
           priceListItems={priceListItems}
           services={canUseCrmServices ? servicesPage?.data : undefined}
           onResolveService={canUseCrmServices ? resolveService : undefined}
+          currencyCode={currency}
+          priceMultiplier={Number(rate) || 1}
         />
       </div>
 
       <div className="mb-6 flex justify-end">
-        <TotalsFooter {...totals} onDiscountChange={setOrderDiscount} />
+        <TotalsFooter {...totals} onDiscountChange={setOrderDiscount} currencyCode={currency} />
       </div>
 
       <div className="flex justify-end gap-2">

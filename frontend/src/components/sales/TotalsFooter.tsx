@@ -9,18 +9,19 @@ interface TotalsFooterProps {
   total: number
   onDiscountChange?: (value: number) => void
   disabled?: boolean
+  currencyCode?: string
 }
 
-export function TotalsFooter({ subtotal, taxAmount, discountAmount, total, onDiscountChange, disabled }: TotalsFooterProps) {
+export function TotalsFooter({ subtotal, taxAmount, discountAmount, total, onDiscountChange, disabled, currencyCode }: TotalsFooterProps) {
   return (
     <div className="ml-auto w-full max-w-xs space-y-2 rounded-xl border border-border bg-card p-4">
       <div className="flex justify-between text-sm text-muted-foreground">
         <span>Subtotal</span>
-        <span>{formatCurrency(subtotal)}</span>
+        <span>{formatCurrency(subtotal, currencyCode)}</span>
       </div>
       <div className="flex justify-between text-sm text-muted-foreground">
         <span>Tax</span>
-        <span>{formatCurrency(taxAmount)}</span>
+        <span>{formatCurrency(taxAmount, currencyCode)}</span>
       </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <Label htmlFor="order-discount" className="text-sm font-normal text-muted-foreground">
@@ -38,12 +39,12 @@ export function TotalsFooter({ subtotal, taxAmount, discountAmount, total, onDis
             className="h-8 w-28 text-right"
           />
         ) : (
-          <span>{formatCurrency(discountAmount)}</span>
+          <span>{formatCurrency(discountAmount, currencyCode)}</span>
         )}
       </div>
       <div className="flex justify-between border-t border-border pt-2 text-base font-bold text-foreground">
         <span>Total</span>
-        <span>{formatCurrency(total)}</span>
+        <span>{formatCurrency(total, currencyCode)}</span>
       </div>
     </div>
   )

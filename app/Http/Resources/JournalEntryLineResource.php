@@ -16,6 +16,8 @@ class JournalEntryLineResource extends JsonResource
             'account_name' => $this->whenLoaded('account', fn () => $this->account->name),
             'debit' => (float) $this->debit,
             'credit' => (float) $this->credit,
+            'transaction_debit' => (float) $this->transaction_debit,
+            'transaction_credit' => (float) $this->transaction_credit,
             'description' => $this->description,
         ];
     }

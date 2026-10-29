@@ -27,12 +27,15 @@ class Invoice extends TenantModel
         'total_amount',
         'amount_paid',
         'journal_entry_id',
+        'currency_code',
+        'exchange_rate',
         'created_by',
     ];
 
     protected function casts(): array
     {
         return [
+            'exchange_rate' => 'decimal:10',
             'invoice_date' => 'date',
             'due_date' => 'date',
             'overdue_notified_at' => 'datetime',

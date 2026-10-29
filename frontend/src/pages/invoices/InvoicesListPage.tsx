@@ -62,8 +62,8 @@ export function InvoicesListPage() {
     { key: 'customer_id', header: 'Customer', render: (row) => customerName(row.customer_id) },
     { key: 'invoice_date', header: 'Invoice Date', accessor: (row) => row.invoice_date, sortable: true, render: (row) => formatDate(row.invoice_date) },
     { key: 'due_date', header: 'Due Date', accessor: (row) => row.due_date, sortable: true, render: (row) => formatDate(row.due_date) },
-    { key: 'total_amount', header: 'Total', accessor: (row) => row.total_amount, sortable: true, render: (row) => formatCurrency(row.total_amount) },
-    { key: 'amount_paid', header: 'Amount Paid', accessor: (row) => row.amount_paid, render: (row) => formatCurrency(row.amount_paid) },
+    { key: 'total_amount', header: 'Total', accessor: (row) => row.total_amount, sortable: true, render: (row) => formatCurrency(row.total_amount, row.currency_code) },
+    { key: 'amount_paid', header: 'Amount Paid', accessor: (row) => row.amount_paid, render: (row) => formatCurrency(row.amount_paid, row.currency_code) },
     {
       key: 'status',
       header: 'Status',

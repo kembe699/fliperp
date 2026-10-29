@@ -16,6 +16,8 @@ class SupplierPaymentResource extends JsonResource
             'supplier_bill_id' => $this->supplier_bill_id,
             'payment_date' => $this->payment_date?->toDateString(),
             'amount' => (float) $this->amount,
+            'currency_code' => $this->currency_code,
+            'exchange_rate' => (float) $this->exchange_rate,
             'payment_type_id' => $this->payment_type_id,
             'reference_number' => $this->reference_number,
             'paid_by' => $this->paid_by,

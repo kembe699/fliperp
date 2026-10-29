@@ -28,6 +28,9 @@ export interface Invoice {
   discount_amount: number
   total_amount: number
   amount_paid: number
+  currency_code: string
+  /** Units of currency_code per 1 base unit. */
+  exchange_rate: number
   balance_due: number
   journal_entry_id: number | null
   created_by: number
@@ -55,5 +58,7 @@ export interface InvoiceFormInput {
   invoice_date?: string
   due_date: string
   discount_amount?: number
+  currency_code?: string
+  exchange_rate?: number
   items: InvoiceLineInput[]
 }

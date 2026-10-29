@@ -31,6 +31,7 @@ class ChartOfAccountsSeeder extends Seeder
         ['code' => '5200', 'name' => 'General Operating Expenses', 'type' => 'expense'],
         ['code' => '5300', 'name' => 'Cost of Goods Sold', 'type' => 'expense'],
         ['code' => '5400', 'name' => 'Cash Short/Over', 'type' => 'expense'],
+        ['code' => '5500', 'name' => 'Realised FX Gain/Loss', 'type' => 'expense'],
     ];
 
     public function run(): void

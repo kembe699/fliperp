@@ -25,6 +25,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,6 +44,7 @@ export function SupplierBillDetailPage() {
   const [amountError, setAmountError] = useState<string | null>(null)
   const [referenceNumber, setReferenceNumber] = useState('')
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [paymentRate, setPaymentRate] = useState('1')
   const [downloading, setDownloading] = useState(false)
 
   const { data: bill, isLoading } = useQuery({ queryKey: ['supplier-bill', id], queryFn: () => fetchSupplierBill(billId), enabled: !!billId })
@@ -99,6 +101,7 @@ export function SupplierBillDetailPage() {
         supplier_bill_id: billId,
         payment_date: paymentDate,
         amount: Number(amount),
+        exchange_rate: Number(paymentRate),
         payment_type_id: paymentTypeId ? Number(paymentTypeId) : null,
         reference_number: referenceNumber || null,
       }),
@@ -219,23 +222,23 @@ export function SupplierBillDetailPage() {
           <div className="ml-auto w-full max-w-xs space-y-1.5">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Subtotal</span>
-              <span>{formatCurrency(bill.subtotal)}</span>
+              <span>{formatCurrency(bill.subtotal, bill.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Tax</span>
-              <span>{formatCurrency(bill.tax_amount)}</span>
+              <span>{formatCurrency(bill.tax_amount, bill.currency_code)}</span>
             </div>
             <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold text-foreground">
               <span>Total</span>
-              <span>{formatCurrency(bill.total_amount)}</span>
+              <span>{formatCurrency(bill.total_amount, bill.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Amount Paid</span>
-              <span>{formatCurrency(bill.amount_paid)}</span>
+              <span>{formatCurrency(bill.amount_paid, bill.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm font-semibold text-danger">
               <span>Balance Due</span>
-              <span>{formatCurrency(bill.balance_due)}</span>
+              <span>{formatCurrency(bill.balance_due, bill.currency_code)}</span>
             </div>
           </div>
         </CardContent>
@@ -267,7 +270,7 @@ export function SupplierBillDetailPage() {
                 payments.data.map((payment) => (
                   <tr key={payment.id} className="border-b border-border last:border-b-0">
                     <td className="px-4 py-3 text-foreground">{formatDate(payment.payment_date)}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(payment.amount)}</td>
+                    <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(payment.amount, bill.currency_code)}</td>
                     <td className="px-4 py-3 text-foreground">{paymentTypeName(payment.payment_type_id)}</td>
                     <td className="px-4 py-3 text-foreground">{payment.reference_number ?? '—'}</td>
                     <td className="px-4 py-3 text-foreground">{paidByName(payment.paid_by)}</td>
@@ -286,7 +289,7 @@ export function SupplierBillDetailPage() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Balance due: <span className="font-semibold text-foreground">{formatCurrency(bill.balance_due)}</span>
+              Balance due: <span className="font-semibold text-foreground">{formatCurrency(bill.balance_due, bill.currency_code)}</span>
             </p>
             <div className="space-y-1.5">
               <Label>Amount</Label>
@@ -322,12 +325,13 @@ export function SupplierBillDetailPage() {
               <Label>Payment Date</Label>
               <Input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
             </div>
+            {bill && <CurrencyRateFields currency={bill.currency_code} date={paymentDate} rate={paymentRate} onRateChange={setPaymentRate} />}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
               Cancel
             </Button>
-            <Button disabled={!amount || paymentMutation.isPending} onClick={() => paymentMutation.mutate()}>
+            <Button disabled={!amount || !(Number(paymentRate) > 0) || paymentMutation.isPending} onClick={() => paymentMutation.mutate()}>
               Record Payment
             </Button>
           </DialogFooter>

@@ -9,6 +9,7 @@ import { fetchCustomers } from '@/api/customers'
 import { fetchActiveProducts } from '@/api/products'
 import { fetchPaymentTypes } from '@/api/pos'
 import { createCustomerPayment } from '@/api/customerPayments'
+import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
@@ -38,6 +39,7 @@ export function InvoiceDetailPage() {
   const [paymentTypeId, setPaymentTypeId] = useState('')
   const [amount, setAmount] = useState('')
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [paymentRate, setPaymentRate] = useState('1')
   const [downloading, setDownloading] = useState(false)
 
   const { data: invoice, isLoading } = useQuery({ queryKey: ['invoice', id], queryFn: () => fetchInvoice(invoiceId), enabled: !!invoiceId })
@@ -82,6 +84,7 @@ export function InvoiceDetailPage() {
         payment_type_id: Number(paymentTypeId),
         payment_date: paymentDate,
         amount: Number(amount),
+        exchange_rate: Number(paymentRate),
       }),
     onSuccess: () => {
       toast.success('Payment recorded')
@@ -214,9 +217,9 @@ export function InvoiceDetailPage() {
                     {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
                   </td>
                   <td className="py-2 text-right text-foreground">{Number(item.quantity)}</td>
-                  <td className="py-2 text-right text-foreground">{formatCurrency(item.unit_price)}</td>
-                  <td className="py-2 text-right text-foreground">{formatCurrency(item.discount_amount)}</td>
-                  <td className="py-2 text-right font-medium text-foreground">{formatCurrency(item.line_total)}</td>
+                  <td className="py-2 text-right text-foreground">{formatCurrency(item.unit_price, invoice.currency_code)}</td>
+                  <td className="py-2 text-right text-foreground">{formatCurrency(item.discount_amount, invoice.currency_code)}</td>
+                  <td className="py-2 text-right font-medium text-foreground">{formatCurrency(item.line_total, invoice.currency_code)}</td>
                 </tr>
               ))}
             </tbody>
@@ -225,27 +228,27 @@ export function InvoiceDetailPage() {
           <div className="ml-auto w-full max-w-xs space-y-1.5">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Subtotal</span>
-              <span>{formatCurrency(invoice.subtotal)}</span>
+              <span>{formatCurrency(invoice.subtotal, invoice.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Discount</span>
-              <span>{formatCurrency(invoice.discount_amount)}</span>
+              <span>{formatCurrency(invoice.discount_amount, invoice.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Tax</span>
-              <span>{formatCurrency(invoice.tax_amount)}</span>
+              <span>{formatCurrency(invoice.tax_amount, invoice.currency_code)}</span>
             </div>
             <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold text-foreground">
               <span>Total</span>
-              <span>{formatCurrency(invoice.total_amount)}</span>
+              <span>{formatCurrency(invoice.total_amount, invoice.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Amount Paid</span>
-              <span>{formatCurrency(invoice.amount_paid)}</span>
+              <span>{formatCurrency(invoice.amount_paid, invoice.currency_code)}</span>
             </div>
             <div className="flex justify-between text-sm font-semibold text-danger">
               <span>Balance Due</span>
-              <span>{formatCurrency(invoice.balance_due)}</span>
+              <span>{formatCurrency(invoice.balance_due, invoice.currency_code)}</span>
             </div>
           </div>
         </CardContent>
@@ -258,7 +261,7 @@ export function InvoiceDetailPage() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Balance due: <span className="font-semibold text-foreground">{formatCurrency(invoice.balance_due)}</span>
+              Balance due: <span className="font-semibold text-foreground">{formatCurrency(invoice.balance_due, invoice.currency_code)}</span>
             </p>
             <div className="space-y-1.5">
               <Label>Payment Type</Label>
@@ -283,12 +286,15 @@ export function InvoiceDetailPage() {
               <Label>Payment Date</Label>
               <Input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
             </div>
+            {invoice && (
+              <CurrencyRateFields currency={invoice.currency_code} date={paymentDate} rate={paymentRate} onRateChange={setPaymentRate} />
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
               Cancel
             </Button>
-            <Button disabled={!paymentTypeId || !amount || paymentMutation.isPending} onClick={() => paymentMutation.mutate()}>
+            <Button disabled={!paymentTypeId || !amount || !(Number(paymentRate) > 0) || paymentMutation.isPending} onClick={() => paymentMutation.mutate()}>
               Record Payment
             </Button>
           </DialogFooter>

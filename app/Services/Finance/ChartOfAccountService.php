@@ -10,10 +10,11 @@ class ChartOfAccountService
 {
     /**
      * Codes 1000, 1100, 1200, 1900, 2000, 2100, 2200, 2300, 4000, 5000, 5100,
-     * 5300 and 5400 are relied on by code in InvoiceService, PayrollRunService,
-     * DepreciationService, the procurement services (GrnService,
-     * SupplierPaymentService), and the POS services (SaleService,
-     * CashDrawerService, CustomerPaymentService) when posting journal entries —
+     * 5300, 5400 and 5500 are relied on by code in InvoiceService,
+     * PayrollRunService, DepreciationService, the procurement services
+     * (GrnService, SupplierPaymentService), the POS services (SaleService,
+     * CashDrawerService, CustomerPaymentService) and, for realised FX
+     * gain/loss, ExchangeRateService, when posting journal entries —
      * matches database/seeders/ChartOfAccountsSeeder.php (which only seeds the
      * one demo company). 3000 and 5200 aren't relied on by any service but
      * round out a minimally usable ledger.
@@ -34,6 +35,7 @@ class ChartOfAccountService
         ['5200', 'General Operating Expenses', 'expense'],
         ['5300', 'Cost of Goods Sold', 'expense'],
         ['5400', 'Cash Short/Over', 'expense'],
+        ['5500', 'Realised FX Gain/Loss', 'expense'],
     ];
 
     public function paginate(int $perPage = 15): LengthAwarePaginator

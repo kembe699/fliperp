@@ -6,6 +6,8 @@ import { Camera, Download } from 'lucide-react'
 import { downloadGeneralLedger, fetchChartOfAccounts, fetchGeneralLedger, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
+import { useBaseCurrency } from '@/hooks/use-base-currency'
+import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
 import { startOfMonth, toISODate } from '@/lib/format'
 import { sourceRecordLink } from '@/lib/journal-source-links'
 
@@ -17,6 +19,9 @@ import { Label } from '@/components/ui/label'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 
 export function GeneralLedgerReportPage() {
+  const baseCurrency = useBaseCurrency()
+  const [showIn, setShowIn] = useState(baseCurrency)
+  const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [accountId, setAccountId] = useState<string | null>(null)
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
@@ -24,10 +29,11 @@ export function GeneralLedgerReportPage() {
 
   const { data: accounts } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts })
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['general-ledger', accountId, from, to],
-    queryFn: () => fetchGeneralLedger({ account_id: Number(accountId), from, to }),
+    queryKey: ['general-ledger', accountId, from, to, showIn],
+    queryFn: () => fetchGeneralLedger({ account_id: Number(accountId), from, to, currency: currencyParam }),
     enabled: !!accountId,
   })
+  const currencyCode = data?.currency?.code
 
   const snapshotMutation = useMutation({
     mutationFn: () => saveReportSnapshot('general-ledger', { account_id: Number(accountId), from, to }),
@@ -39,7 +45,7 @@ export function GeneralLedgerReportPage() {
     if (!accountId) return
     setDownloading(true)
     try {
-      await downloadGeneralLedger(Number(accountId), from, to)
+      await downloadGeneralLedger(Number(accountId), from, to, currencyParam)
     } finally {
       setDownloading(false)
     }
@@ -83,8 +89,11 @@ export function GeneralLedgerReportPage() {
             <Label>To</Label>
             <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
+          <ReportCurrencySelect value={showIn} onChange={setShowIn} />
         </CardContent>
       </Card>
+
+      <ConversionNotice currency={data?.currency} />
 
       {!accountId ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Select an account to view its ledger.</p>
@@ -106,7 +115,7 @@ export function GeneralLedgerReportPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-semibold uppercase text-muted-foreground">Opening Balance</p>
-                    <p className="text-sm font-medium text-foreground">{formatCurrency(data.opening_balance)}</p>
+                    <p className="text-sm font-medium text-foreground">{formatCurrency(data.opening_balance, currencyCode)}</p>
                   </div>
                 </div>
 
@@ -143,9 +152,9 @@ export function GeneralLedgerReportPage() {
                               '—'
                             )}
                           </td>
-                          <td className="py-2 text-right text-foreground">{line.debit > 0 ? formatCurrency(line.debit) : '—'}</td>
-                          <td className="py-2 text-right text-foreground">{line.credit > 0 ? formatCurrency(line.credit) : '—'}</td>
-                          <td className="py-2 text-right font-medium text-foreground">{formatCurrency(line.balance)}</td>
+                          <td className="py-2 text-right text-foreground">{line.debit > 0 ? formatCurrency(line.debit, currencyCode) : '—'}</td>
+                          <td className="py-2 text-right text-foreground">{line.credit > 0 ? formatCurrency(line.credit, currencyCode) : '—'}</td>
+                          <td className="py-2 text-right font-medium text-foreground">{formatCurrency(line.balance, currencyCode)}</td>
                         </tr>
                       )
                     })}
@@ -161,7 +170,7 @@ export function GeneralLedgerReportPage() {
 
                 <div className="mt-4 flex justify-end border-t-2 border-border pt-2 text-base font-bold text-foreground">
                   <span className="mr-4">Closing Balance</span>
-                  <span>{formatCurrency(data.closing_balance)}</span>
+                  <span>{formatCurrency(data.closing_balance, currencyCode)}</span>
                 </div>
               </>
             )}

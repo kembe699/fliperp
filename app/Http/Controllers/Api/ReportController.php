@@ -13,6 +13,7 @@ use App\Services\Reporting\BalanceSheetService;
 use App\Services\Reporting\CashFlowService;
 use App\Services\Reporting\GeneralLedgerService;
 use App\Services\Reporting\ProfitAndLossService;
+use App\Services\Reporting\ReportCurrencyConverter;
 use App\Services\Reporting\ReportSnapshotService;
 use App\Services\Reporting\TrialBalanceService;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,7 @@ class ReportController extends Controller
         protected GeneralLedgerService $generalLedgerService,
         protected CashFlowService $cashFlowService,
         protected ReportSnapshotService $reportSnapshotService,
+        protected ReportCurrencyConverter $currencyConverter,
     ) {}
 
     public function trialBalance(TrialBalanceRequest $request): JsonResponse
@@ -41,6 +43,13 @@ class ReportController extends Controller
             $request->string('from')->toString(),
             $request->string('to')->toString(),
             $request->integer('branch_id') ?: null,
+        );
+
+        $data = $this->currencyConverter->convert(
+            $data,
+            $request->user()->company_id,
+            $request->input('currency'),
+            $request->string('to')->toString(),
         );
 
         return $this->success($data);
@@ -55,6 +64,13 @@ class ReportController extends Controller
             $request->integer('branch_id') ?: null,
         );
 
+        $data = $this->currencyConverter->convert(
+            $data,
+            $request->user()->company_id,
+            $request->input('currency'),
+            $request->string('to')->toString(),
+        );
+
         return $this->success($data);
     }
 
@@ -64,6 +80,13 @@ class ReportController extends Controller
             $request->user()->company_id,
             $request->string('as_of')->toString(),
             $request->integer('branch_id') ?: null,
+        );
+
+        $data = $this->currencyConverter->convert(
+            $data,
+            $request->user()->company_id,
+            $request->input('currency'),
+            $request->string('as_of')->toString(),
         );
 
         return $this->success($data);
@@ -79,6 +102,13 @@ class ReportController extends Controller
             $request->integer('branch_id') ?: null,
         );
 
+        $data = $this->currencyConverter->convert(
+            $data,
+            $request->user()->company_id,
+            $request->input('currency'),
+            $request->string('to')->toString(),
+        );
+
         return $this->success($data);
     }
 
@@ -89,6 +119,13 @@ class ReportController extends Controller
             $request->string('from')->toString(),
             $request->string('to')->toString(),
             $request->integer('branch_id') ?: null,
+        );
+
+        $data = $this->currencyConverter->convert(
+            $data,
+            $request->user()->company_id,
+            $request->input('currency'),
+            $request->string('to')->toString(),
         );
 
         return $this->success($data);
@@ -112,6 +149,10 @@ class ReportController extends Controller
             'general-ledger' => $this->snapshotGeneralLedger($request, $companyId, $branchId),
             'balance-sheet' => $this->snapshotAsOf($request, fn ($asOf) => $this->balanceSheetService->generate($companyId, $asOf, $branchId)),
         };
+
+        // Snapshots are always the ledger's own (base-currency) figures; the
+        // currency block says so, same as on the live report.
+        $data = $this->currencyConverter->convert($data, $companyId, null, $periodEnd);
 
         $snapshot = $this->reportSnapshotService->save($type, $periodStart, $periodEnd, $data);
 

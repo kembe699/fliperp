@@ -1,3 +1,5 @@
+import type { ReportCurrencyInfo } from '@/types/exchangeRate'
+
 export type ChartOfAccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
 
 export interface ChartOfAccount {
@@ -17,8 +19,12 @@ export interface JournalEntryLine {
   account_id: number
   account_code: string | null
   account_name: string | null
+  /** Base-currency amounts (what every report uses). */
   debit: number
   credit: number
+  /** Amounts in the entry's own currency. */
+  transaction_debit: number
+  transaction_credit: number
   description: string | null
 }
 
@@ -33,9 +39,14 @@ export interface JournalEntry {
   source_id: number | null
   posted_by: number | null
   status: JournalEntryStatus
+  currency_code: string
+  /** Units of currency_code per 1 base unit. */
+  exchange_rate: number
   lines: JournalEntryLine[]
   total_debit: number | null
   total_credit: number | null
+  total_transaction_debit: number | null
+  total_transaction_credit: number | null
 }
 
 export type AccountingPeriodStatus = 'open' | 'closed'
@@ -59,6 +70,7 @@ export interface ReportAccountLine {
 }
 
 export interface TrialBalanceReport {
+  currency?: ReportCurrencyInfo
   from: string
   to: string
   accounts: { account_id: number; code: string; name: string; type: string; debit: number; credit: number; balance: number }[]
@@ -67,6 +79,7 @@ export interface TrialBalanceReport {
 }
 
 export interface ProfitAndLossReport {
+  currency?: ReportCurrencyInfo
   from: string
   to: string
   revenue: { total: number; accounts: ReportAccountLine[] }
@@ -77,6 +90,7 @@ export interface ProfitAndLossReport {
 }
 
 export interface BalanceSheetReport {
+  currency?: ReportCurrencyInfo
   as_of: string
   assets: { total: number; accounts: ReportAccountLine[] }
   liabilities: { total: number; accounts: ReportAccountLine[] }
@@ -85,6 +99,7 @@ export interface BalanceSheetReport {
 }
 
 export interface CashFlowReport {
+  currency?: ReportCurrencyInfo
   from: string
   to: string
   categories: { source_module: string; cash_in: number; cash_out: number; net: number }[]

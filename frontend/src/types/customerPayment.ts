@@ -6,6 +6,8 @@ export interface CustomerPayment {
   payment_type_id: number
   payment_date: string
   amount: number
+  currency_code: string
+  exchange_rate: number
   reference_number: string | null
   received_by: number
   journal_entry_id: number | null
@@ -19,5 +21,7 @@ export interface CreateCustomerPaymentInput {
   payment_type_id: number
   payment_date: string
   amount: number
+  /** The invoice's currency is always used; only the rate can be set (defaults to the rate for payment_date). */
+  exchange_rate?: number
   reference_number?: string
 }

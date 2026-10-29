@@ -27,6 +27,8 @@ class StoreJournalEntryRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'source_module' => ['nullable', 'string', 'max:100'],
             'source_id' => ['nullable', 'integer'],
+            'currency_code' => ['nullable', 'string', 'size:3', 'exists:currencies,code'],
+            'exchange_rate' => ['nullable', 'numeric', 'gt:0'],
             'lines' => ['required', 'array', 'min:2'],
             'lines.*.account_id' => [
                 'required',

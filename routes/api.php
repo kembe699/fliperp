@@ -80,6 +80,7 @@ use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\TaxRateController;
+use App\Http\Controllers\Api\ExchangeRateController;
 use App\Http\Controllers\Api\UnitOfMeasureController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
@@ -182,6 +183,11 @@ Route::prefix('v1')->group(function () {
         // Finance core
         Route::post('chart-of-accounts/seed', [ChartOfAccountController::class, 'seed']);
         Route::apiResource('chart-of-accounts', ChartOfAccountController::class);
+        // Declared before the resource so 'lookup'/'currencies' aren't read as {exchange_rate} ids.
+        Route::get('exchange-rates/lookup', [ExchangeRateController::class, 'lookup']);
+        Route::get('exchange-rates/currencies', [ExchangeRateController::class, 'currencies']);
+        Route::apiResource('exchange-rates', ExchangeRateController::class);
+
         Route::apiResource('journal-entries', JournalEntryController::class);
         Route::post('journal-entries/{journal_entry}/post', [JournalEntryController::class, 'post']);
         Route::post('journal-entries/{journal_entry}/reverse', [JournalEntryController::class, 'reverse']);

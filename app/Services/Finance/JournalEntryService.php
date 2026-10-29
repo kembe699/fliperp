@@ -9,8 +9,21 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Currency: an entry has a currency_code and exchange_rate (units of that
+ * currency per 1 base unit, see ExchangeRateService). Callers always pass
+ * line amounts in the entry's own currency as `debit`/`credit`; each line is
+ * stored with those as transaction_debit/transaction_credit and with
+ * debit/credit in the base currency (amount / rate), which is all the reports
+ * ever read. A line may carry an explicit `base_debit`/`base_credit` instead
+ * (used for realised FX gain/loss, a base-only line with no transaction
+ * amount). With no currency given, an entry is in the base currency at rate 1
+ * — so every existing caller posts exactly as before.
+ */
 class JournalEntryService
 {
+    public function __construct(protected ExchangeRateService $exchangeRateService) {}
+
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return JournalEntry::query()
@@ -24,7 +37,13 @@ class JournalEntryService
     {
         $this->assertBalanced($data['lines']);
 
-        return DB::transaction(function () use ($data) {
+        $companyId = $data['company_id'] ?? Auth::user()?->company_id;
+        [$currency, $rate] = $companyId
+            ? $this->exchangeRateService->resolve($companyId, $data['currency_code'] ?? null, $data['entry_date'], $data['exchange_rate'] ?? null)
+            : [$data['currency_code'] ?? null, 1.0];
+        $lines = $this->normalizeLines($data['lines'], $rate);
+
+        return DB::transaction(function () use ($data, $currency, $rate, $lines) {
             $entry = JournalEntry::create([
                 'branch_id' => $data['branch_id'] ?? null,
                 'reference_number' => $data['reference_number'],
@@ -34,9 +53,11 @@ class JournalEntryService
                 'source_id' => $data['source_id'] ?? null,
                 'status' => 'draft',
                 'created_by' => Auth::id(),
+                'currency_code' => $currency,
+                'exchange_rate' => $rate,
             ]);
 
-            $entry->lines()->createMany($this->normalizeLines($data['lines']));
+            $entry->lines()->createMany($lines);
 
             return $entry->load('lines.account');
         });
@@ -54,7 +75,28 @@ class JournalEntryService
             $this->assertBalanced($data['lines']);
         }
 
-        return DB::transaction(function () use ($entry, $data) {
+        // A change of currency, rate or date re-derives the rate and therefore
+        // every line's base amount, from the lines given or the stored ones.
+        $currencyTouched = array_key_exists('currency_code', $data) || array_key_exists('exchange_rate', $data) || isset($data['entry_date']);
+        [$currency, $rate] = $currencyTouched
+            ? $this->exchangeRateService->resolve(
+                $entry->company_id,
+                $data['currency_code'] ?? $entry->currency_code,
+                $data['entry_date'] ?? $entry->entry_date->toDateString(),
+                array_key_exists('exchange_rate', $data) ? $data['exchange_rate'] : (isset($data['currency_code']) || isset($data['entry_date']) ? null : $entry->exchange_rate),
+            )
+            : [$entry->currency_code, (float) $entry->exchange_rate];
+
+        $lines = isset($data['lines'])
+            ? $this->normalizeLines($data['lines'], $rate)
+            : ($currencyTouched ? $this->normalizeLines($entry->lines->map(fn ($line) => [
+                'account_id' => $line->account_id,
+                'debit' => (float) $line->transaction_debit,
+                'credit' => (float) $line->transaction_credit,
+                'description' => $line->description,
+            ])->all(), $rate) : null);
+
+        return DB::transaction(function () use ($entry, $data, $currency, $rate, $lines) {
             $entry->update(array_filter([
                 'branch_id' => $data['branch_id'] ?? $entry->branch_id,
                 'reference_number' => $data['reference_number'] ?? $entry->reference_number,
@@ -62,11 +104,13 @@ class JournalEntryService
                 'description' => $data['description'] ?? $entry->description,
                 'source_module' => $data['source_module'] ?? $entry->source_module,
                 'source_id' => $data['source_id'] ?? $entry->source_id,
+                'currency_code' => $currency,
+                'exchange_rate' => $rate,
             ], fn ($value) => $value !== null));
 
-            if (isset($data['lines'])) {
+            if ($lines !== null) {
                 $entry->lines()->delete();
-                $entry->lines()->createMany($this->normalizeLines($data['lines']));
+                $entry->lines()->createMany($lines);
             }
 
             return $entry->fresh('lines.account');
@@ -133,13 +177,19 @@ class JournalEntryService
                 'source_id' => $entry->source_id,
                 'status' => 'posted',
                 'posted_by' => Auth::id(),
+                'currency_code' => $entry->currency_code,
+                'exchange_rate' => $entry->exchange_rate,
             ]);
 
+            // Mirrors the original exactly, base and transaction amounts alike —
+            // never re-converted, so the reversal nets it to zero in both.
             foreach ($entry->lines as $line) {
                 $reversal->lines()->create([
                     'account_id' => $line->account_id,
                     'debit' => $line->credit,
                     'credit' => $line->debit,
+                    'transaction_debit' => $line->transaction_credit,
+                    'transaction_credit' => $line->transaction_debit,
                     'description' => $line->description,
                 ]);
             }
@@ -166,14 +216,50 @@ class JournalEntryService
         }
     }
 
-    protected function normalizeLines(array $lines): array
+    /**
+     * Stores each line's own-currency amounts and its base amounts (amount /
+     * rate, or an explicit base_debit/base_credit). Rounding each line to the
+     * cent can leave the base side a few cents out of balance; that residue is
+     * absorbed by the largest line on the short side, so the base entry always
+     * balances exactly. An imbalance beyond rounding is rejected.
+     */
+    protected function normalizeLines(array $lines, float $rate = 1.0): array
     {
-        return array_map(fn (array $line) => [
-            'account_id' => $line['account_id'],
-            'debit' => $line['debit'] ?? 0,
-            'credit' => $line['credit'] ?? 0,
-            'description' => $line['description'] ?? null,
-        ], $lines);
+        $normalized = array_map(function (array $line) use ($rate) {
+            $transactionDebit = round((float) ($line['debit'] ?? 0), 2);
+            $transactionCredit = round((float) ($line['credit'] ?? 0), 2);
+
+            return [
+                'account_id' => $line['account_id'],
+                'debit' => array_key_exists('base_debit', $line) ? round((float) $line['base_debit'], 2) : round($transactionDebit / $rate, 2),
+                'credit' => array_key_exists('base_credit', $line) ? round((float) $line['base_credit'], 2) : round($transactionCredit / $rate, 2),
+                'transaction_debit' => $transactionDebit,
+                'transaction_credit' => $transactionCredit,
+                'description' => $line['description'] ?? null,
+            ];
+        }, array_values($lines));
+
+        $differenceCents = (int) round(array_sum(array_column($normalized, 'debit')) * 100) - (int) round(array_sum(array_column($normalized, 'credit')) * 100);
+
+        if ($differenceCents !== 0) {
+            if (abs($differenceCents) > count($normalized)) {
+                throw ValidationException::withMessages([
+                    'lines' => ['Journal entry debit and credit totals must balance in the base currency.'],
+                ]);
+            }
+
+            // Debits exceed credits: top up the largest credit line, and vice versa.
+            $side = $differenceCents > 0 ? 'credit' : 'debit';
+            $largest = null;
+            foreach ($normalized as $index => $line) {
+                if ($line[$side] > 0 && ($largest === null || $line[$side] > $normalized[$largest][$side])) {
+                    $largest = $index;
+                }
+            }
+            $normalized[$largest][$side] = round($normalized[$largest][$side] + abs($differenceCents) / 100, 2);
+        }
+
+        return $normalized;
     }
 
     protected function assertBalanced(array $lines): void

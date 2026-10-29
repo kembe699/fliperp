@@ -9,6 +9,7 @@ import { fetchChartOfAccounts } from '@/api/reports'
 import { fetchBranches } from '@/api/branches'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
+import { useAuthStore } from '@/lib/auth-store'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
+import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
 
 interface Row {
   key: string
@@ -36,6 +38,9 @@ export function JournalEntryFormPage() {
   const [referenceNumber, setReferenceNumber] = useState('')
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [description, setDescription] = useState('')
+  const baseCurrency = useAuthStore((state) => state.company?.currency_code) ?? 'USD'
+  const [currency, setCurrency] = useState(baseCurrency)
+  const [rate, setRate] = useState('1')
   const [rows, setRows] = useState<Row[]>([
     { key: crypto.randomUUID(), account_id: null, debit: '', credit: '', description: '' },
     { key: crypto.randomUUID(), account_id: null, debit: '', credit: '', description: '' },
@@ -56,6 +61,8 @@ export function JournalEntryFormPage() {
         reference_number: referenceNumber,
         entry_date: entryDate,
         description: description || null,
+        currency_code: currency,
+        exchange_rate: Number(rate),
         lines: rows
           .filter((row) => row.account_id)
           .map((row) => ({ account_id: row.account_id!, debit: Number(row.debit) || 0, credit: Number(row.credit) || 0, description: row.description || null })),
@@ -68,7 +75,7 @@ export function JournalEntryFormPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
-  const canSubmit = referenceNumber && entryDate && isBalanced && rows.filter((row) => row.account_id).length >= 2
+  const canSubmit = referenceNumber && entryDate && isBalanced && Number(rate) > 0 && rows.filter((row) => row.account_id).length >= 2
 
   return (
     <div>
@@ -104,6 +111,7 @@ export function JournalEntryFormPage() {
             <Label>Description</Label>
             <Input value={description} onChange={(event) => setDescription(event.target.value)} />
           </div>
+          <CurrencyRateFields currency={currency} onCurrencyChange={setCurrency} date={entryDate} rate={rate} onRateChange={setRate} />
         </CardContent>
       </Card>
 
@@ -151,10 +159,10 @@ export function JournalEntryFormPage() {
 
           <div className="flex items-center justify-end gap-6 border-t border-border pt-3 text-sm">
             <span className="text-muted-foreground">
-              Total Debit: <span className="font-medium text-foreground">{formatCurrency(totalDebit)}</span>
+              Total Debit: <span className="font-medium text-foreground">{formatCurrency(totalDebit, currency)}</span>
             </span>
             <span className="text-muted-foreground">
-              Total Credit: <span className="font-medium text-foreground">{formatCurrency(totalCredit)}</span>
+              Total Credit: <span className="font-medium text-foreground">{formatCurrency(totalCredit, currency)}</span>
             </span>
             <span className={`font-semibold ${isBalanced ? 'text-success' : 'text-danger'}`}>{isBalanced ? 'Balanced' : 'Not Balanced'}</span>
           </div>

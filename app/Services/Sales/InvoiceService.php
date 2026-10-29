@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\PriceListItem;
 use App\Models\Product;
 use App\Models\TaxRate;
+use App\Services\Finance\ExchangeRateService;
 use App\Services\Finance\JournalEntryService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -31,6 +32,7 @@ class InvoiceService
     public function __construct(
         protected PromotionService $promotionService,
         protected JournalEntryService $journalEntryService,
+        protected ExchangeRateService $exchangeRateService,
     ) {}
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -61,9 +63,12 @@ class InvoiceService
         return DB::transaction(function () use ($data) {
             $customer = Customer::find($data['customer_id']);
             $date = $data['invoice_date'] ?? now()->toDateString();
+            [$currency, $rate] = $this->exchangeRateService->resolve(
+                Auth::user()->company_id, $data['currency_code'] ?? null, $date, $data['exchange_rate'] ?? null,
+            );
 
             ['subtotal' => $subtotal, 'taxAmount' => $taxAmount, 'items' => $items] = $this->computeTotals(
-                $data['items'], $data['price_list_id'] ?? null, $customer, $date,
+                $data['items'], $data['price_list_id'] ?? null, $customer, $date, $rate,
             );
 
             $discountAmount = round((float) ($data['discount_amount'] ?? 0), 2);
@@ -82,6 +87,8 @@ class InvoiceService
                 'total_amount' => round($subtotal - $discountAmount + $taxAmount, 2),
                 'amount_paid' => 0,
                 'created_by' => Auth::id(),
+                'currency_code' => $currency,
+                'exchange_rate' => $rate,
             ]);
 
             $invoice->items()->createMany($items);
@@ -99,14 +106,28 @@ class InvoiceService
         }
 
         return DB::transaction(function () use ($invoice, $data) {
-            $payload = collect($data)->except('items')->toArray();
+            $payload = collect($data)->except(['items', 'currency_code', 'exchange_rate'])->toArray();
+            $date = $data['invoice_date'] ?? $invoice->invoice_date->toDateString();
+
+            // A new currency, rate or date re-derives the rate (an explicit
+            // rate wins; otherwise the one in force on the invoice date).
+            $rate = (float) $invoice->exchange_rate;
+            if (array_key_exists('currency_code', $data) || array_key_exists('exchange_rate', $data) || isset($data['invoice_date'])) {
+                $keepsManualRate = ! array_key_exists('currency_code', $data) && ! isset($data['invoice_date']);
+                [$payload['currency_code'], $rate] = $this->exchangeRateService->resolve(
+                    $invoice->company_id,
+                    $data['currency_code'] ?? $invoice->currency_code,
+                    $date,
+                    $data['exchange_rate'] ?? ($keepsManualRate ? $invoice->exchange_rate : null),
+                );
+                $payload['exchange_rate'] = $rate;
+            }
 
             if (isset($data['items'])) {
                 $customer = Customer::find($data['customer_id'] ?? $invoice->customer_id);
-                $date = $data['invoice_date'] ?? $invoice->invoice_date->toDateString();
 
                 ['subtotal' => $subtotal, 'taxAmount' => $taxAmount, 'items' => $items] = $this->computeTotals(
-                    $data['items'], $data['price_list_id'] ?? null, $customer, $date,
+                    $data['items'], $data['price_list_id'] ?? null, $customer, $date, $rate,
                 );
 
                 $discountAmount = round((float) ($data['discount_amount'] ?? $invoice->discount_amount), 2);
@@ -178,6 +199,10 @@ class InvoiceService
                 'description' => "Invoice sent to customer for {$invoice->reference_number}",
                 'source_module' => 'sales',
                 'source_id' => $invoice->id,
+                // Posted in the invoice's currency at the invoice's own rate —
+                // that rate is what receivable is carried at until paid.
+                'currency_code' => $invoice->currency_code,
+                'exchange_rate' => $invoice->exchange_rate,
                 'lines' => $lines,
             ]);
 
@@ -264,7 +289,13 @@ class InvoiceService
         return $amountPaid > 0 ? 'partially_paid' : 'sent';
     }
 
-    protected function computeTotals(array $items, ?int $priceListId, ?Customer $customer, string $date): array
+    /**
+     * $rate converts the defaults that come from the catalogue — product and
+     * price-list prices, promotion discounts — which are base-currency
+     * figures, into the invoice's currency. Amounts typed on the invoice are
+     * already in its currency and are used as given.
+     */
+    protected function computeTotals(array $items, ?int $priceListId, ?Customer $customer, string $date, float $rate = 1.0): array
     {
         $subtotal = 0.0;
         $taxAmount = 0.0;
@@ -276,11 +307,11 @@ class InvoiceService
 
             $unitPrice = isset($item['unit_price'])
                 ? (float) $item['unit_price']
-                : $this->resolveUnitPrice($product, $item['product_variant_id'] ?? null, $priceListId);
+                : round($this->resolveUnitPrice($product, $item['product_variant_id'] ?? null, $priceListId) * $rate, 2);
 
             $discount = isset($item['discount_amount'])
                 ? (float) $item['discount_amount']
-                : $this->promotionService->applicableDiscount($product, $customer, $date, $quantity);
+                : round($this->promotionService->applicableDiscount($product, $customer, $date, $quantity) * $rate, 2);
 
             $lineTotal = round(($quantity * $unitPrice) - $discount, 2);
 

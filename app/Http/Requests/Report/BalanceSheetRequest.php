@@ -17,6 +17,8 @@ class BalanceSheetRequest extends FormRequest
             'as_of' => ['required', 'date'],
             'allow_future' => ['nullable', 'boolean'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            // Show the (base-currency) figures converted into this currency, for display.
+            'currency' => ['nullable', 'string', 'size:3'],
         ];
     }
 

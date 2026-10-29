@@ -21,12 +21,15 @@ class JournalEntry extends TenantModel
         'posted_by',
         'created_by',
         'status',
+        'currency_code',
+        'exchange_rate',
     ];
 
     protected function casts(): array
     {
         return [
             'entry_date' => 'date',
+            'exchange_rate' => 'decimal:10',
         ];
     }
 

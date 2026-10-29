@@ -11,6 +11,7 @@ import type {
   ReportSnapshotType,
   TrialBalanceReport,
 } from '@/types/accounting'
+import type { ReportCurrencyInfo } from '@/types/exchangeRate'
 
 export type { ChartOfAccount }
 
@@ -39,33 +40,35 @@ export interface GeneralLedgerReport {
   opening_balance: number
   lines: GeneralLedgerLine[]
   closing_balance: number
+  currency?: ReportCurrencyInfo
 }
 
 export async function fetchGeneralLedger(params: {
   account_id: number
   from: string
   to: string
+  currency?: string
 }): Promise<GeneralLedgerReport> {
   const { data } = await api.get<ApiResponse<GeneralLedgerReport>>('/reports/general-ledger', { params })
   return data.data
 }
 
-export async function fetchTrialBalance(params: { from: string; to: string; branch_id?: number }): Promise<TrialBalanceReport> {
+export async function fetchTrialBalance(params: { from: string; to: string; branch_id?: number; currency?: string }): Promise<TrialBalanceReport> {
   const { data } = await api.get<ApiResponse<TrialBalanceReport>>('/reports/trial-balance', { params })
   return data.data
 }
 
-export async function fetchProfitAndLoss(params: { from: string; to: string; branch_id?: number }): Promise<ProfitAndLossReport> {
+export async function fetchProfitAndLoss(params: { from: string; to: string; branch_id?: number; currency?: string }): Promise<ProfitAndLossReport> {
   const { data } = await api.get<ApiResponse<ProfitAndLossReport>>('/reports/profit-and-loss', { params })
   return data.data
 }
 
-export async function fetchBalanceSheet(params: { as_of: string; branch_id?: number }): Promise<BalanceSheetReport> {
+export async function fetchBalanceSheet(params: { as_of: string; branch_id?: number; currency?: string }): Promise<BalanceSheetReport> {
   const { data } = await api.get<ApiResponse<BalanceSheetReport>>('/reports/balance-sheet', { params })
   return data.data
 }
 
-export async function fetchCashFlow(params: { from: string; to: string; branch_id?: number }): Promise<CashFlowReport> {
+export async function fetchCashFlow(params: { from: string; to: string; branch_id?: number; currency?: string }): Promise<CashFlowReport> {
   const { data } = await api.get<ApiResponse<CashFlowReport>>('/reports/cash-flow', { params })
   return data.data
 }
@@ -82,8 +85,8 @@ export async function saveReportSnapshot(type: ReportSnapshotType, params: Recor
 }
 
 /** For the General Ledger report, which needs account_id, not just from/to. One row per ledger line. */
-export async function downloadGeneralLedger(accountId: number, from: string, to: string): Promise<void> {
-  const report = await fetchGeneralLedger({ account_id: accountId, from, to })
+export async function downloadGeneralLedger(accountId: number, from: string, to: string, currency?: string): Promise<void> {
+  const report = await fetchGeneralLedger({ account_id: accountId, from, to, currency })
 
   const columns: CsvColumn<GeneralLedgerLine>[] = [
     { header: 'Date', accessor: (row) => row.date },
@@ -107,7 +110,7 @@ export async function downloadGeneralLedger(accountId: number, from: string, to:
     source_id: null,
   }
 
-  exportToCsv(`general-ledger-${report.account.code}-${from}-to-${to}.csv`, columns, [openingRow, ...report.lines])
+  exportToCsv(`general-ledger-${report.account.code}-${from}-to-${to}${csvCurrencySuffix(report.currency)}.csv`, columns, [openingRow, ...report.lines])
 }
 
 /** The 4 report types whose params reduce cleanly to from/to (or as_of for balance-sheet). */
@@ -141,12 +144,18 @@ function accountRows(section: string, accounts: ReportAccountLine[]): ReportCsvR
   return accounts.map((account) => ({ section, code: account.code, name: account.name, amount: account.amount }))
 }
 
+/** Converted downloads say so in the file name, e.g. "-in-SSP-converted". */
+function csvCurrencySuffix(currency?: ReportCurrencyInfo): string {
+  return currency?.converted ? `-in-${currency.code}-converted` : ''
+}
+
 /** Fetches a report and triggers a CSV download, one row per account/section, structured per report shape. */
-export async function downloadReport(type: QuickReportType, from: string, to: string): Promise<void> {
-  const filename = `${type}-${from}-to-${to}.csv`
+export async function downloadReport(type: QuickReportType, from: string, to: string, currency?: string): Promise<void> {
+  const suffix = currency ? `-in-${currency}` : ''
+  const filename = `${type}-${from}-to-${to}${suffix}.csv`
 
   if (type === 'trial-balance') {
-    const report = await fetchTrialBalance({ from, to })
+    const report = await fetchTrialBalance({ from, to, currency })
     const columns: CsvColumn<TrialBalanceReport['accounts'][number]>[] = [
       { header: 'Code', accessor: (row) => row.code },
       { header: 'Account', accessor: (row) => row.name },
@@ -160,7 +169,7 @@ export async function downloadReport(type: QuickReportType, from: string, to: st
   }
 
   if (type === 'profit-and-loss') {
-    const report = await fetchProfitAndLoss({ from, to })
+    const report = await fetchProfitAndLoss({ from, to, currency })
     const rows: ReportCsvRow[] = [
       ...accountRows('Revenue', report.revenue.accounts),
       { section: 'Revenue', code: '', name: 'Total Revenue', amount: report.revenue.total },
@@ -176,7 +185,7 @@ export async function downloadReport(type: QuickReportType, from: string, to: st
   }
 
   if (type === 'balance-sheet') {
-    const report = await fetchBalanceSheet({ as_of: to })
+    const report = await fetchBalanceSheet({ as_of: to, currency })
     const rows: ReportCsvRow[] = [
       ...accountRows('Assets', report.assets.accounts),
       { section: 'Assets', code: '', name: 'Total Assets', amount: report.assets.total },
@@ -191,7 +200,7 @@ export async function downloadReport(type: QuickReportType, from: string, to: st
     return
   }
 
-  const report = await fetchCashFlow({ from, to })
+  const report = await fetchCashFlow({ from, to, currency })
   const columns: CsvColumn<CashFlowReport['categories'][number]>[] = [
     { header: 'Category', accessor: (row) => row.source_module },
     { header: 'Cash In', accessor: (row) => row.cash_in },
