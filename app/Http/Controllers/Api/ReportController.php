@@ -115,14 +115,15 @@ class ReportController extends Controller
 
     public function generalLedger(GeneralLedgerRequest $request): JsonResponse
     {
-        $data = $this->generalLedgerService->generate(
-            $request->user()->company_id,
-            $request->integer('account_id'),
+        $args = [
             $request->string('from')->toString(),
             $request->string('to')->toString(),
             $request->integer('branch_id') ?: null,
             $this->dimensionFilters($request),
-        );
+        ];
+        $data = $request->filled('account_id')
+            ? $this->generalLedgerService->generate($request->user()->company_id, $request->integer('account_id'), ...$args)
+            : $this->generalLedgerService->generateAll($request->user()->company_id, ...$args);
 
         $data = $this->currencyConverter->convert(
             $data,
@@ -213,12 +214,14 @@ class ReportController extends Controller
     protected function snapshotGeneralLedger(Request $request, int $companyId, ?int $branchId): array
     {
         $validated = Validator::make($request->query(), [
-            'account_id' => ['required', 'integer', Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId)],
+            'account_id' => ['nullable', 'integer', Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId)],
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],
         ])->validate();
 
-        $data = $this->generalLedgerService->generate($companyId, $validated['account_id'], $validated['from'], $validated['to'], $branchId);
+        $data = empty($validated['account_id'])
+            ? $this->generalLedgerService->generateAll($companyId, $validated['from'], $validated['to'], $branchId)
+            : $this->generalLedgerService->generate($companyId, $validated['account_id'], $validated['from'], $validated['to'], $branchId);
 
         return [$validated['from'], $validated['to'], $data];
     }

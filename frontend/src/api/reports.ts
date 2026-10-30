@@ -67,6 +67,26 @@ export async function fetchGeneralLedger(params: {
   return data.data
 }
 
+export interface GeneralLedgerAccount {
+  account: GeneralLedgerReport['account']
+  opening_balance: number
+  lines: GeneralLedgerLine[]
+  closing_balance: number
+}
+
+/** Every account with a balance or activity in the period, each with its own ledger. */
+export interface GeneralLedgerAllReport {
+  from: string
+  to: string
+  accounts: GeneralLedgerAccount[]
+  currency?: ReportCurrencyInfo
+}
+
+export async function fetchGeneralLedgerAll(params: { from: string; to: string; currency?: string } & DimensionParams): Promise<GeneralLedgerAllReport> {
+  const { data } = await api.get<ApiResponse<GeneralLedgerAllReport>>('/reports/general-ledger', { params })
+  return data.data
+}
+
 export async function fetchTrialBalance(params: { from: string; to: string; branch_id?: number; currency?: string } & DimensionParams): Promise<TrialBalanceReport> {
   const { data } = await api.get<ApiResponse<TrialBalanceReport>>('/reports/trial-balance', { params })
   return data.data
@@ -98,11 +118,13 @@ export async function saveReportSnapshot(type: ReportSnapshotType, params: Recor
   return data.data
 }
 
-/** For the General Ledger report, which needs account_id, not just from/to. One row per ledger line. */
-export async function downloadGeneralLedger(accountId: number, from: string, to: string, currency?: string, dimensions: DimensionParams = {}): Promise<void> {
-  const report = await fetchGeneralLedger({ account_id: accountId, from, to, currency, ...dimensions })
+/** The General Ledger for every account: an opening row, then one row per ledger line, account by account. */
+export async function downloadGeneralLedger(from: string, to: string, currency?: string, dimensions: DimensionParams = {}): Promise<void> {
+  const report = await fetchGeneralLedgerAll({ from, to, currency, ...dimensions })
 
-  const columns: CsvColumn<GeneralLedgerLine>[] = [
+  type Row = GeneralLedgerLine & { account: string }
+  const columns: CsvColumn<Row>[] = [
+    { header: 'Account', accessor: (row) => row.account },
     { header: 'Date', accessor: (row) => row.date },
     { header: 'Reference', accessor: (row) => row.reference_number },
     { header: 'Description', accessor: (row) => row.description },
@@ -121,18 +143,13 @@ export async function downloadGeneralLedger(accountId: number, from: string, to:
     { header: 'Cost Centre', accessor: (row) => row.cost_centre_code ?? '' },
   ]
 
-  const openingRow: GeneralLedgerLine = {
-    date: report.from,
-    reference_number: 'Opening Balance',
-    description: null,
-    debit: 0,
-    credit: 0,
-    balance: report.opening_balance,
-    source_module: null,
-    source_id: null,
-  }
+  const rows: Row[] = report.accounts.flatMap((ledger) => {
+    const account = `${ledger.account.code} ${ledger.account.name}`
+    const opening: Row = { account, date: report.from, reference_number: 'Opening Balance', description: null, debit: 0, credit: 0, balance: ledger.opening_balance, source_module: null, source_id: null }
+    return [opening, ...ledger.lines.map((line) => ({ ...line, account }))]
+  })
 
-  exportToCsv(`general-ledger-${report.account.code}-${from}-to-${to}${csvCurrencySuffix(report.currency)}.csv`, columns, [openingRow, ...report.lines])
+  exportToCsv(`general-ledger-${from}-to-${to}${csvCurrencySuffix(report.currency)}.csv`, columns, rows)
 }
 
 /** The 4 report types whose params reduce cleanly to from/to (or as_of for balance-sheet). */

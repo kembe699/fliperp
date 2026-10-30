@@ -18,7 +18,8 @@ class GeneralLedgerRequest extends FormRequest
         $companyId = $this->user()->company_id;
 
         return [
-            'account_id' => ['required', 'integer', Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId)],
+            // Left out: every account's ledger.
+            'account_id' => ['nullable', 'integer', Rule::exists('chart_of_accounts', 'id')->where('company_id', $companyId)],
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],

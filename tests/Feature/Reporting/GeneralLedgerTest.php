@@ -69,3 +69,19 @@ it('computes the correct opening balance from activity before the requested rang
     expect(count($data['lines']))->toBe(1);
     expect((float) $data['closing_balance'])->toBe(300.0);
 });
+
+it('shows every account\'s ledger when no account is chosen, matching each account on its own', function () {
+    $data = $this->getJson('/api/v1/reports/general-ledger?from=2026-01-16&to=2026-01-31')->assertOk()->json('data');
+    $ledgers = collect($data['accounts'])->keyBy('account.code');
+
+    // Accounts in code order, and only those with a balance or activity.
+    $codes = collect($data['accounts'])->pluck('account.code');
+    expect($codes->all())->toBe($codes->sort()->values()->all())
+        ->and($codes)->not->toContain('1900');
+
+    $cash = $ledgers['1000'];
+    $single = $this->getJson("/api/v1/reports/general-ledger?account_id={$this->accounts['1000']->id}&from=2026-01-16&to=2026-01-31")->json('data');
+    expect((float) $cash['opening_balance'])->toBe(-800.0)
+        ->and((float) $cash['closing_balance'])->toBe(300.0)
+        ->and($cash['lines'])->toEqual($single['lines']);
+});
