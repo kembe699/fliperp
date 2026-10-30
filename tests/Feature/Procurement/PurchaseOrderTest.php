@@ -54,7 +54,9 @@ it('blocks a user from approving their own purchase order when another eligible 
     // $this->admin created and submitted it and also has purchase-orders.approve,
     // but $secondAdmin — another user in the same company who also holds that
     // permission — exists, so self-approval is blocked (maker-checker).
-    $this->postJson("/api/v1/purchase-orders/{$poId}/approve")->assertStatus(403);
+    $this->postJson("/api/v1/purchase-orders/{$poId}/approve")
+        ->assertStatus(403)
+        ->assertJsonPath('message', 'You raised this purchase order, so another user with approval rights must approve it.');
 
     Sanctum::actingAs($secondAdmin, ['*']);
     $this->postJson("/api/v1/purchase-orders/{$poId}/approve")

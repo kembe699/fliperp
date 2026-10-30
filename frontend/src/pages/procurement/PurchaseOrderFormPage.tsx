@@ -27,14 +27,14 @@ import { CodingFields } from '@/components/shared/CodingFields'
 import { ProductFormDialog } from '@/components/inventory/ProductFormDialog'
 import { EMPTY_CODING, type Coding } from '@/types/grants'
 
-interface Row extends Coding {
+interface Row {
   key: string
   product_id: number | null
   quantity_ordered: number
   unit_cost: number
 }
 
-const emptyRow = (): Row => ({ key: crypto.randomUUID(), product_id: null, quantity_ordered: 1, unit_cost: 0, ...EMPTY_CODING })
+const emptyRow = (): Row => ({ key: crypto.randomUUID(), product_id: null, quantity_ordered: 1, unit_cost: 0 })
 
 export function PurchaseOrderFormPage() {
   const navigate = useNavigate()
@@ -58,6 +58,8 @@ export function PurchaseOrderFormPage() {
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('')
   const [notes, setNotes] = useState('')
   const [rows, setRows] = useState<Row[]>(() => [emptyRow()])
+  // One SOF/DEA/project/cost centre for the whole order, applied to every line.
+  const [coding, setCoding] = useState<Coding>(EMPTY_CODING)
 
   useEffect(() => {
     if (user?.branch_id) setBranchId(String(user.branch_id))
@@ -94,10 +96,7 @@ export function PurchaseOrderFormPage() {
         product_id: row.product_id!,
         quantity_ordered: row.quantity_ordered,
         unit_cost: row.unit_cost,
-        grant_id: row.grant_id,
-        dea_id: row.dea_id,
-        project_id: row.project_id,
-        cost_centre_id: row.cost_centre_id,
+        ...coding,
       })),
   })
 
@@ -193,9 +192,19 @@ export function PurchaseOrderFormPage() {
       <Card className="mb-4">
         <CardContent className="space-y-3 p-6">
           <div>
+            <p className="text-sm font-semibold text-foreground">Charge To</p>
+            <p className="text-xs text-muted-foreground">Optional. One coding for the whole purchase order.</p>
+          </div>
+          <CodingFields value={coding} date={orderDate} onChange={(patch) => setCoding((prev) => ({ ...prev, ...patch }))} />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-4">
+        <CardContent className="space-y-3 p-6">
+          <div>
             <p className="text-sm font-semibold text-foreground">Line Items</p>
             <p className="text-xs text-muted-foreground">
-              Code each line to the SOF, DEA, project and cost centre it is charged to. The coding follows the goods into the ledger when they are received.
+              The SOF, DEA, project and cost centre chosen above apply to every line and follow the goods into the ledger when they are received.
               {can('products.create') && ' An item that isn\'t set up yet can be created from the product search with its category and department, so it posts to the right accounts.'}
             </p>
           </div>
@@ -252,7 +261,6 @@ export function PurchaseOrderFormPage() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <CodingFields compact value={row} date={orderDate} onChange={(patch) => updateRow(row.key, patch)} />
             </div>
           ))}
           <Button type="button" variant="outline" size="sm" onClick={addRow}>

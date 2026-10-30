@@ -89,6 +89,9 @@ export function PurchaseOrderDetailPage() {
   }
 
   const total = po.items.reduce((sum, item) => sum + Number(item.quantity_ordered) * Number(item.unit_cost), 0)
+  // Orders are coded once for the whole order, so the coding shows once above the
+  // lines; an older order coded differently per line keeps the per-line column.
+  const sharedCoding = new Set(po.items.map((item) => codingSummary(item) ?? '')).size <= 1 ? codingSummary(po.items[0] ?? {}) : undefined
   const canApprove = can('purchase-orders.approve') && po.status === 'submitted'
   const canCancel = can('purchase-orders.cancel') && ['draft', 'submitted', 'approved'].includes(po.status)
   const canReceive = can('goods-received-notes.create') && ['approved', 'partially_received'].includes(po.status)
@@ -156,11 +159,18 @@ export function PurchaseOrderDetailPage() {
             <StatusBadge label={po.status.replace(/_/g, ' ')} variant={PURCHASE_ORDER_STATUS_VARIANT[po.status]} className="text-sm" />
           </div>
 
+          {sharedCoding !== undefined && (
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Charged To</p>
+              <p className="mt-1 text-sm text-foreground">{sharedCoding ?? '—'}</p>
+            </div>
+          )}
+
           <table className="mb-6 w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="py-2">Product</th>
-                <th className="py-2">Coding</th>
+                {sharedCoding === undefined && <th className="py-2">Coding</th>}
                 <th className="py-2 text-right">Qty Ordered</th>
                 <th className="py-2 text-right">Qty Received</th>
                 <th className="py-2 text-right">Unit Cost</th>
@@ -174,7 +184,7 @@ export function PurchaseOrderDetailPage() {
                     {productName(item.product_id)}
                     <span className="ml-1 text-xs text-muted-foreground">{productSku(item.product_id)}</span>
                   </td>
-                  <td className="py-2 text-xs text-muted-foreground">{codingSummary(item) ?? '—'}</td>
+                  {sharedCoding === undefined && <td className="py-2 text-xs text-muted-foreground">{codingSummary(item) ?? '—'}</td>}
                   <td className="py-2 text-right text-foreground">{item.quantity_ordered}</td>
                   <td className="py-2 text-right text-foreground">{item.quantity_received}</td>
                   <td className="py-2 text-right text-foreground">{formatCurrency(item.unit_cost)}</td>
