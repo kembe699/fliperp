@@ -117,7 +117,7 @@ class RoleAndPermissionSeeder extends Seeder
         // which additionally requires users.is_platform_staff = true regardless
         // of these permissions; a non-platform-staff user holding these grants
         // alone still can't reach /platform-admin/*).
-        'platform-clients' => ['view', 'create', 'update', 'suspend', 'activate'],
+        'platform-clients' => ['view', 'create', 'update', 'suspend', 'activate', 'delete'],
         'platform-billing' => ['view', 'create'],
         'platform-tickets' => ['view', 'manage'],
 
@@ -291,7 +291,7 @@ class RoleAndPermissionSeeder extends Seeder
             'crm-reports' => ['view'],
             'crm-customers' => ['view-all'],
             'support-tickets' => ['view', 'create', 'reply'],
-            'platform-clients' => ['view', 'create', 'update', 'suspend', 'activate'],
+            'platform-clients' => ['view', 'create', 'update', 'suspend', 'activate', 'delete'],
             'platform-billing' => ['view', 'create'],
             'platform-tickets' => ['view', 'manage'],
         ],

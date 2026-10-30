@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DeletePlatformClientDialog } from '@/pages/platform/DeletePlatformClientDialog'
 import { PlatformBillingFormDialog } from '@/pages/platform/PlatformBillingFormDialog'
 
 const STATUS_VARIANT: Record<CompanyStatus, 'success' | 'danger' | 'warning'> = {
@@ -45,6 +46,7 @@ export function PlatformClientDetailPage() {
   const queryClient = useQueryClient()
 
   const [billingDialog, setBillingDialog] = useState<'invoice' | 'quotation' | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['platform-client', clientId],
@@ -96,6 +98,9 @@ export function PlatformClientDetailPage() {
                 Activate Client
               </Button>
             )}
+            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+              Delete Client
+            </Button>
           </div>
         }
       />
@@ -254,6 +259,11 @@ export function PlatformClientDetailPage() {
           kind={billingDialog}
         />
       )}
+      <DeletePlatformClientDialog
+        client={deleteOpen ? company : null}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => navigate('/platform-admin/clients')}
+      />
     </div>
   )
 }

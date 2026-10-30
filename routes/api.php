@@ -462,6 +462,8 @@ Route::prefix('v1')->group(function () {
             ->middleware('permission:platform-clients.create');
         Route::patch('clients/{client}', [PlatformClientController::class, 'update'])
             ->middleware('permission:platform-clients.update');
+        Route::delete('clients/{client}', [PlatformClientController::class, 'destroy'])
+            ->middleware('permission:platform-clients.delete');
         Route::patch('clients/{client}/suspend', [PlatformClientController::class, 'suspend'])
             ->middleware('permission:platform-clients.suspend');
         Route::patch('clients/{client}/activate', [PlatformClientController::class, 'activate'])

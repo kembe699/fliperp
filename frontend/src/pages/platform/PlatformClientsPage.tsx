@@ -16,6 +16,7 @@ import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/comp
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DeletePlatformClientDialog } from '@/pages/platform/DeletePlatformClientDialog'
 import { PlatformClientFormDialog } from '@/pages/platform/PlatformClientFormDialog'
 
 const STATUS_VARIANT: Record<CompanyStatus, 'success' | 'danger' | 'warning'> = {
@@ -34,6 +35,7 @@ export function PlatformClientsPage() {
   const [status, setStatus] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
+  const [deleting, setDeleting] = useState<Company | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['platform-clients', page, status, search],
@@ -80,6 +82,7 @@ export function PlatformClientsPage() {
     ...(row.status === 'active'
       ? [{ label: 'Suspend', destructive: true, onClick: (c: Company) => suspendMutation.mutate(c.id) }]
       : [{ label: 'Activate', onClick: (c: Company) => activateMutation.mutate(c.id) }]),
+    { label: 'Delete permanently', destructive: true, onClick: (c: Company) => setDeleting(c) },
   ]
 
   return (
@@ -132,6 +135,7 @@ export function PlatformClientsPage() {
       />
 
       <PlatformClientFormDialog open={formOpen} onOpenChange={setFormOpen} />
+      <DeletePlatformClientDialog client={deleting} onOpenChange={(open) => !open && setDeleting(null)} />
     </div>
   )
 }

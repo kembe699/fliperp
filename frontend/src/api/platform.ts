@@ -52,6 +52,10 @@ export async function activatePlatformClient(id: number): Promise<Company> {
   return data.data
 }
 
+export async function deletePlatformClient(id: number, confirmCode: string): Promise<void> {
+  await api.delete(`/platform-admin/clients/${id}`, { data: { confirm_code: confirmCode } })
+}
+
 export async function fetchPlatformBillingSummary(): Promise<PlatformBillingSummary> {
   const { data } = await api.get<ApiResponse<PlatformBillingSummary>>('/platform-admin/billing/summary')
   return data.data

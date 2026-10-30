@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Platform\PlatformClientService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PlatformClientController extends Controller
 {
@@ -115,6 +116,22 @@ class PlatformClientController extends Controller
         $company = $this->platformClientService->activate($client);
 
         return $this->success(new CompanyResource($company), 'Client activated.');
+    }
+
+    public function destroy(Request $request, Company $client): JsonResponse
+    {
+        $this->assertIsClient($client);
+
+        // Typed confirmation: the client code must be re-entered, so a stray
+        // request can't wipe a client.
+        $request->validate(['confirm_code' => ['required', 'string']]);
+        if (strcasecmp(trim($request->input('confirm_code')), $client->client_code) !== 0) {
+            throw ValidationException::withMessages(['confirm_code' => 'The client code you typed does not match.']);
+        }
+
+        $this->platformClientService->deleteClient($client);
+
+        return $this->success(null, "{$client->name} has been permanently deleted.");
     }
 
     protected function assertIsClient(Company $client): void
