@@ -17,6 +17,7 @@ it('creates a client company, its branch, a billing customer under the platform 
 
     $response = $this->postJson('/api/v1/platform-admin/clients', [
         'company_name' => 'Acme Logistics',
+        'client_code' => 'ACME',
         'admin_name' => 'Acme Admin',
         'admin_email' => 'admin@acmelogistics.test',
         'branch_name' => 'Head Office',
@@ -24,7 +25,7 @@ it('creates a client company, its branch, a billing customer under the platform 
 
     $response->assertCreated();
     expect($response->json('data.company.status'))->toBe('pending');
-    expect($response->json('data.company.client_code'))->toStartWith('NHC-');
+    expect($response->json('data.company.client_code'))->toBe('ACME');
     expect($response->json('data.temp_password'))->not->toBeEmpty();
 
     $companyId = $response->json('data.company.id');
@@ -44,24 +45,10 @@ it('creates a client company, its branch, a billing customer under the platform 
     Mail::assertSent(ClientWelcomeEmail::class, fn ($mail) => $mail->hasTo('admin@acmelogistics.test') && $mail->clientCode === $company->client_code);
 });
 
-it('generates a unique client_code for every client created', function () {
-    Mail::fake();
-
-    $codes = collect(range(1, 5))->map(function (int $i) {
-        return $this->postJson('/api/v1/platform-admin/clients', [
-            'company_name' => "Client {$i}",
-            'admin_name' => "Admin {$i}",
-            'admin_email' => "admin{$i}@client-uniq.test",
-        ])->json('data.company.client_code');
-    });
-
-    expect($codes->unique())->toHaveCount(5);
-});
-
 it('lists only non-platform clients, filterable by status and searchable by name/client_code', function () {
     Mail::fake();
     $pending = $this->postJson('/api/v1/platform-admin/clients', [
-        'company_name' => 'Searchable Co', 'admin_name' => 'A', 'admin_email' => 'a@searchable.test',
+        'company_name' => 'Searchable Co', 'client_code' => 'SEARCH', 'admin_name' => 'A', 'admin_email' => 'a@searchable.test',
     ])->json('data.company');
 
     $response = $this->getJson('/api/v1/platform-admin/clients?search=Searchable');
@@ -76,7 +63,7 @@ it('lists only non-platform clients, filterable by status and searchable by name
 it('suspends and reactivates a client, timestamping the transition', function () {
     Mail::fake();
     $client = Company::find($this->postJson('/api/v1/platform-admin/clients', [
-        'company_name' => 'Suspend Me Ltd', 'admin_name' => 'A', 'admin_email' => 'a@suspendme.test',
+        'company_name' => 'Suspend Me Ltd', 'client_code' => 'SUSPEND', 'admin_name' => 'A', 'admin_email' => 'a@suspendme.test',
     ])->json('data.company.id'));
     $client->update(['status' => 'active']);
 
@@ -96,7 +83,7 @@ it('suspends and reactivates a client, timestamping the transition', function ()
 it('returns full client detail: admin users, billing summary, and tickets', function () {
     Mail::fake();
     $client = Company::find($this->postJson('/api/v1/platform-admin/clients', [
-        'company_name' => 'Detail Co', 'admin_name' => 'Detail Admin', 'admin_email' => 'admin@detailco.test',
+        'company_name' => 'Detail Co', 'client_code' => 'DETAIL', 'admin_name' => 'Detail Admin', 'admin_email' => 'admin@detailco.test',
     ])->json('data.company.id'));
 
     $response = $this->getJson("/api/v1/platform-admin/clients/{$client->id}");

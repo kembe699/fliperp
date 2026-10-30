@@ -12,7 +12,7 @@ beforeEach(function () {
 
     Mail::fake();
     $this->client = Company::find($this->postJson('/api/v1/platform-admin/clients', [
-        'company_name' => 'Billed Co', 'admin_name' => 'A', 'admin_email' => 'a@billedco.test',
+        'company_name' => 'Billed Co', 'client_code' => 'BILLED-CO', 'admin_name' => 'A', 'admin_email' => 'a@billedco.test',
     ])->json('data.company.id'));
 
     // Products live under whichever company creates them — the platform company

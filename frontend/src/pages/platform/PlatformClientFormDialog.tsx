@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 
 const emptyForm: CreatePlatformClientInput = {
   company_name: '',
+  client_code: '',
   admin_name: '',
   admin_email: '',
   branch_name: '',
@@ -114,6 +115,22 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
                   value={form.company_name}
                   onChange={(event) => setForm({ ...form, company_name: event.target.value })}
                 />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="client_code">Client Code</Label>
+                <Input
+                  id="client_code"
+                  required
+                  minLength={3}
+                  maxLength={32}
+                  pattern="[A-Za-z0-9]+(-[A-Za-z0-9]+)*"
+                  title="Letters, numbers and single hyphens, e.g. NHC-SOBKH"
+                  placeholder="e.g. NHC-SOBKH"
+                  className="font-mono uppercase"
+                  value={form.client_code}
+                  onChange={(event) => setForm({ ...form, client_code: event.target.value.toUpperCase().replace(/\s/g, '') })}
+                />
+                <p className="text-xs text-muted-foreground">The client's users type this at login. It can't be reused.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">

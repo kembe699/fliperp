@@ -62,6 +62,7 @@ export interface PlatformClientDetail {
 
 export interface CreatePlatformClientInput {
   company_name: string
+  client_code: string
   currency_code?: string
   timezone?: string
   branch_name?: string

@@ -44,6 +44,7 @@ class PlatformClientService
 
             $company = Company::create([
                 'name' => $data['company_name'],
+                'client_code' => $data['client_code'] ?? null,
                 'slug' => Str::slug($data['company_name']).'-'.Str::lower(Str::random(6)),
                 'currency_code' => $data['currency_code'] ?? 'USD',
                 'timezone' => $data['timezone'] ?? 'UTC',
