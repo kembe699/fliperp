@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { FileText, Receipt } from 'lucide-react'
 
-import { activatePlatformClient, fetchPlatformClient, suspendPlatformClient } from '@/api/platform'
+import { activatePlatformClient, fetchPlatformClient, suspendPlatformClient, updatePlatformClient } from '@/api/platform'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DeletePlatformClientDialog } from '@/pages/platform/DeletePlatformClientDialog'
+import { ModuleToggleList } from '@/pages/platform/ModuleToggleList'
 import { PlatformBillingFormDialog } from '@/pages/platform/PlatformBillingFormDialog'
 
 const STATUS_VARIANT: Record<CompanyStatus, 'success' | 'danger' | 'warning'> = {
@@ -47,6 +48,7 @@ export function PlatformClientDetailPage() {
 
   const [billingDialog, setBillingDialog] = useState<'invoice' | 'quotation' | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [modules, setModules] = useState<string[]>([])
 
   const { data, isLoading } = useQuery({
     queryKey: ['platform-client', clientId],
@@ -72,6 +74,19 @@ export function PlatformClientDetailPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  useEffect(() => {
+    if (data) setModules(data.company.enabled_modules)
+  }, [data])
+
+  const modulesMutation = useMutation({
+    mutationFn: () => updatePlatformClient(clientId, { enabled_modules: modules }),
+    onSuccess: (company) => {
+      toast.success(`Modules saved: ${company.enabled_modules.length} on. The client sees the change on their next page load.`)
+      queryClient.invalidateQueries({ queryKey: ['platform-client', clientId] })
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
   if (isLoading || !data) {
     return (
       <div>
@@ -81,6 +96,7 @@ export function PlatformClientDetailPage() {
   }
 
   const { company, admin_users, billing, usage, tickets } = data
+  const modulesChanged = [...modules].sort().join() !== [...company.enabled_modules].sort().join()
 
   return (
     <div>
@@ -105,7 +121,7 @@ export function PlatformClientDetailPage() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardContent className="p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Client Code</p>
@@ -132,11 +148,20 @@ export function PlatformClientDetailPage() {
             <p className="mt-1 text-lg font-semibold text-foreground">{formatDate(company.created_at)}</p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Modules</p>
+            <p className="mt-1 text-lg font-semibold text-foreground">
+              {company.enabled_modules.length} of {data.modules.length} on
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="modules">Modules</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
         </TabsList>
@@ -160,6 +185,34 @@ export function PlatformClientDetailPage() {
               {usage.last_login_at && (
                 <p className="pt-2 text-xs text-muted-foreground">Last login {formatDate(usage.last_login_at)}</p>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="modules">
+          <Card>
+            <CardHeader>
+              <CardTitle>Modules</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+              <p className="text-sm text-muted-foreground">
+                The client sees only the modules switched on: their menus, pages and data. Users, roles, branches, the dashboard and support are always
+                available. Switching a module off hides it without deleting anything, so switching it back on brings everything back.
+              </p>
+              <ModuleToggleList modules={data.modules} value={modules} onChange={setModules} disabled={modulesMutation.isPending} />
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  {modules.length} of {data.modules.length} modules on
+                </span>
+                <div className="flex gap-2">
+                  <Button variant="outline" disabled={!modulesChanged || modulesMutation.isPending} onClick={() => setModules(company.enabled_modules)}>
+                    Reset
+                  </Button>
+                  <Button disabled={!modulesChanged || modulesMutation.isPending} onClick={() => modulesMutation.mutate()}>
+                    {modulesMutation.isPending ? 'Saving…' : 'Save Modules'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use App\Support\Modules;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +31,7 @@ class Company extends Model
         'onboarded_by',
         'suspended_at',
         'activated_at',
+        'enabled_modules',
     ];
 
     protected function casts(): array
@@ -39,7 +41,25 @@ class Company extends Model
             'is_platform' => 'boolean',
             'suspended_at' => 'datetime',
             'activated_at' => 'datetime',
+            'enabled_modules' => 'array',
         ];
+    }
+
+    /**
+     * Permission groups this company's switched-off modules take away (see
+     * App\Support\Modules). Empty for a company with every module on.
+     *
+     * @return array<int, string>
+     */
+    public function disabledPermissionGroups(): array
+    {
+        return Modules::disabledGroups($this->enabled_modules);
+    }
+
+    /** @return array<int, string> */
+    public function enabledModules(): array
+    {
+        return Modules::enabledFor($this->enabled_modules);
     }
 
     protected static function booted(): void

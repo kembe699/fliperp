@@ -10,6 +10,7 @@ import type {
   CreatePlatformQuotationInput,
   PlatformBillingSummary,
   PlatformClientDetail,
+  PlatformModule,
   PlatformTicket,
   PlatformTicketPriority,
   PlatformTicketStatus,
@@ -37,7 +38,12 @@ export async function createPlatformClient(input: CreatePlatformClientInput): Pr
   return data.data
 }
 
-export async function updatePlatformClient(id: number, input: { name?: string; currency_code?: string; timezone?: string }): Promise<Company> {
+export async function fetchPlatformModules(): Promise<PlatformModule[]> {
+  const { data } = await api.get<ApiResponse<PlatformModule[]>>('/platform-admin/modules')
+  return data.data
+}
+
+export async function updatePlatformClient(id: number, input: { name?: string; currency_code?: string; timezone?: string; enabled_modules?: string[] }): Promise<Company> {
   const { data } = await api.patch<ApiResponse<Company>>(`/platform-admin/clients/${id}`, input)
   return data.data
 }

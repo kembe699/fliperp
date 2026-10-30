@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchDepartments } from '@/api/hr'
+import { useModules } from '@/hooks/use-modules'
 import { cn } from '@/lib/utils'
 import { useDimensionOptions, type DimensionFilterValue } from '@/lib/coding'
 import type { Coding } from '@/types/grants'
@@ -23,8 +24,12 @@ interface Props {
  * optional. The DEA list follows the chosen SOF, and changing the SOF clears
  * a DEA that belongs to another one.
  */
+// SOF, DEA and cost centre come with the Grants module; projects with M&E.
+const FIELD_MODULE: Record<string, string> = { grant_id: 'grants', dea_id: 'grants', cost_centre_id: 'grants', project_id: 'me' }
+
 export function CodingFields({ value, onChange, date, compact = false, className }: Props) {
   const { data: options } = useDimensionOptions()
+  const { hasModule } = useModules()
 
   const grants = (options?.grants ?? []).filter((grant) => !date || grant.id === value.grant_id || (grant.start_date <= date && grant.end_date >= date))
   const deas = options?.grants.find((grant) => grant.id === value.grant_id)?.deas ?? []
@@ -87,7 +92,9 @@ export function CodingFields({ value, onChange, date, compact = false, className
         />
       ),
     },
-  ]
+  ].filter((field) => hasModule(FIELD_MODULE[field.key]))
+
+  if (fields.length === 0) return null
 
   if (compact) {
     return (
@@ -127,6 +134,8 @@ export function DimensionFilters({
   showDepartment?: boolean
 }) {
   const { data: options } = useDimensionOptions(true)
+  const { hasModule } = useModules()
+  const grantsOn = hasModule('grants')
   const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments, enabled: showDepartment })
   const deas = options?.grants.find((grant) => grant.id === value.grant_id)?.deas ?? []
   const set = (key: keyof DimensionFilterValue, selected: string | null) => {
@@ -138,16 +147,18 @@ export function DimensionFilters({
 
   return (
     <>
-      <div className="w-44 space-y-1.5">
-        <Label>SOF</Label>
-        <SearchableSelect
-          options={(options?.grants ?? []).map((grant) => ({ value: String(grant.id), label: grant.code, sublabel: grant.name }))}
-          value={pick(value.grant_id)}
-          onChange={(selected) => set('grant_id', selected)}
-          placeholder="All"
-        />
-      </div>
-      {showDea && (
+      {grantsOn && (
+        <div className="w-44 space-y-1.5">
+          <Label>SOF</Label>
+          <SearchableSelect
+            options={(options?.grants ?? []).map((grant) => ({ value: String(grant.id), label: grant.code, sublabel: grant.name }))}
+            value={pick(value.grant_id)}
+            onChange={(selected) => set('grant_id', selected)}
+            placeholder="All"
+          />
+        </div>
+      )}
+      {grantsOn && showDea && (
         <div className="w-36 space-y-1.5">
           <Label>DEA</Label>
           <SearchableSelect
@@ -159,24 +170,28 @@ export function DimensionFilters({
           />
         </div>
       )}
-      <div className="w-44 space-y-1.5">
-        <Label>Project</Label>
-        <SearchableSelect
-          options={(options?.projects ?? []).map((project) => ({ value: String(project.id), label: project.code ?? project.name, sublabel: project.code ? project.name : undefined }))}
-          value={pick(value.project_id)}
-          onChange={(selected) => set('project_id', selected)}
-          placeholder="All"
-        />
-      </div>
-      <div className="w-40 space-y-1.5">
-        <Label>Cost Centre</Label>
-        <SearchableSelect
-          options={(options?.cost_centres ?? []).map((centre) => ({ value: String(centre.id), label: centre.code, sublabel: centre.name }))}
-          value={pick(value.cost_centre_id)}
-          onChange={(selected) => set('cost_centre_id', selected)}
-          placeholder="All"
-        />
-      </div>
+      {hasModule('me') && (
+        <div className="w-44 space-y-1.5">
+          <Label>Project</Label>
+          <SearchableSelect
+            options={(options?.projects ?? []).map((project) => ({ value: String(project.id), label: project.code ?? project.name, sublabel: project.code ? project.name : undefined }))}
+            value={pick(value.project_id)}
+            onChange={(selected) => set('project_id', selected)}
+            placeholder="All"
+          />
+        </div>
+      )}
+      {grantsOn && (
+        <div className="w-40 space-y-1.5">
+          <Label>Cost Centre</Label>
+          <SearchableSelect
+            options={(options?.cost_centres ?? []).map((centre) => ({ value: String(centre.id), label: centre.code, sublabel: centre.name }))}
+            value={pick(value.cost_centre_id)}
+            onChange={(selected) => set('cost_centre_id', selected)}
+            placeholder="All"
+          />
+        </div>
+      )}
       {showDepartment && (
         <div className="w-44 space-y-1.5">
           <Label>Department</Label>

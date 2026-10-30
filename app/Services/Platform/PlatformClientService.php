@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\User;
+use App\Support\Modules;
 use App\Services\Finance\ChartOfAccountService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\QueryException;
@@ -56,6 +57,8 @@ class PlatformClientService
                 'is_active' => true,
                 'status' => 'pending',
                 'onboarded_by' => Auth::id(),
+                // Chosen at onboarding; left out, the client gets every module.
+                'enabled_modules' => isset($data['enabled_modules']) ? Modules::enabledFor($data['enabled_modules']) : null,
             ]);
 
             $branch = Branch::create([

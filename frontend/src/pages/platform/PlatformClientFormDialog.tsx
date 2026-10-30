@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Check, Copy } from 'lucide-react'
 
-import { createPlatformClient } from '@/api/platform'
+import { createPlatformClient, fetchPlatformModules } from '@/api/platform'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import type { CreatePlatformClientInput, CreatePlatformClientResult } from '@/types/platform'
 
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ModuleToggleList } from '@/pages/platform/ModuleToggleList'
 
 const emptyForm: CreatePlatformClientInput = {
   company_name: '',
@@ -31,9 +32,16 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
   const [form, setForm] = useState<CreatePlatformClientInput>(emptyForm)
   const [result, setResult] = useState<CreatePlatformClientResult | null>(null)
   const [copied, setCopied] = useState<'code' | 'password' | null>(null)
+  const { data: modules = [] } = useQuery({ queryKey: ['platform-modules'], queryFn: fetchPlatformModules, enabled: open })
+  // Every module starts on; switch off what this client shouldn't have.
+  const [enabledModules, setEnabledModules] = useState<string[]>([])
+
+  useEffect(() => {
+    if (open) setEnabledModules(modules.map((module) => module.key))
+  }, [open, modules])
 
   const createMutation = useMutation({
-    mutationFn: () => createPlatformClient(form),
+    mutationFn: () => createPlatformClient({ ...form, enabled_modules: enabledModules }),
     onSuccess: (data) => {
       setResult(data)
       queryClient.invalidateQueries({ queryKey: ['platform-clients'] })
@@ -58,7 +66,7 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         {result ? (
           <div className="space-y-4">
             <DialogHeader>
@@ -171,6 +179,14 @@ export function PlatformClientFormDialog({ open, onOpenChange }: PlatformClientF
                     onChange={(event) => setForm({ ...form, billing_phone: event.target.value })}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label>Modules</Label>
+                <p className="text-xs text-muted-foreground">
+                  {enabledModules.length} of {modules.length} on. The client only sees these; you can change them later from the client's page.
+                </p>
+                <ModuleToggleList modules={modules} value={enabledModules} onChange={setEnabledModules} />
               </div>
 
               <DialogFooter>

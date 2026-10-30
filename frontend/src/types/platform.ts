@@ -49,8 +49,16 @@ export interface PlatformClientTicketSummary {
   created_at: string
 }
 
+/** A module the platform can switch on or off for a client. */
+export interface PlatformModule {
+  key: string
+  label: string
+  description: string
+}
+
 export interface PlatformClientDetail {
   company: Company
+  modules: PlatformModule[]
   admin_users: { id: number; name: string; email: string }[]
   billing: PlatformClientBillingSummary | null
   usage: {
@@ -71,6 +79,7 @@ export interface CreatePlatformClientInput {
   billing_phone?: string
   admin_name: string
   admin_email: string
+  enabled_modules?: string[]
 }
 
 export interface CreatePlatformClientResult {

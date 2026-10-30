@@ -27,6 +27,8 @@ export interface Company {
   is_active: boolean
   status: CompanyStatus
   is_platform: boolean
+  /** Module keys switched on for this company (see PlatformModule); every module when never set. */
+  enabled_modules: string[]
   billing_customer_id: number | null
   onboarded_by: number | null
   suspended_at: string | null

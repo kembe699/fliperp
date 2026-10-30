@@ -13,6 +13,7 @@ use App\Models\PlatformTicket;
 use App\Models\Scopes\CompanyScope;
 use App\Models\User;
 use App\Services\Platform\PlatformClientService;
+use App\Support\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +30,12 @@ class PlatformClientController extends Controller
         );
 
         return $this->paginated(CompanyResource::collection($clients));
+    }
+
+    /** The modules a client can be given, for the onboarding form. */
+    public function modules(): JsonResponse
+    {
+        return $this->success(Modules::catalogue());
     }
 
     public function store(StorePlatformClientRequest $request): JsonResponse
@@ -75,6 +82,7 @@ class PlatformClientController extends Controller
 
         return $this->success([
             'company' => new CompanyResource($client),
+            'modules' => Modules::catalogue(),
             'admin_users' => UserResource::collection($adminUsers),
             'billing' => $billing,
             'usage' => [
@@ -95,7 +103,12 @@ class PlatformClientController extends Controller
     {
         $this->assertIsClient($client);
 
-        $client->update($request->validated());
+        $data = $request->validated();
+        if (array_key_exists('enabled_modules', $data)) {
+            $data['enabled_modules'] = Modules::enabledFor($data['enabled_modules']);
+        }
+
+        $client->update($data);
 
         return $this->success(new CompanyResource($client->fresh()), 'Client updated successfully.');
     }

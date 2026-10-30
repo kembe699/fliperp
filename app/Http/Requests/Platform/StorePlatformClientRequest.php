@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Platform;
 
+use App\Support\Modules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -39,6 +40,8 @@ class StorePlatformClientRequest extends FormRequest
             'billing_phone' => ['nullable', 'string', 'max:32'],
             'admin_name' => ['required', 'string', 'max:255'],
             'admin_email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'enabled_modules' => ['sometimes', 'array'],
+            'enabled_modules.*' => ['string', Rule::in(Modules::keys())],
         ];
     }
 

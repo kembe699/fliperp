@@ -476,6 +476,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('platform-admin')->middleware(['auth:sanctum', 'platform_staff'])->group(function () {
         Route::middleware('permission:platform-clients.view')->group(function () {
             Route::get('clients', [PlatformClientController::class, 'index']);
+            Route::get('modules', [PlatformClientController::class, 'modules']);
             Route::get('clients/{client}', [PlatformClientController::class, 'show']);
         });
         Route::post('clients', [PlatformClientController::class, 'store'])
