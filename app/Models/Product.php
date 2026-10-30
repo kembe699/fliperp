@@ -15,6 +15,7 @@ class Product extends TenantModel
     protected $fillable = [
         'company_id',
         'category_id',
+        'department_id',
         'name',
         'sku',
         'barcode',
@@ -43,6 +44,11 @@ class Product extends TenantModel
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function unitOfMeasure(): BelongsTo

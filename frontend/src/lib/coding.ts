@@ -14,4 +14,5 @@ export function codingSummary(line: Partial<CodingLabels>): string | null {
   return parts.length ? parts.join(' / ') : null
 }
 
-export type DimensionFilterValue = Partial<Record<keyof Coding, number>>
+/** The coding filters on a report, plus the department journal lines are posted under. */
+export type DimensionFilterValue = Partial<Record<keyof Coding | 'department_id', number>>

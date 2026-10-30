@@ -176,6 +176,7 @@ function createProduct(Company $company, array $overrides = []): Product
     return Product::create([
         'company_id' => $company->id,
         'category_id' => $category->id,
+        'department_id' => ($overrides['department'] ?? null)?->id,
         'unit_of_measure_id' => $unit->id,
         'name' => $overrides['name'] ?? 'Test Product',
         'sku' => $overrides['sku'] ?? 'SKU-'.Str::upper(Str::random(8)),

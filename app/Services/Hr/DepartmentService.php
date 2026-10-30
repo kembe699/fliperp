@@ -3,7 +3,9 @@
 namespace App\Services\Hr;
 
 use App\Models\Department;
+use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class DepartmentService
 {
@@ -26,6 +28,12 @@ class DepartmentService
 
     public function delete(Department $department): void
     {
+        if (Product::where('department_id', $department->id)->exists()) {
+            throw ValidationException::withMessages([
+                'department' => ['Cannot delete a department that still has products or services. Move them to another department first.'],
+            ]);
+        }
+
         $department->delete();
     }
 }

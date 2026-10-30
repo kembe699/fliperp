@@ -16,6 +16,7 @@ import {
   updateProduct,
   uploadProductImage,
 } from '@/api/inventory'
+import { fetchDepartments } from '@/api/hr'
 import { fetchTaxRates } from '@/api/pos'
 import { applyFieldErrors, getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
@@ -36,6 +37,7 @@ const productSchema = z.object({
   barcode: z.string().optional().or(z.literal('')),
   description: z.string().optional().or(z.literal('')),
   category_id: z.string().min(1, 'Category is required'),
+  department_id: z.string().min(1, 'Department is required'),
   unit_of_measure_id: z.string().min(1, 'Unit of measure is required'),
   tax_rate_id: z.string().optional(),
   cost_price: z.number().min(0),
@@ -51,13 +53,18 @@ interface ProductFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   product?: Product | null
+  /** Prefills a new product's name, e.g. what was typed into an item search. */
+  initialName?: string
+  /** Called with the saved product, e.g. to add a just-created item to an order. */
+  onSaved?: (product: Product) => void
 }
 
-export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDialogProps) {
+export function ProductFormDialog({ open, onOpenChange, product, initialName, onSaved }: ProductFormDialogProps) {
   const queryClient = useQueryClient()
   const isEdit = !!product
 
   const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories, enabled: open })
+  const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments, enabled: open })
   const { data: units } = useQuery({ queryKey: ['units-of-measure'], queryFn: fetchUnitsOfMeasure, enabled: open })
   const { data: taxRates } = useQuery({ queryKey: ['tax-rates'], queryFn: fetchTaxRates, enabled: open })
 
@@ -71,7 +78,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   } = useForm<ProductFormSchema>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: '', sku: '', barcode: '', description: '', category_id: '', unit_of_measure_id: '',
+      name: '', sku: '', barcode: '', description: '', category_id: '', department_id: '', unit_of_measure_id: '',
       tax_rate_id: undefined, cost_price: 0, selling_price: 0, reorder_level: 0, track_inventory: true, is_active: true,
     },
   })
@@ -87,11 +94,12 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   useEffect(() => {
     if (!open) return
     reset({
-      name: product?.name ?? '',
+      name: product?.name ?? initialName ?? '',
       sku: product?.sku ?? '',
       barcode: product?.barcode ?? '',
       description: product?.description ?? '',
       category_id: product ? String(product.category_id) : '',
+      department_id: product?.department_id ? String(product.department_id) : '',
       unit_of_measure_id: product ? String(product.unit_of_measure_id) : '',
       tax_rate_id: product?.tax_rate_id ? String(product.tax_rate_id) : undefined,
       cost_price: product?.cost_price ?? 0,
@@ -105,7 +113,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     setImageFilePreview(null)
     setImageUrlInput(product?.image_url ?? '')
     setRemoveExistingImage(false)
-  }, [open, product, reset])
+  }, [open, product, initialName, reset])
 
   const handleFileSelect = (file: File | null) => {
     setImageFile(file)
@@ -129,6 +137,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         barcode: values.barcode || null,
         description: values.description || null,
         category_id: Number(values.category_id),
+        department_id: Number(values.department_id),
         unit_of_measure_id: Number(values.unit_of_measure_id),
         tax_rate_id: values.tax_rate_id ? Number(values.tax_rate_id) : null,
         cost_price: values.cost_price,
@@ -149,9 +158,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
 
       return saved
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       toast.success(isEdit ? 'Product updated' : 'Product created')
       queryClient.invalidateQueries({ queryKey: ['products'] })
+      onSaved?.(saved)
       onOpenChange(false)
     },
     onError: (error) => {
@@ -284,7 +294,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="barcode">Barcode</Label>
               <Input id="barcode" {...register('barcode')} />
@@ -310,6 +320,29 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                 )}
               />
               {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label required>Department</Label>
+              <Controller
+                control={control}
+                name="department_id"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments?.map((department) => (
+                        <SelectItem key={department.id} value={String(department.id)}>
+                          {department.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.department_id && <p className="text-xs text-destructive">{errors.department_id.message}</p>}
+              {departments?.length === 0 && <p className="text-xs text-muted-foreground">Add departments under HR & Payroll → Departments first.</p>}
             </div>
           </div>
 

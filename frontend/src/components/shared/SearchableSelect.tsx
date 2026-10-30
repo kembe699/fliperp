@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, Plus } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,9 @@ interface SearchableSelectProps {
   emptyText?: string
   className?: string
   disabled?: boolean
+  /** Adds a "create" entry under the results, called with whatever was typed in the search. */
+  onCreate?: (search: string) => void
+  createLabel?: string
 }
 
 export function SearchableSelect({
@@ -32,12 +35,21 @@ export function SearchableSelect({
   emptyText = 'No results found.',
   className,
   disabled = false,
+  onCreate,
+  createLabel = 'Create new',
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
   const selected = options.find((option) => option.value === value)
 
   return (
-    <Popover open={open && !disabled} onOpenChange={setOpen}>
+    <Popover
+      open={open && !disabled}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) setSearch('')
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -52,7 +64,7 @@ export function SearchableSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput placeholder={searchPlaceholder} value={search} onValueChange={setSearch} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
@@ -73,6 +85,22 @@ export function SearchableSelect({
                 </CommandItem>
               ))}
             </CommandGroup>
+            {onCreate && (
+              <CommandGroup forceMount>
+                <CommandItem
+                  forceMount
+                  value={`__create__ ${search}`}
+                  onSelect={() => {
+                    onCreate(search.trim())
+                    setOpen(false)
+                    setSearch('')
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {search.trim() ? `${createLabel} “${search.trim()}”` : createLabel}
+                </CommandItem>
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

@@ -12,6 +12,15 @@ class StoreCategoryRequest extends FormRequest
         return true;
     }
 
+    public function messages(): array
+    {
+        return [
+            'revenue_account_id.exists' => 'The revenue account must be one of your revenue accounts.',
+            'cogs_account_id.exists' => 'The cost of sales account must be one of your expense accounts.',
+            'inventory_account_id.exists' => 'The inventory account must be one of your asset accounts.',
+        ];
+    }
+
     public function rules(): array
     {
         return [
@@ -23,6 +32,9 @@ class StoreCategoryRequest extends FormRequest
             'image_url' => ['nullable', 'string', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'revenue_account_id' => ['nullable', Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id)->where('type', 'revenue')],
+            'cogs_account_id' => ['nullable', Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id)->where('type', 'expense')],
+            'inventory_account_id' => ['nullable', Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id)->where('type', 'asset')],
         ];
     }
 }

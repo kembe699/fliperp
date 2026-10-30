@@ -11,6 +11,7 @@ use App\Models\SalePayment;
 use App\Models\TaxRate;
 use App\Notifications\SaleVoided;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Finance\ProductAccountResolver;
 use App\Services\Inventory\StockMovementService;
 use App\Services\Notifications\NotificationRecipientResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -425,12 +426,33 @@ class SaleService
             ];
         }
 
-        $lines[] = [
-            'account_id' => $this->resolveAccount($sale->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id,
-            'debit' => 0,
-            'credit' => $revenueAmount,
-            'description' => 'Sales revenue',
-        ];
+        // Revenue, cost of sales and inventory land on each item's category
+        // accounts, under the item's department. The sale-level discount is
+        // shared across the revenue lines in proportion to their totals.
+        $resolver = new ProductAccountResolver;
+        $revenueWeights = [];
+        $revenueGroups = [];
+        $costGroups = [];
+        foreach ($sale->items as $item) {
+            $accounts = $resolver->forProduct($sale->company_id, $item->product_id);
+            $revenueKey = $accounts['revenue'].'-'.$accounts['department_id'];
+            $revenueGroups[$revenueKey] = ['account_id' => $accounts['revenue'], 'department_id' => $accounts['department_id']];
+            $revenueWeights[$revenueKey] = ($revenueWeights[$revenueKey] ?? 0) + (float) $item->line_total;
+
+            $costKey = $accounts['cogs'].'-'.$accounts['inventory'].'-'.$accounts['department_id'];
+            $costGroups[$costKey] ??= ['cogs' => $accounts['cogs'], 'inventory' => $accounts['inventory'], 'department_id' => $accounts['department_id'], 'cost' => 0.0];
+            $costGroups[$costKey]['cost'] += (float) $item->quantity * (float) Product::withTrashed()->whereKey($item->product_id)->value('cost_price');
+        }
+
+        foreach (ProductAccountResolver::split($revenueAmount, $revenueWeights) as $key => $amount) {
+            $lines[] = [
+                'account_id' => $revenueGroups[$key]['account_id'],
+                'debit' => 0,
+                'credit' => $amount,
+                'description' => 'Sales revenue',
+                'department_id' => $revenueGroups[$key]['department_id'],
+            ];
+        }
 
         if ($taxAmount > 0) {
             $lines[] = [
@@ -442,18 +464,15 @@ class SaleService
         }
 
         if ($cogsTotal > 0) {
-            $lines[] = [
-                'account_id' => $this->resolveAccount($sale->company_id, self::COGS_ACCOUNT_CODE)->id,
-                'debit' => $cogsTotal,
-                'credit' => 0,
-                'description' => 'Cost of goods sold',
-            ];
-            $lines[] = [
-                'account_id' => $this->resolveAccount($sale->company_id, self::INVENTORY_ACCOUNT_CODE)->id,
-                'debit' => 0,
-                'credit' => $cogsTotal,
-                'description' => 'Inventory sold',
-            ];
+            $costs = ProductAccountResolver::split($cogsTotal, array_map(fn ($group) => $group['cost'], $costGroups));
+            foreach ($costs as $key => $amount) {
+                if ($amount <= 0) {
+                    continue;
+                }
+                $group = $costGroups[$key];
+                $lines[] = ['account_id' => $group['cogs'], 'debit' => $amount, 'credit' => 0, 'description' => 'Cost of goods sold', 'department_id' => $group['department_id']];
+                $lines[] = ['account_id' => $group['inventory'], 'debit' => 0, 'credit' => $amount, 'description' => 'Inventory sold', 'department_id' => $group['department_id']];
+            }
         }
 
         return $this->journalEntryService->postModuleEntry([

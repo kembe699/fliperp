@@ -81,12 +81,22 @@ export async function fetchCategories(): Promise<Category[]> {
   return data.data
 }
 
-export async function createCategory(values: { name: string; parent_id?: number | null; is_active?: boolean; sort_order?: number }): Promise<Category> {
+export interface CategoryInput {
+  name: string
+  parent_id?: number | null
+  is_active?: boolean
+  sort_order?: number
+  revenue_account_id?: number | null
+  cogs_account_id?: number | null
+  inventory_account_id?: number | null
+}
+
+export async function createCategory(values: CategoryInput): Promise<Category> {
   const { data } = await api.post<ApiResponse<Category>>('/categories', values)
   return data.data
 }
 
-export async function updateCategory(id: number, values: { name?: string; parent_id?: number | null; is_active?: boolean; sort_order?: number }): Promise<Category> {
+export async function updateCategory(id: number, values: Partial<CategoryInput>): Promise<Category> {
   const { data } = await api.put<ApiResponse<Category>>(`/categories/${id}`, values)
   return data.data
 }

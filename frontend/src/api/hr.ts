@@ -17,11 +17,32 @@ import type {
   StatutoryDeductionRule,
 } from '@/types/hr'
 
-// Departments & Positions (read-only lookups for Employee form)
+// Departments (HR, and the department every product or service is reported under)
 export async function fetchDepartments(): Promise<Department[]> {
-  const { data } = await api.get<PaginatedResponse<Department>>('/departments', { params: { per_page: 100 } })
+  const { data } = await api.get<PaginatedResponse<Department>>('/departments', { params: { per_page: 500 } })
   return data.data
 }
+
+export interface DepartmentPayload {
+  name?: string
+  parent_id?: number | null
+}
+
+export async function createDepartment(payload: DepartmentPayload): Promise<Department> {
+  const { data } = await api.post<ApiResponse<Department>>('/departments', payload)
+  return data.data
+}
+
+export async function updateDepartment(id: number, payload: DepartmentPayload): Promise<Department> {
+  const { data } = await api.put<ApiResponse<Department>>(`/departments/${id}`, payload)
+  return data.data
+}
+
+export async function deleteDepartment(id: number): Promise<void> {
+  await api.delete(`/departments/${id}`)
+}
+
+// Positions (read-only lookup for Employee form)
 
 export async function fetchPositions(): Promise<Position[]> {
   const { data } = await api.get<PaginatedResponse<Position>>('/positions', { params: { per_page: 100 } })

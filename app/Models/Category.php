@@ -17,6 +17,9 @@ class Category extends TenantModel
         'image_url',
         'is_active',
         'sort_order',
+        'revenue_account_id',
+        'cogs_account_id',
+        'inventory_account_id',
     ];
 
     protected function casts(): array
@@ -34,6 +37,21 @@ class Category extends TenantModel
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    public function revenueAccount(): BelongsTo
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'revenue_account_id');
+    }
+
+    public function cogsAccount(): BelongsTo
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'cogs_account_id');
+    }
+
+    public function inventoryAccount(): BelongsTo
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'inventory_account_id');
     }
 
     public function products(): HasMany

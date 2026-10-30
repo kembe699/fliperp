@@ -88,10 +88,12 @@ class DimensionService
     /**
      * Report filters: limits a query over journal_entry_lines (or another
      * table carrying the coding block) to lines coded to every dimension given.
+     * Journal lines also carry the department of the product or service they
+     * came from, filterable the same way.
      */
     public static function filter(Builder|\Illuminate\Database\Query\Builder $query, array $dimensions, string $table = 'journal_entry_lines'): Builder|\Illuminate\Database\Query\Builder
     {
-        foreach (self::KEYS as $key) {
+        foreach ([...self::KEYS, 'department_id'] as $key) {
             if (! empty($dimensions[$key])) {
                 $query->where("{$table}.{$key}", (int) $dimensions[$key]);
             }
@@ -108,6 +110,7 @@ class DimensionService
             'dea_id' => ['nullable', 'integer'],
             'project_id' => ['nullable', 'integer'],
             'cost_centre_id' => ['nullable', 'integer'],
+            'department_id' => ['nullable', 'integer'],
         ];
     }
 

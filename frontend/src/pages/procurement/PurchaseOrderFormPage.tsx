@@ -11,7 +11,10 @@ import { fetchBranches } from '@/api/branches'
 import { fetchActiveProducts } from '@/api/products'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { useAuthStore } from '@/lib/auth-store'
+import { usePermissions } from '@/hooks/use-permissions'
 import { formatCurrency } from '@/lib/currency'
+import type { Product } from '@/types/inventory'
+import type { Product as CatalogueProduct } from '@/types/product'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -21,6 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { CodingFields } from '@/components/shared/CodingFields'
+import { ProductFormDialog } from '@/components/inventory/ProductFormDialog'
 import { EMPTY_CODING, type Coding } from '@/types/grants'
 
 interface Row extends Coding {
@@ -40,7 +44,11 @@ export function PurchaseOrderFormPage() {
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => fetchSuppliers({ per_page: 100 }) })
   const { data: warehouses } = useQuery({ queryKey: ['warehouses'], queryFn: fetchWarehouses })
   const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
-  const { data: products } = useQuery({ queryKey: ['products-all'], queryFn: () => fetchActiveProducts() })
+  const { can } = usePermissions()
+  // Every active item, not just the first page, so nothing already set up looks missing.
+  const { data: products } = useQuery({ queryKey: ['products-all', 'purchasing'], queryFn: () => fetchActiveProducts({ per_page: 2000 }) })
+  // The line a new item is being created for, and what was typed when the item wasn't found.
+  const [creatingItem, setCreatingItem] = useState<{ rowKey: string; name: string } | null>(null)
 
   const [supplierId, setSupplierId] = useState<string | null>(null)
   const [branchId, setBranchId] = useState('')
@@ -58,6 +66,17 @@ export function PurchaseOrderFormPage() {
   const addRow = () => setRows((prev) => [...prev, emptyRow()])
   const removeRow = (key: string) => setRows((prev) => prev.filter((row) => row.key !== key))
   const updateRow = (key: string, patch: Partial<Row>) => setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)))
+
+  // Picking an item fills its cost price in, unless a cost was already typed.
+  const chooseProduct = (row: Row, product: Pick<Product, 'id' | 'cost_price'> | undefined) =>
+    updateRow(row.key, { product_id: product?.id ?? null, ...(product && !row.unit_cost ? { unit_cost: Number(product.cost_price) } : {}) })
+
+  const handleItemCreated = (product: Product) => {
+    queryClient.setQueryData<CatalogueProduct[]>(['products-all', 'purchasing'], (current) => [product, ...(current ?? [])])
+    queryClient.invalidateQueries({ queryKey: ['products-all'] })
+    const row = rows.find((r) => r.key === creatingItem?.rowKey)
+    if (row) chooseProduct(row, product)
+  }
 
   const total = rows.reduce((sum, row) => sum + row.quantity_ordered * row.unit_cost, 0)
 
@@ -177,6 +196,7 @@ export function PurchaseOrderFormPage() {
             <p className="text-sm font-semibold text-foreground">Line Items</p>
             <p className="text-xs text-muted-foreground">
               Code each line to the SOF, DEA, project and cost centre it is charged to. The coding follows the goods into the ledger when they are received.
+              {can('products.create') && ' An item that isn\'t set up yet can be created from the product search with its category and department, so it posts to the right accounts.'}
             </p>
           </div>
           <div className="hidden items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
@@ -199,8 +219,12 @@ export function PurchaseOrderFormPage() {
                   <SearchableSelect
                     options={(products ?? []).map((product) => ({ value: String(product.id), label: product.name, sublabel: product.sku }))}
                     value={row.product_id ? String(row.product_id) : null}
-                    onChange={(value) => updateRow(row.key, { product_id: value ? Number(value) : null })}
+                    onChange={(value) => chooseProduct(row, products?.find((product) => String(product.id) === value))}
                     placeholder="Select product"
+                    emptyText="Item not found."
+                    {...(can('products.create')
+                      ? { onCreate: (name: string) => setCreatingItem({ rowKey: row.key, name }), createLabel: 'New item' }
+                      : {})}
                   />
                 </div>
                 <Input
@@ -253,6 +277,13 @@ export function PurchaseOrderFormPage() {
           Save & Submit
         </Button>
       </div>
+
+      <ProductFormDialog
+        open={!!creatingItem}
+        onOpenChange={(open) => !open && setCreatingItem(null)}
+        initialName={creatingItem?.name}
+        onSaved={handleItemCreated}
+      />
     </div>
   )
 }

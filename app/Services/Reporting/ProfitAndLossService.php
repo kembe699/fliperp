@@ -2,6 +2,7 @@
 
 namespace App\Services\Reporting;
 
+use App\Models\Category;
 use App\Models\ChartOfAccount;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
@@ -28,8 +29,9 @@ class ProfitAndLossService
         $revenueAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'revenue', $dimensions);
         $expenseAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'expense', $dimensions);
 
-        $cogsAccounts = $expenseAccounts->filter(fn ($row) => $row['code'] === self::COGS_ACCOUNT_CODE)->values();
-        $operatingExpenseAccounts = $expenseAccounts->filter(fn ($row) => $row['code'] !== self::COGS_ACCOUNT_CODE)->values();
+        $cogsIds = self::cogsAccountIds($companyId);
+        $cogsAccounts = $expenseAccounts->filter(fn ($row) => in_array($row['account_id'], $cogsIds, true))->values();
+        $operatingExpenseAccounts = $expenseAccounts->reject(fn ($row) => in_array($row['account_id'], $cogsIds, true))->values();
 
         $revenueTotal = round($revenueAccounts->sum('amount'), 2);
         $cogsTotal = round($cogsAccounts->sum('amount'), 2);
@@ -46,6 +48,26 @@ class ProfitAndLossService
             'operating_expenses' => ['total' => $operatingExpensesTotal, 'accounts' => $operatingExpenseAccounts->all()],
             'net_profit' => $netProfit,
         ];
+    }
+
+    /**
+     * Cost of sales: the default 5300 plus every account a product category
+     * posts its cost of sales to, so a category with its own cost account
+     * (say "Cost of Drugs") still lands above gross profit, not among
+     * operating expenses.
+     *
+     * @return array<int, int>
+     */
+    public static function cogsAccountIds(int $companyId): array
+    {
+        return ChartOfAccount::query()
+            ->where('company_id', $companyId)
+            ->where(fn ($query) => $query
+                ->where('code', self::COGS_ACCOUNT_CODE)
+                ->orWhereIn('id', Category::withoutGlobalScopes()->where('company_id', $companyId)->whereNotNull('cogs_account_id')->select('cogs_account_id')))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     /**

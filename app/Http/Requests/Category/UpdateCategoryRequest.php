@@ -12,6 +12,11 @@ class UpdateCategoryRequest extends FormRequest
         return true;
     }
 
+    public function messages(): array
+    {
+        return (new StoreCategoryRequest)->messages();
+    }
+
     public function rules(): array
     {
         return [
@@ -23,6 +28,9 @@ class UpdateCategoryRequest extends FormRequest
             'image_url' => ['nullable', 'string', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'revenue_account_id' => ['nullable', Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id)->where('type', 'revenue')],
+            'cogs_account_id' => ['nullable', Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id)->where('type', 'expense')],
+            'inventory_account_id' => ['nullable', Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id)->where('type', 'asset')],
         ];
     }
 }

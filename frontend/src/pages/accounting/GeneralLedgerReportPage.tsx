@@ -93,7 +93,7 @@ export function GeneralLedgerReportPage() {
             <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </div>
           <ReportCurrencySelect value={showIn} onChange={setShowIn} />
-          <DimensionFilters value={dimensions} onChange={setDimensions} />
+          <DimensionFilters value={dimensions} onChange={setDimensions} showDepartment />
         </CardContent>
       </Card>
 

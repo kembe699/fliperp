@@ -2,9 +2,9 @@ import { api } from '@/lib/api'
 import type { PaginatedResponse } from '@/types/api'
 import type { Product, StockLevel } from '@/types/product'
 
-export async function fetchActiveProducts(params: { category_id?: number; search?: string } = {}): Promise<Product[]> {
+export async function fetchActiveProducts(params: { category_id?: number; search?: string; per_page?: number } = {}): Promise<Product[]> {
   const { data } = await api.get<PaginatedResponse<Product>>('/products', {
-    params: { ...params, is_active: true, per_page: 100 },
+    params: { per_page: 100, ...params, is_active: true },
   })
   return data.data
 }

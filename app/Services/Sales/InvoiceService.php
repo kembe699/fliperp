@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\TaxRate;
 use App\Services\Finance\ExchangeRateService;
 use App\Services\Finance\JournalEntryService;
+use App\Services\Finance\ProductAccountResolver;
 use App\Services\Grants\DimensionService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -294,33 +295,36 @@ class InvoiceService
     }
 
     /**
-     * Revenue credit lines, one per distinct coding (SOF/DEA/project/cost
-     * centre) among the invoice's items, so coded income reaches the grant
-     * and project reports. The invoice-level discount is shared across them
-     * in proportion to their totals; any rounding cent goes to the last line,
-     * so they always sum to $revenueAmount.
+     * Revenue credit lines, one per distinct revenue account, department and
+     * coding (SOF/DEA/project/cost centre) among the invoice's items: each
+     * item's revenue goes to its category's account under its department, and
+     * coded income still reaches the grant and project reports. The
+     * invoice-level discount is shared across them in proportion to their
+     * totals; any rounding cent goes to the last line, so they always sum to
+     * $revenueAmount.
      */
     protected function revenueLines(Invoice $invoice, float $revenueAmount): array
     {
-        $accountId = $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id;
-        $groups = $invoice->items()->get()
-            ->groupBy(fn ($item) => implode('-', $item->only(DimensionService::KEYS)))
-            ->map(fn ($items) => ['dimensions' => $items->first()->only(DimensionService::KEYS), 'total' => (float) $items->sum('line_total')])
-            ->values();
-        $itemsTotal = (float) $groups->sum('total');
+        $resolver = new ProductAccountResolver;
+        $groups = [];
+        $weights = [];
+        foreach ($invoice->items()->get() as $item) {
+            $accounts = $item->product_id
+                ? $resolver->forProduct($invoice->company_id, $item->product_id)
+                : ['revenue' => $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id, 'department_id' => null];
+            $line = ['account_id' => $accounts['revenue'], 'department_id' => $accounts['department_id']] + $item->only(DimensionService::KEYS);
+            $key = implode('-', $line);
+            $groups[$key] = $line;
+            $weights[$key] = ($weights[$key] ?? 0) + (float) $item->line_total;
+        }
 
-        if ($groups->count() <= 1 || $itemsTotal <= 0) {
-            return [['account_id' => $accountId, 'debit' => 0, 'credit' => $revenueAmount, 'description' => 'Sales revenue'] + ($groups->first()['dimensions'] ?? [])];
+        if ($groups === []) {
+            return [['account_id' => $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id, 'debit' => 0, 'credit' => $revenueAmount, 'description' => 'Sales revenue']];
         }
 
         $lines = [];
-        $allocated = 0.0;
-        foreach ($groups as $index => $group) {
-            $amount = $index === $groups->count() - 1
-                ? round($revenueAmount - $allocated, 2)
-                : round($revenueAmount * $group['total'] / $itemsTotal, 2);
-            $allocated += $amount;
-            $lines[] = ['account_id' => $accountId, 'debit' => 0, 'credit' => $amount, 'description' => 'Sales revenue'] + $group['dimensions'];
+        foreach (ProductAccountResolver::split($revenueAmount, $weights) as $key => $amount) {
+            $lines[] = ['debit' => 0, 'credit' => $amount, 'description' => 'Sales revenue'] + $groups[$key];
         }
 
         return $lines;

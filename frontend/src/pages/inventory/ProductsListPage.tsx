@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { fetchCategories, fetchProducts, fetchStockLevels, updateProduct } from '@/api/inventory'
+import { fetchDepartments } from '@/api/hr'
 import { formatCurrency } from '@/lib/currency'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
@@ -38,6 +39,7 @@ export function ProductsListPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 
   const { data: categories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories })
+  const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments })
   const { data: stockLevels } = useQuery({ queryKey: ['stock-levels-all'], queryFn: () => fetchStockLevels() })
 
   const { data, isLoading, isError } = useQuery({
@@ -73,6 +75,12 @@ export function ProductsListPage() {
     { key: 'name', header: 'Name', accessor: (row) => row.name, sortable: true },
     { key: 'sku', header: 'SKU', accessor: (row) => row.sku },
     { key: 'category_id', header: 'Category', render: (row) => categories?.find((c) => c.id === row.category_id)?.name ?? '—' },
+    {
+      key: 'department_id',
+      header: 'Department',
+      accessor: (row) => departments?.find((d) => d.id === row.department_id)?.name ?? 'Not set',
+      render: (row) => departments?.find((d) => d.id === row.department_id)?.name ?? <span className="text-warning">Not set</span>,
+    },
     { key: 'cost_price', header: 'Cost Price', accessor: (row) => row.cost_price, render: (row) => formatCurrency(row.cost_price) },
     { key: 'selling_price', header: 'Selling Price', accessor: (row) => row.selling_price, render: (row) => formatCurrency(row.selling_price) },
     {

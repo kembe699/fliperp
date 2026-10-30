@@ -14,9 +14,11 @@ beforeEach(function () {
 it('performs CRUD on products', function () {
     $category = createCategory($this->company);
     $unit = createUnitOfMeasure($this->company);
+    $department = \App\Models\Department::create(['company_id' => $this->company->id, 'name' => 'Shop']);
 
     $response = $this->postJson('/api/v1/products', [
         'category_id' => $category->id,
+        'department_id' => $department->id,
         'unit_of_measure_id' => $unit->id,
         'name' => 'Bottled Water',
         'sku' => 'WATER-500',

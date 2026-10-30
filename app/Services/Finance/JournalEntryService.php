@@ -107,6 +107,7 @@ class JournalEntryService
                 'debit' => (float) $line->transaction_debit,
                 'credit' => (float) $line->transaction_credit,
                 'description' => $line->description,
+                'department_id' => $line->department_id,
             ] + $line->only(DimensionService::KEYS))->all(), $rate) : null);
 
         if (isset($data['lines']) || isset($data['entry_date'])) {
@@ -212,6 +213,7 @@ class JournalEntryService
                     'transaction_debit' => $line->transaction_credit,
                     'transaction_credit' => $line->transaction_debit,
                     'description' => $line->description,
+                    'department_id' => $line->department_id,
                 ] + $line->only(DimensionService::KEYS));
             }
 
@@ -257,6 +259,7 @@ class JournalEntryService
                 'transaction_debit' => $transactionDebit,
                 'transaction_credit' => $transactionCredit,
                 'description' => $line['description'] ?? null,
+                'department_id' => ! empty($line['department_id']) ? (int) $line['department_id'] : null,
             ] + DimensionService::of($line);
         }, array_values($lines));
 

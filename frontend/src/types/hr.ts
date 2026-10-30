@@ -1,7 +1,7 @@
 export interface Department {
   id: number
   company_id: number
-  branch_id: number
+  branch_id: number | null
   name: string
   parent_id: number | null
 }

@@ -6,6 +6,9 @@ export interface Category {
   image_url: string | null
   is_active: boolean
   sort_order: number
+  revenue_account_id: number | null
+  cogs_account_id: number | null
+  inventory_account_id: number | null
 }
 
 export interface UnitOfMeasure {
@@ -28,6 +31,7 @@ export interface Product {
   id: number
   company_id: number
   category_id: number
+  department_id: number | null
   name: string
   sku: string
   barcode: string | null
@@ -47,6 +51,7 @@ export interface Product {
 
 export interface ProductFormValues {
   category_id: number
+  department_id: number
   name: string
   sku: string
   barcode?: string | null

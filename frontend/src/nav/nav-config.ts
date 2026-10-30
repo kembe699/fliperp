@@ -80,6 +80,7 @@ export const navConfig: NavItem[] = [
     path: '/hr',
     icon: Users,
     children: [
+      { label: 'Departments', path: '/departments', requiredPermission: 'departments.view' },
       { label: 'Employees', path: '/employees', requiredPermission: 'employees.view' },
       { label: 'Attendance', path: '/attendance', requiredPermission: 'attendance.view' },
       { label: 'Leave Requests', path: '/leave-requests', requiredPermission: 'leave-requests.view' },

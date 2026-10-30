@@ -23,6 +23,8 @@ class JournalEntryLineResource extends JsonResource
             'transaction_credit' => (float) $this->transaction_credit,
             'description' => $this->description,
             ...$this->dimensionFields(),
+            'department_id' => $this->department_id,
+            'department_name' => $this->department_id ? $this->department?->name : null,
         ];
     }
 }

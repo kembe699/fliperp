@@ -59,6 +59,7 @@ import { GoodsReceivedNotesListPage } from '@/pages/procurement/GoodsReceivedNot
 import { GrnFormPage } from '@/pages/procurement/GrnFormPage'
 import { GrnDetailPage } from '@/pages/procurement/GrnDetailPage'
 
+import { DepartmentsPage } from '@/pages/hr/DepartmentsPage'
 import { EmployeesListPage } from '@/pages/hr/EmployeesListPage'
 import { EmployeeDetailPage } from '@/pages/hr/EmployeeDetailPage'
 import { AttendancePage } from '@/pages/hr/AttendancePage'
@@ -276,6 +277,7 @@ function App() {
           <Route path="/supplier-bills/new" element={<SupplierBillFormPage />} />
           <Route path="/supplier-bills/:id" element={<SupplierBillDetailPage />} />
 
+          <Route path="/departments" element={<DepartmentsPage />} />
           <Route path="/employees" element={<EmployeesListPage />} />
           <Route path="/employees/:id" element={<EmployeeDetailPage />} />
           <Route path="/attendance" element={<AttendancePage />} />

@@ -30,10 +30,6 @@ use App\Services\Budgeting\BudgetVsActualService;
  */
 class DashboardAggregationService
 {
-    public const REVENUE_ACCOUNT_CODE = '4000';
-
-    public const COGS_ACCOUNT_CODE = '5300';
-
     public function __construct(protected BudgetVsActualService $budgetVsActualService) {}
 
     public function summary(int $companyId, ?int $branchId, string $from, string $to): array
@@ -73,23 +69,27 @@ class DashboardAggregationService
             ->sum('total_amount'), 2);
     }
 
+    /**
+     * Revenue across every revenue account less cost of sales (see
+     * ProfitAndLossService::cogsAccountIds), now that categories post to
+     * their own accounts rather than only 4000 and 5300.
+     */
     protected function grossProfitEstimate(int $companyId, ?int $branchId, string $from, string $to): float
     {
-        $revenueAccount = ChartOfAccount::query()->where('company_id', $companyId)->where('code', self::REVENUE_ACCOUNT_CODE)->first();
-        $cogsAccount = ChartOfAccount::query()->where('company_id', $companyId)->where('code', self::COGS_ACCOUNT_CODE)->first();
+        $revenueIds = ChartOfAccount::query()->where('company_id', $companyId)->where('type', 'revenue')->pluck('id');
+        $cogsIds = ProfitAndLossService::cogsAccountIds($companyId);
 
-        $baseQuery = fn (int $accountId) => JournalEntryLine::query()
+        $net = fn ($accountIds) => (float) JournalEntryLine::query()
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->where('journal_entries.company_id', $companyId)
             ->whereIn('journal_entries.status', JournalEntry::LEDGER_STATUSES)
-            ->where('journal_entry_lines.account_id', $accountId)
+            ->whereIn('journal_entry_lines.account_id', $accountIds)
             ->whereBetween('journal_entries.entry_date', [$from, $to])
-            ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId));
+            ->when($branchId, fn ($query) => $query->where('journal_entries.branch_id', $branchId))
+            ->selectRaw('COALESCE(SUM(journal_entry_lines.credit - journal_entry_lines.debit), 0) as net')
+            ->value('net');
 
-        $revenue = $revenueAccount ? (float) $baseQuery($revenueAccount->id)->sum('journal_entry_lines.credit') - (float) $baseQuery($revenueAccount->id)->sum('journal_entry_lines.debit') : 0.0;
-        $cogs = $cogsAccount ? (float) $baseQuery($cogsAccount->id)->sum('journal_entry_lines.debit') - (float) $baseQuery($cogsAccount->id)->sum('journal_entry_lines.credit') : 0.0;
-
-        return round($revenue - $cogs, 2);
+        return round($net($revenueIds) + $net($cogsIds), 2);
     }
 
     protected function lowStockProductCount(int $companyId): int

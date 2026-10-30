@@ -223,9 +223,9 @@ class ReportController extends Controller
         return [$validated['from'], $validated['to'], $data];
     }
 
-    /** The SOF/DEA/project/cost-centre filters given on a report request. */
+    /** The SOF/DEA/project/cost-centre and department filters given on a report request. */
     protected function dimensionFilters(Request $request): array
     {
-        return array_filter(DimensionService::of($request->only(DimensionService::KEYS)));
+        return array_filter(DimensionService::of($request->only(DimensionService::KEYS)) + ['department_id' => $request->integer('department_id') ?: null]);
     }
 }

@@ -1,3 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
+
+import { fetchDepartments } from '@/api/hr'
 import { cn } from '@/lib/utils'
 import { useDimensionOptions, type DimensionFilterValue } from '@/lib/coding'
 import type { Coding } from '@/types/grants'
@@ -111,10 +114,22 @@ export function CodingFields({ value, onChange, date, compact = false, className
 }
 
 /** Report filters by SOF, DEA, project and cost centre (closed SOFs included, for past periods). */
-export function DimensionFilters({ value, onChange, showDea = true }: { value: DimensionFilterValue; onChange: (value: DimensionFilterValue) => void; showDea?: boolean }) {
+export function DimensionFilters({
+  value,
+  onChange,
+  showDea = true,
+  showDepartment = false,
+}: {
+  value: DimensionFilterValue
+  onChange: (value: DimensionFilterValue) => void
+  showDea?: boolean
+  /** Journal-line reports only: the department each product's sales, costs and stock post under. */
+  showDepartment?: boolean
+}) {
   const { data: options } = useDimensionOptions(true)
+  const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments, enabled: showDepartment })
   const deas = options?.grants.find((grant) => grant.id === value.grant_id)?.deas ?? []
-  const set = (key: keyof Coding, selected: string | null) => {
+  const set = (key: keyof DimensionFilterValue, selected: string | null) => {
     const next = { ...value, [key]: selected ? Number(selected) : undefined }
     if (key === 'grant_id') delete next.dea_id
     onChange(next)
@@ -162,6 +177,17 @@ export function DimensionFilters({ value, onChange, showDea = true }: { value: D
           placeholder="All"
         />
       </div>
+      {showDepartment && (
+        <div className="w-44 space-y-1.5">
+          <Label>Department</Label>
+          <SearchableSelect
+            options={(departments ?? []).map((department) => ({ value: String(department.id), label: department.name }))}
+            value={pick(value.department_id)}
+            onChange={(selected) => set('department_id', selected)}
+            placeholder="All"
+          />
+        </div>
+      )}
     </>
   )
 }

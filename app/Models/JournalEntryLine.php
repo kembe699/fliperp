@@ -22,6 +22,7 @@ class JournalEntryLine extends Model
         'dea_id',
         'project_id',
         'cost_centre_id',
+        'department_id',
     ];
 
     protected function casts(): array
@@ -32,6 +33,11 @@ class JournalEntryLine extends Model
             'transaction_debit' => 'decimal:2',
             'transaction_credit' => 'decimal:2',
         ];
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function journalEntry(): BelongsTo

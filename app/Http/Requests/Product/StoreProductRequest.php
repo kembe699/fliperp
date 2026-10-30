@@ -18,6 +18,7 @@ class StoreProductRequest extends FormRequest
 
         return [
             'category_id' => ['required', Rule::exists('categories', 'id')->where('company_id', $companyId)],
+            'department_id' => ['required', Rule::exists('departments', 'id')->where('company_id', $companyId)],
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['required', 'string', 'max:100', Rule::unique('products', 'sku')->where('company_id', $companyId)],
             'barcode' => ['nullable', 'string', 'max:100'],

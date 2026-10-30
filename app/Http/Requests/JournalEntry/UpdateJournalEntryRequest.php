@@ -43,6 +43,7 @@ class UpdateJournalEntryRequest extends FormRequest
             'lines.*.credit' => ['nullable', 'numeric', 'min:0'],
             'lines.*.description' => ['nullable', 'string', 'max:255'],
             ...DimensionService::lineRules('lines.*'),
+            'lines.*.department_id' => ['nullable', Rule::exists('departments', 'id')->where('company_id', $this->user()->company_id)],
         ];
     }
 }

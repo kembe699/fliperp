@@ -4,9 +4,11 @@ import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 
 import { createCategory, deleteCategory, fetchCategories, updateCategory } from '@/api/inventory'
+import { fetchChartOfAccounts } from '@/api/reports'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
+import type { ChartOfAccount, ChartOfAccountType } from '@/types/accounting'
 import type { Category } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -23,11 +25,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
+// The accounts a category's products post to. Left on "Default", a product
+// posts to the standard chart code shown.
+const ACCOUNT_FIELDS: { key: 'revenue_account_id' | 'cogs_account_id' | 'inventory_account_id'; label: string; type: ChartOfAccountType; fallback: string }[] = [
+  { key: 'revenue_account_id', label: 'Revenue Account', type: 'revenue', fallback: '4000' },
+  { key: 'cogs_account_id', label: 'Cost of Sales Account', type: 'expense', fallback: '5300' },
+  { key: 'inventory_account_id', label: 'Inventory Account', type: 'asset', fallback: '1200' },
+]
+const DEFAULT_ACCOUNT = 'default'
+
+type AccountChoice = Record<(typeof ACCOUNT_FIELDS)[number]['key'], string>
+const accountLabel = (account?: ChartOfAccount) => (account ? `${account.code} · ${account.name}` : '—')
+
 export function CategoriesPage() {
   const queryClient = useQueryClient()
   const { can } = usePermissions()
 
   const { data: categories, isLoading, isError } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories })
+  const { data: accounts = [] } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts })
 
   const [status, setStatus] = useState('all')
   const [search, setSearch] = useState('')
@@ -35,6 +50,7 @@ export function CategoriesPage() {
   const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState('')
   const [parentId, setParentId] = useState<string>('none')
+  const [accountChoice, setAccountChoice] = useState<AccountChoice>({ revenue_account_id: DEFAULT_ACCOUNT, cogs_account_id: DEFAULT_ACCOUNT, inventory_account_id: DEFAULT_ACCOUNT })
 
   const filtered = useMemo(() => {
     return (categories ?? [])
@@ -46,11 +62,23 @@ export function CategoriesPage() {
     if (!formOpen) return
     setName(editing?.name ?? '')
     setParentId(editing?.parent_id ? String(editing.parent_id) : 'none')
+    setAccountChoice({
+      revenue_account_id: editing?.revenue_account_id ? String(editing.revenue_account_id) : DEFAULT_ACCOUNT,
+      cogs_account_id: editing?.cogs_account_id ? String(editing.cogs_account_id) : DEFAULT_ACCOUNT,
+      inventory_account_id: editing?.inventory_account_id ? String(editing.inventory_account_id) : DEFAULT_ACCOUNT,
+    })
   }, [formOpen, editing])
 
   const saveMutation = useMutation({
     mutationFn: () => {
-      const payload = { name, parent_id: parentId === 'none' ? null : Number(parentId) }
+      const toId = (value: string) => (value === DEFAULT_ACCOUNT ? null : Number(value))
+      const payload = {
+        name,
+        parent_id: parentId === 'none' ? null : Number(parentId),
+        revenue_account_id: toId(accountChoice.revenue_account_id),
+        cogs_account_id: toId(accountChoice.cogs_account_id),
+        inventory_account_id: toId(accountChoice.inventory_account_id),
+      }
       return editing ? updateCategory(editing.id, payload) : createCategory(payload)
     },
     onSuccess: () => {
@@ -70,9 +98,22 @@ export function CategoriesPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
+  const defaultLabel = (code: string) => {
+    const account = accounts.find((a) => a.code === code)
+    return account ? accountLabel(account) : code
+  }
+
   const columns: DataTableColumn<Category>[] = [
     { key: 'name', header: 'Name', accessor: (row) => row.name, sortable: true },
     { key: 'parent_id', header: 'Parent', render: (row) => categories?.find((c) => c.id === row.parent_id)?.name ?? '—' },
+    ...ACCOUNT_FIELDS.map((field) => ({
+      key: field.key,
+      header: field.label.replace(' Account', ''),
+      accessor: (row: Category) => {
+        const id = row[field.key]
+        return id ? accountLabel(accounts.find((a) => a.id === id)) : `Default (${defaultLabel(field.fallback)})`
+      },
+    })),
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge label={row.is_active ? 'Active' : 'Inactive'} variant={row.is_active ? 'success' : 'neutral'} /> },
   ]
 
@@ -160,6 +201,34 @@ export function CategoriesPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <p className="text-xs text-muted-foreground">
+                Sales, cost of sales and stock for every product or service in this category post to these accounts, so the finance reports show them on
+                their own lines. Leave one on Default to use the standard account.
+              </p>
+              {ACCOUNT_FIELDS.map((field) => (
+                <div key={field.key} className="space-y-1.5">
+                  <Label>{field.label}</Label>
+                  <Select value={accountChoice[field.key]} onValueChange={(value) => setAccountChoice((current) => ({ ...current, [field.key]: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={DEFAULT_ACCOUNT}>
+                        Default ({defaultLabel(field.fallback)})
+                      </SelectItem>
+                      {accounts
+                        .filter((account) => account.type === field.type && (account.is_active || String(account.id) === accountChoice[field.key]))
+                        .map((account) => (
+                          <SelectItem key={account.id} value={String(account.id)}>
+                            {accountLabel(account)}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
             </div>
           </div>
           <DialogFooter>

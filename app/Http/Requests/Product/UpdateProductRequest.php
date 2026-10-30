@@ -19,6 +19,7 @@ class UpdateProductRequest extends FormRequest
 
         return [
             'category_id' => ['sometimes', 'required', Rule::exists('categories', 'id')->where('company_id', $companyId)],
+            'department_id' => ['sometimes', 'required', Rule::exists('departments', 'id')->where('company_id', $companyId)],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'sku' => [
                 'sometimes', 'required', 'string', 'max:100',

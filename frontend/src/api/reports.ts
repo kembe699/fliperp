@@ -16,7 +16,7 @@ import type { PayablesReport, ReceivablesReport } from '@/types/aging'
 import type { Coding } from '@/types/grants'
 
 /** SOF / DEA / project / cost-centre report filters. */
-export type DimensionParams = Partial<Record<keyof Coding, number>>
+export type DimensionParams = Partial<Record<keyof Coding | 'department_id', number>>
 
 export type { ChartOfAccount }
 
