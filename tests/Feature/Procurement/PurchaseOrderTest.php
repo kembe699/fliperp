@@ -64,6 +64,22 @@ it('blocks a user from approving their own purchase order when another eligible 
         ->assertJsonPath('data.status', 'approved');
 });
 
+it('lets a user approve their own purchase order once the company allows self-approval', function () {
+    createUserWithRole('company_admin', $this->company, $this->branch);
+
+    $poId = ($this->createDraftPo)('PO-SELF-001');
+    $this->postJson("/api/v1/purchase-orders/{$poId}/submit")->assertOk();
+
+    $this->putJson("/api/v1/companies/{$this->company->id}", ['allow_self_approval' => true])
+        ->assertOk()
+        ->assertJsonPath('data.allow_self_approval', true);
+    $this->admin->refresh();
+
+    $this->postJson("/api/v1/purchase-orders/{$poId}/approve")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'approved');
+});
+
 it('blocks editing a purchase order once it has been submitted', function () {
     $poId = ($this->createDraftPo)();
 

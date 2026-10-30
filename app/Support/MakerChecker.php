@@ -9,13 +9,14 @@ use App\Models\User;
  * own record only when another user in the same company actually holds the
  * approving permission too. A solo-operator company (one user holding every
  * permission) would otherwise be locked out of approving its own records —
- * self-approval is the only option there, so it stays allowed.
+ * self-approval is the only option there, so it stays allowed. A company can
+ * also switch the rule off altogether (Settings > Company > Approvals).
  */
 class MakerChecker
 {
     public static function blocksSelfApproval(User $actor, ?int $creatorId, string $approvePermission): bool
     {
-        if ($creatorId === null || $actor->id !== $creatorId) {
+        if ($creatorId === null || $actor->id !== $creatorId || $actor->company?->allow_self_approval) {
             return false;
         }
 

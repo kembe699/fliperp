@@ -22,6 +22,7 @@ export interface CompanyInput {
   currency_code?: string | null
   timezone?: string | null
   is_active?: boolean
+  allow_self_approval?: boolean
 }
 
 export async function updateCompany(id: number, values: CompanyInput): Promise<Company> {

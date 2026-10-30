@@ -6,6 +6,7 @@ export interface Company {
   currency_code: string | null
   timezone: string | null
   is_active: boolean
+  allow_self_approval: boolean
 }
 
 export interface SettingsUser {

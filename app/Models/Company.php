@@ -32,6 +32,7 @@ class Company extends Model
         'suspended_at',
         'activated_at',
         'enabled_modules',
+        'allow_self_approval',
     ];
 
     protected function casts(): array
@@ -42,6 +43,7 @@ class Company extends Model
             'suspended_at' => 'datetime',
             'activated_at' => 'datetime',
             'enabled_modules' => 'array',
+            'allow_self_approval' => 'boolean',
         ];
     }
 

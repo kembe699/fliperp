@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Building2, Coins, Upload, X } from 'lucide-react'
+import { Building2, CheckCircle2, Coins, Upload, X } from 'lucide-react'
 
 import { deleteCompanyLogo, fetchCompany, fetchCurrencies, updateCompany, uploadCompanyLogo } from '@/api/settings'
 import { getApiErrorInfo } from '@/lib/api-errors'
@@ -75,6 +75,15 @@ export function CompanySettingsPage() {
     mutationFn: () => updateCompany(authCompany!.id, { currency_code: currencyCode || null }),
     onSuccess: (updated) => {
       toast.success('Currency updated — it now applies across the app')
+      onCompanySaved(updated)
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
+
+  const selfApprovalMutation = useMutation({
+    mutationFn: (allow: boolean) => updateCompany(authCompany!.id, { allow_self_approval: allow }),
+    onSuccess: (updated) => {
+      toast.success(updated.allow_self_approval ? 'Users can now approve their own records' : 'Records now need a second person to approve')
       onCompanySaved(updated)
     },
     onError: (error) => toast.error(getApiErrorInfo(error).message),
@@ -235,6 +244,33 @@ export function CompanySettingsPage() {
                   Save Currency
                 </Button>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CheckCircle2 className="h-4 w-4" />
+                Approvals
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <label className="flex items-start gap-3 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-input"
+                  checked={company.allow_self_approval}
+                  disabled={!canEdit || selfApprovalMutation.isPending}
+                  onChange={(event) => selfApprovalMutation.mutate(event.target.checked)}
+                />
+                <span>
+                  <span className="block font-medium">Allow users to approve their own records</span>
+                  <span className="block text-xs text-muted-foreground">
+                    When on, whoever raises a purchase order, stock adjustment or journal entry can also approve or post it, as long as they have the
+                    approval permission. When off, someone else with that permission must approve it.
+                  </span>
+                </span>
+              </label>
             </CardContent>
           </Card>
         </div>

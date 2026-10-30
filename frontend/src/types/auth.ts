@@ -29,6 +29,8 @@ export interface Company {
   is_platform: boolean
   /** Module keys switched on for this company (see PlatformModule); every module when never set. */
   enabled_modules: string[]
+  /** The person who raised a PO, stock adjustment or journal entry may approve it themselves. */
+  allow_self_approval: boolean
   billing_customer_id: number | null
   onboarded_by: number | null
   suspended_at: string | null

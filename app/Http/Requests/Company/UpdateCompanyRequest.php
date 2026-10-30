@@ -23,6 +23,7 @@ class UpdateCompanyRequest extends FormRequest
             'currency_code' => ['nullable', 'string', 'size:3'],
             'timezone' => ['nullable', 'string', 'max:64'],
             'is_active' => ['nullable', 'boolean'],
+            'allow_self_approval' => ['sometimes', 'boolean'],
         ];
     }
 }
