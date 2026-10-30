@@ -28,7 +28,7 @@ class ClientWelcomeEmail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: "Welcome to Nile Hive — {$this->companyName} is ready");
+        return new Envelope(subject: "Welcome to FlipERP — {$this->companyName} is ready");
     }
 
     public function content(): Content
