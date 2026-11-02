@@ -12,7 +12,6 @@ import { SUPPLIER_BILL_STATUS_LABEL, SUPPLIER_BILL_STATUS_VARIANT } from '@/comp
 import type { SupplierBill, SupplierBillStatus } from '@/types/procurement'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -21,7 +20,7 @@ import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 const STATUSES: SupplierBillStatus[] = ['unpaid', 'partially_paid', 'paid', 'overdue']
 
 export function SupplierBillsListPage() {
@@ -97,55 +96,56 @@ export function SupplierBillsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {SUPPLIER_BILL_STATUS_LABEL[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={supplierId} onValueChange={(value) => { setSupplierId(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Supplier" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All suppliers</SelectItem>
-            {suppliers?.data.map((supplier) => (
-              <SelectItem key={supplier.id} value={String(supplier.id)}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1.5">
-          <Input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="h-8 w-36 rounded-full text-sm" />
-          <span className="text-sm text-muted-foreground">to</span>
-          <Input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="h-8 w-36 rounded-full text-sm" />
-        </div>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'reference_number', label: 'Reference Number' }, { value: 'supplier_name', label: 'Supplier Name' }]}
-          placeholder="Search supplier bills…"
-          onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-          onClear={() => { setSearch(''); setPage(1) }}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load supplier bills. Please try again.</p>
       ) : (
         <DataTable
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {SUPPLIER_BILL_STATUS_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={supplierId} onValueChange={(value) => { setSupplierId(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All suppliers</SelectItem>
+                  {suppliers?.data.map((supplier) => (
+                    <SelectItem key={supplier.id} value={String(supplier.id)}>
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center gap-1.5">
+                <Input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="h-8 w-36 text-sm" />
+                <span className="text-sm text-muted-foreground">to</span>
+                <Input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="h-8 w-36 text-sm" />
+              </div>
+            </>
+          }
+          searchSlot={
+            <SearchBar
+              options={[{ value: 'reference_number', label: 'Reference Number' }, { value: 'supplier_name', label: 'Supplier Name' }]}
+              placeholder="Search supplier bills…"
+              onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+              onClear={() => { setSearch(''); setPage(1) }}
+            />
+          }
+          exportable={false}
           columns={columns}
           data={data?.data ?? []}
           rowKey={(row) => row.id}

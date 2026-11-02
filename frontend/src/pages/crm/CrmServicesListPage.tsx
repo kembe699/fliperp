@@ -5,22 +5,18 @@ import { Plus } from 'lucide-react'
 
 import { fetchCrmServices, updateCrmService, deleteCrmService } from '@/api/crm'
 import { formatCurrency } from '@/lib/currency'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { CrmService } from '@/types/crm'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CrmServiceFormDialog } from '@/components/crm/CrmServiceFormDialog'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function CrmServicesListPage() {
   const queryClient = useQueryClient()
@@ -90,7 +86,6 @@ export function CrmServicesListPage() {
         title="Services"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('crm-services.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('crm-services.create') && (
               <Button
                 onClick={() => {
@@ -106,37 +101,27 @@ export function CrmServicesListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={activeStatus} onValueChange={setActiveStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'category', label: 'Category' },
-          ]}
-          placeholder="Search services…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">
           Could not load services. Please try again.
         </p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={activeStatus} onValueChange={setActiveStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

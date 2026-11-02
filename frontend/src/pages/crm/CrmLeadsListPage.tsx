@@ -12,7 +12,6 @@ import { usePermissions } from '@/hooks/use-permissions'
 import type { CrmLead, CrmLeadStatus } from '@/types/crm'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
@@ -30,7 +29,7 @@ const STATUS_VARIANT: Record<CrmLeadStatus, 'info' | 'success' | 'neutral'> = {
 
 const SOURCE_OPTIONS = ['referral', 'website', 'cold_call', 'social_media', 'event', 'other']
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function CrmLeadsListPage() {
   const navigate = useNavigate()
@@ -137,68 +136,69 @@ export function CrmLeadsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="converted">Converted</SelectItem>
-            <SelectItem value="disqualified">Disqualified</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={source} onValueChange={(value) => { setSource(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Source" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All sources</SelectItem>
-            {SOURCE_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s.replace('_', ' ')}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={assignedTo} onValueChange={(value) => { setAssignedTo(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Assigned To" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Everyone</SelectItem>
-            {users?.data.map((u) => (
-              <SelectItem key={u.id} value={String(u.id)}>
-                {u.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'company_name', label: 'Company' },
-            { value: 'email', label: 'Email' },
-            { value: 'phone', label: 'Phone' },
-          ]}
-          placeholder="Search leads…"
-          onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-          onClear={() => { setSearch(''); setPage(1) }}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">
           Could not load leads. Please try again.
         </p>
       ) : (
         <DataTable
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                  <SelectItem value="disqualified">Disqualified</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={source} onValueChange={(value) => { setSource(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sources</SelectItem>
+                  {SOURCE_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.replace('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={assignedTo} onValueChange={(value) => { setAssignedTo(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Assigned To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Everyone</SelectItem>
+                  {users?.data.map((u) => (
+                    <SelectItem key={u.id} value={String(u.id)}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
+          searchSlot={
+            <SearchBar
+              options={[
+                { value: 'name', label: 'Name' },
+                { value: 'company_name', label: 'Company' },
+                { value: 'email', label: 'Email' },
+                { value: 'phone', label: 'Phone' },
+              ]}
+              placeholder="Search leads…"
+              onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+              onClear={() => { setSearch(''); setPage(1) }}
+            />
+          }
+          exportable={false}
           columns={columns}
           data={data?.data ?? []}
           rowKey={(row) => row.id}

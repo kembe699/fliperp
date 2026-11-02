@@ -6,14 +6,10 @@ import { Plus } from 'lucide-react'
 import { fetchPayrollRuns } from '@/api/hr'
 import { fetchBranches } from '@/api/branches'
 import { formatDate } from '@/lib/format'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { PayrollRun, PayrollRunStatus } from '@/types/hr'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -21,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PayrollRunFormDialog } from '@/components/hr/PayrollRunFormDialog'
 
 const STATUSES: PayrollRunStatus[] = ['draft', 'processed']
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function PayrollRunsListPage() {
   const navigate = useNavigate()
@@ -54,7 +50,6 @@ export function PayrollRunsListPage() {
         title="Payroll Runs"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('payroll-runs.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('payroll-runs.create') && (
               <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -65,35 +60,28 @@ export function PayrollRunsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'branch', label: 'Branch' }]}
-          placeholder="Search payroll runs…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load payroll runs. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

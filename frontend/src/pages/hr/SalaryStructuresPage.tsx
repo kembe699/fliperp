@@ -5,13 +5,10 @@ import { Plus } from 'lucide-react'
 import { fetchEmployees, fetchSalaryStructures } from '@/api/hr'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { SalaryStructure } from '@/types/hr'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
 import { SalaryStructureFormDialog } from '@/components/hr/SalaryStructureFormDialog'
@@ -47,7 +44,6 @@ export function SalaryStructuresPage() {
         title="Salary Structures"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('salary-structures.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('salary-structures.create') && (
               <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -58,19 +54,11 @@ export function SalaryStructuresPage() {
         }
       />
 
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'employee', label: 'Employee' }]}
-          placeholder="Search salary structures…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load salary structures. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

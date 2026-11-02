@@ -6,18 +6,14 @@ import { Plus, RefreshCw } from 'lucide-react'
 
 import { fetchAssetCategories, fetchAssets, runDepreciation } from '@/api/assets'
 import { formatCurrency } from '@/lib/currency'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Asset, AssetStatus } from '@/types/assets'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssetFormDialog } from '@/components/assets/AssetFormDialog'
 
@@ -28,7 +24,7 @@ const STATUS_VARIANT: Record<AssetStatus, 'success' | 'neutral' | 'warning' | 'd
   under_maintenance: 'warning',
   disposed: 'danger',
 }
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function AssetsListPage() {
   const navigate = useNavigate()
@@ -77,7 +73,6 @@ export function AssetsListPage() {
         title="Assets"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('assets.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('assets.run-depreciation') && (
               <Button variant="outline" disabled={depreciationMutation.isPending} onClick={() => depreciationMutation.mutate()}>
                 <RefreshCw className="h-4 w-4" />
@@ -94,52 +89,42 @@ export function AssetsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s.replace('_', ' ')}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {categories?.map((category) => (
-              <SelectItem key={category.id} value={String(category.id)}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'asset_code', label: 'Code' },
-          ]}
-          placeholder="Search assets…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load assets. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.replace('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={String(category.id)}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

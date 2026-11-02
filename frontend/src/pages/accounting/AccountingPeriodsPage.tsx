@@ -6,14 +6,10 @@ import { Lock, Plus } from 'lucide-react'
 import { closeAccountingPeriod, createAccountingPeriod, fetchAccountingPeriods } from '@/api/accounting'
 import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { AccountingPeriod, AccountingPeriodStatus } from '@/types/accounting'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -27,7 +23,7 @@ const STATUS_VARIANT: Record<AccountingPeriodStatus, 'success' | 'neutral'> = {
   closed: 'neutral',
 }
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function AccountingPeriodsPage() {
   const queryClient = useQueryClient()
@@ -107,7 +103,6 @@ export function AccountingPeriodsPage() {
         title="Accounting Periods"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('accounting-periods.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('accounting-periods.create') && (
               <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -117,28 +112,6 @@ export function AccountingPeriodsPage() {
           </div>
         }
       />
-
-      <FilterBar>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'name', label: 'Name' }]}
-          placeholder="Search accounting periods…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
 
       {blockers && (
         <div className="mb-4 rounded-xl border border-danger/30 bg-danger/5 p-4">
@@ -161,6 +134,21 @@ export function AccountingPeriodsPage() {
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load accounting periods. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

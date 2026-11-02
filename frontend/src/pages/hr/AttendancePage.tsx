@@ -24,7 +24,7 @@ import { AttendanceQrCodeSection } from '@/components/hr/AttendanceQrCodeSection
 import { AttendanceGeofencesSection } from '@/components/hr/AttendanceGeofencesSection'
 
 const STATUSES: AttendanceStatus[] = ['present', 'absent', 'late', 'on_leave']
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function AttendancePage() {
   const { can } = usePermissions()
@@ -105,66 +105,67 @@ export function AttendancePage() {
         </TabsList>
 
         <TabsContent value="records">
-          <FilterBar>
-            <div className="flex items-center gap-2">
-              <Input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1) }} className="h-8 w-auto rounded-full" placeholder="From" />
-              <span className="text-sm text-muted-foreground">to</span>
-              <Input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1) }} className="h-8 w-auto rounded-full" placeholder="To" />
-            </div>
-
-            <Select value={departmentId} onValueChange={(value) => { setDepartmentId(value); setPage(1) }}>
-              <SelectTrigger className={pillTrigger}>
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All departments</SelectItem>
-                {departments?.map((department) => (
-                  <SelectItem key={department.id} value={String(department.id)}>
-                    {department.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
-              <SelectTrigger className={pillTrigger}>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s.replace('_', ' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <ExportCsvButton
-              onExport={async () => {
-                const all = await fetchAttendance({ per_page: 10000, ...currentFilters })
-                exportToCsv(
-                  'attendance.csv',
-                  csvColumnsFromDataTable(columns).concat([{ header: 'Employee', accessor: (row: Attendance) => employeeName(row.employee_id) }]),
-                  all.data,
-                )
-              }}
-            />
-          </FilterBar>
-
-          <div className="mb-4">
-            <SearchBar
-              options={[{ value: 'employee', label: 'Employee name/code' }]}
-              placeholder="Search by employee name or code…"
-              onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-              onClear={() => { setSearch(''); setPage(1) }}
-            />
-          </div>
-
           {isError ? (
             <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load attendance records. Please try again.</p>
           ) : (
             <DataTable
+              toolbarExtra={
+                <>
+                  <div className="flex items-center gap-2">
+                    <Input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1) }} className="h-8 w-[9.5rem] text-sm" placeholder="From" />
+                    <span className="text-sm text-muted-foreground">to</span>
+                    <Input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1) }} className="h-8 w-[9.5rem] text-sm" placeholder="To" />
+                  </div>
+
+                  <Select value={departmentId} onValueChange={(value) => { setDepartmentId(value); setPage(1) }}>
+                    <SelectTrigger className={pillTrigger}>
+                      <SelectValue placeholder="Department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All departments</SelectItem>
+                      {departments?.map((department) => (
+                        <SelectItem key={department.id} value={String(department.id)}>
+                          {department.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+                    <SelectTrigger className={pillTrigger}>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      {STATUSES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s.replace('_', ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <ExportCsvButton
+                    onExport={async () => {
+                      const all = await fetchAttendance({ per_page: 10000, ...currentFilters })
+                      exportToCsv(
+                        'attendance.csv',
+                        csvColumnsFromDataTable(columns).concat([{ header: 'Employee', accessor: (row: Attendance) => employeeName(row.employee_id) }]),
+                        all.data,
+                      )
+                    }}
+                  />
+                </>
+              }
+              searchSlot={
+                <SearchBar
+                  options={[{ value: 'employee', label: 'Employee name/code' }]}
+                  placeholder="Search by employee name or code…"
+                  onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+                  onClear={() => { setSearch(''); setPage(1) }}
+                />
+              }
+              exportable={false}
               columns={columns}
               data={data?.data ?? []}
               rowKey={(row) => row.id}

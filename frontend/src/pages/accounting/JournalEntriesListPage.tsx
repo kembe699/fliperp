@@ -6,20 +6,16 @@ import { Plus } from 'lucide-react'
 import { fetchJournalEntries } from '@/api/accounting'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { JournalEntry, JournalEntryStatus } from '@/types/accounting'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 const STATUSES: JournalEntryStatus[] = ['draft', 'posted', 'reversed']
 const STATUS_VARIANT: Record<JournalEntryStatus, 'neutral' | 'success' | 'danger'> = {
   draft: 'neutral',
@@ -65,7 +61,6 @@ export function JournalEntriesListPage() {
         title="Journal Entries"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('journal-entries.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('journal-entries.create') && (
               <Button onClick={() => navigate('/journal-entries/new')}>
                 <Plus className="h-4 w-4" />
@@ -76,38 +71,28 @@ export function JournalEntriesListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'reference_number', label: 'Reference' },
-            { value: 'description', label: 'Description' },
-          ]}
-          placeholder="Search journal entries…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load journal entries. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

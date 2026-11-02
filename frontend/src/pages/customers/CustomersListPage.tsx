@@ -12,7 +12,6 @@ import { usePermissions } from '@/hooks/use-permissions'
 import type { Customer, CustomerType } from '@/types/customer'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -33,7 +32,7 @@ const CUSTOMER_TYPE_VARIANT: Record<CustomerType, 'neutral' | 'info' | 'warning'
   credit: 'warning',
 }
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function CustomersListPage() {
   const navigate = useNavigate()
@@ -142,64 +141,65 @@ export function CustomersListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={customerType} onValueChange={(value) => { setCustomerType(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Customer Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            <SelectItem value="walk_in">Walk-in</SelectItem>
-            <SelectItem value="regular">Regular</SelectItem>
-            <SelectItem value="credit">Credit</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Branch" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All branches</SelectItem>
-            {branches?.map((branch) => (
-              <SelectItem key={branch.id} value={String(branch.id)}>
-                {branch.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={activeStatus} onValueChange={(value) => { setActiveStatus(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'phone', label: 'Phone' },
-            { value: 'email', label: 'Email' },
-          ]}
-          placeholder="Search customers…"
-          onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-          onClear={() => { setSearch(''); setPage(1) }}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">
           Could not load customers. Please try again.
         </p>
       ) : (
         <DataTable
+          toolbarExtra={
+            <>
+              <Select value={customerType} onValueChange={(value) => { setCustomerType(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Customer Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="walk_in">Walk-in</SelectItem>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="credit">Credit</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All branches</SelectItem>
+                  {branches?.map((branch) => (
+                    <SelectItem key={branch.id} value={String(branch.id)}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={activeStatus} onValueChange={(value) => { setActiveStatus(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          }
+          searchSlot={
+            <SearchBar
+              options={[
+                { value: 'name', label: 'Name' },
+                { value: 'phone', label: 'Phone' },
+                { value: 'email', label: 'Email' },
+              ]}
+              placeholder="Search customers…"
+              onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+              onClear={() => { setSearch(''); setPage(1) }}
+            />
+          }
+          exportable={false}
           columns={columns}
           data={data?.data ?? []}
           rowKey={(row) => row.id}

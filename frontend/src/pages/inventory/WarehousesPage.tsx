@@ -5,15 +5,11 @@ import { Plus } from 'lucide-react'
 
 import { createWarehouse, deleteWarehouse, fetchWarehouses, updateWarehouse } from '@/api/inventory'
 import { fetchBranches } from '@/api/branches'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { Warehouse } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -22,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function WarehousesPage() {
   const queryClient = useQueryClient()
@@ -95,7 +91,6 @@ export function WarehousesPage() {
         title="Warehouses"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('warehouses.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('warehouses.create') && (
               <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
                 <Plus className="h-4 w-4" />
@@ -106,38 +101,28 @@ export function WarehousesPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={branchFilter} onValueChange={setBranchFilter}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Branch" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All branches</SelectItem>
-            {branches?.map((branch) => (
-              <SelectItem key={branch.id} value={String(branch.id)}>
-                {branch.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'code', label: 'Code' },
-          ]}
-          placeholder="Search warehouses…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load warehouses. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All branches</SelectItem>
+                  {branches?.map((branch) => (
+                    <SelectItem key={branch.id} value={String(branch.id)}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

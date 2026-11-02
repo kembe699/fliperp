@@ -18,7 +18,6 @@ import type { Sale } from '@/types/sale'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
@@ -27,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { SaleDetailDialog } from '@/pages/receipts/SaleDetailDialog'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function ReceiptsListPage() {
   const queryClient = useQueryClient()
@@ -143,78 +142,79 @@ export function ReceiptsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value as Sale['status'] | 'all'); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="voided">Voided</SelectItem>
-            <SelectItem value="refunded">Refunded</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Branch" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All branches</SelectItem>
-            {branches?.map((branch) => (
-              <SelectItem key={branch.id} value={String(branch.id)}>
-                {branch.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={servedBy} onValueChange={(value) => { setServedBy(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Cashier" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All cashiers</SelectItem>
-            {cashiersPage?.data.map((user) => (
-              <SelectItem key={user.id} value={String(user.id)}>
-                {user.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={paymentTypeId} onValueChange={(value) => { setPaymentTypeId(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Payment Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All payment types</SelectItem>
-            {paymentTypes?.map((type) => (
-              <SelectItem key={type.id} value={String(type.id)}>
-                {type.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="h-8 w-40 rounded-full text-sm" />
-        <Input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="h-8 w-40 rounded-full text-sm" />
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'reference_number', label: 'Reference' }]}
-          placeholder="Search by reference number…"
-          onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-          onClear={() => { setSearch(''); setPage(1) }}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load receipts. Please try again.</p>
       ) : (
         <DataTable
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={(value) => { setStatus(value as Sale['status'] | 'all'); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="voided">Voided</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All branches</SelectItem>
+                  {branches?.map((branch) => (
+                    <SelectItem key={branch.id} value={String(branch.id)}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={servedBy} onValueChange={(value) => { setServedBy(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Cashier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All cashiers</SelectItem>
+                  {cashiersPage?.data.map((user) => (
+                    <SelectItem key={user.id} value={String(user.id)}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={paymentTypeId} onValueChange={(value) => { setPaymentTypeId(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Payment Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All payment types</SelectItem>
+                  {paymentTypes?.map((type) => (
+                    <SelectItem key={type.id} value={String(type.id)}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="h-8 w-40 text-sm" />
+              <Input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="h-8 w-40 text-sm" />
+            </>
+          }
+          searchSlot={
+            <SearchBar
+              options={[{ value: 'reference_number', label: 'Reference' }]}
+              placeholder="Search by reference number…"
+              onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+              onClear={() => { setSearch(''); setPage(1) }}
+            />
+          }
+          exportable={false}
           columns={columns}
           data={data?.data ?? []}
           rowKey={(row) => row.id}

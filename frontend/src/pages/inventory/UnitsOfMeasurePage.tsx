@@ -4,14 +4,11 @@ import { toast } from 'sonner'
 import { Plus, Sparkles } from 'lucide-react'
 
 import { createUnitOfMeasure, deleteUnitOfMeasure, fetchUnitsOfMeasure, seedUnitsOfMeasure, updateUnitOfMeasure } from '@/api/inventory'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { UnitOfMeasure } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -90,7 +87,6 @@ export function UnitsOfMeasurePage() {
         title="Units of Measure"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('units-of-measure.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('units-of-measure.create') && (
               <Button variant="outline" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
                 <Sparkles className="h-4 w-4" />
@@ -107,19 +103,11 @@ export function UnitsOfMeasurePage() {
         }
       />
 
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'name', label: 'Name / Abbreviation' }]}
-          placeholder="Search units of measure…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load units of measure. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

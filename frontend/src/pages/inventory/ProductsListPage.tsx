@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ProductFormDialog } from '@/components/inventory/ProductFormDialog'
 import { ProductImage } from '@/components/inventory/ProductImage'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function ProductsListPage() {
   const navigate = useNavigate()
@@ -132,57 +132,58 @@ export function ProductsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={categoryId} onValueChange={(value) => { setCategoryId(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {categories?.map((category) => (
-              <SelectItem key={category.id} value={String(category.id)}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={activeStatus} onValueChange={(value) => { setActiveStatus(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <FilterPill
-          label="Low Stock Only"
-          withChevron={false}
-          active={lowStockOnly}
-          onClick={() => { setLowStockOnly((prev) => !prev); setPage(1) }}
-        />
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'sku', label: 'SKU' },
-            { value: 'barcode', label: 'Barcode' },
-          ]}
-          placeholder="Search products…"
-          onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-          onClear={() => { setSearch(''); setPage(1) }}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load products. Please try again.</p>
       ) : (
         <DataTable
+          toolbarExtra={
+            <>
+              <Select value={categoryId} onValueChange={(value) => { setCategoryId(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={String(category.id)}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={activeStatus} onValueChange={(value) => { setActiveStatus(value); setPage(1) }}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <FilterPill
+                label="Low Stock Only"
+                withChevron={false}
+                active={lowStockOnly}
+                onClick={() => { setLowStockOnly((prev) => !prev); setPage(1) }}
+              />
+            </>
+          }
+          searchSlot={
+            <SearchBar
+              options={[
+                { value: 'name', label: 'Name' },
+                { value: 'sku', label: 'SKU' },
+                { value: 'barcode', label: 'Barcode' },
+              ]}
+              placeholder="Search products…"
+              onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+              onClear={() => { setSearch(''); setPage(1) }}
+            />
+          }
+          exportable={false}
           columns={columns}
           data={data?.data ?? []}
           rowKey={(row) => row.id}

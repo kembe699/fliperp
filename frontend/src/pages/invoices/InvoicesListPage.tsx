@@ -8,22 +8,18 @@ import { fetchBranches } from '@/api/branches'
 import { fetchCustomers } from '@/api/customers'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import { INVOICE_STATUS_LABEL, INVOICE_STATUS_VARIANT } from '@/components/sales/status-variants'
 import type { Invoice, InvoiceStatus } from '@/types/invoice'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 const STATUSES: InvoiceStatus[] = ['draft', 'sent', 'partially_paid', 'paid', 'overdue', 'cancelled']
 
 export function InvoicesListPage() {
@@ -85,7 +81,6 @@ export function InvoicesListPage() {
         title="Invoices"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('invoices.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('invoices.create') && (
               <Button onClick={() => navigate('/invoices/new')}>
                 <Plus className="h-4 w-4" />
@@ -96,69 +91,59 @@ export function InvoicesListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {INVOICE_STATUS_LABEL[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={branchId} onValueChange={setBranchId}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Branch" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All branches</SelectItem>
-            {branches?.map((branch) => (
-              <SelectItem key={branch.id} value={String(branch.id)}>
-                {branch.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={customerId} onValueChange={setCustomerId}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Customer" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All customers</SelectItem>
-            {customersPage?.data.map((customer) => (
-              <SelectItem key={customer.id} value={String(customer.id)}>
-                {customer.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="h-8 w-40 rounded-full text-sm" />
-        <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="h-8 w-40 rounded-full text-sm" />
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'reference_number', label: 'Reference' },
-            { value: 'customer', label: 'Customer' },
-          ]}
-          placeholder="Search invoices…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load invoices. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {INVOICE_STATUS_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={branchId} onValueChange={setBranchId}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All branches</SelectItem>
+                  {branches?.map((branch) => (
+                    <SelectItem key={branch.id} value={String(branch.id)}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={customerId} onValueChange={setCustomerId}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All customers</SelectItem>
+                  {customersPage?.data.map((customer) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="h-8 w-40 text-sm" />
+              <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="h-8 w-40 text-sm" />
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

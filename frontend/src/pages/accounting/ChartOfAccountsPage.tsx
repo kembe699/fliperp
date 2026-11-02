@@ -7,14 +7,10 @@ import { createChartOfAccount, deleteChartOfAccount, updateChartOfAccount } from
 import { fetchChartOfAccounts } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { ChartOfAccount, ChartOfAccountType } from '@/types/accounting'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -23,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 const TYPES: ChartOfAccountType[] = ['asset', 'liability', 'equity', 'revenue', 'expense']
 const TYPE_VARIANT: Record<ChartOfAccountType, 'info' | 'warning' | 'neutral' | 'success' | 'danger'> = {
   asset: 'info',
@@ -118,7 +114,6 @@ export function ChartOfAccountsPage() {
         title="Chart of Accounts"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('chart-of-accounts.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('chart-of-accounts.create') && (
               <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
                 <Plus className="h-4 w-4" />
@@ -129,38 +124,28 @@ export function ChartOfAccountsPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            {TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'code', label: 'Code' },
-          ]}
-          placeholder="Search chart of accounts…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load chart of accounts. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  {TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

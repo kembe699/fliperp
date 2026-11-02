@@ -8,7 +8,6 @@ import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import type { CrmStaffReportRow } from '@/types/crm'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { SearchBar } from '@/components/shared/SearchBar'
 import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -68,21 +67,13 @@ export function CrmStaffListPage() {
         action={<ExportCsvButton onExport={async () => exportToCsv('crm-staff.csv', csvColumnsFromDataTable(columns), filtered)} />}
       />
 
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'user_name', label: 'Staff Member' }]}
-          placeholder="Search staff…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">
           Could not load the staff report. Please try again.
         </p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
           columns={columns}
           data={filtered}
           rowKey={(row) => row.user_id}

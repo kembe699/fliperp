@@ -5,22 +5,18 @@ import { Plus } from 'lucide-react'
 
 import { fetchStockAdjustments, fetchWarehouses } from '@/api/inventory'
 import { formatDate } from '@/lib/format'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import { STOCK_ADJUSTMENT_STATUS_VARIANT } from '@/components/sales/inventory-status-variants'
 import type { StockAdjustment, StockAdjustmentStatus } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
-import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StockAdjustmentFormDialog } from '@/components/inventory/StockAdjustmentFormDialog'
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 const STATUSES: StockAdjustmentStatus[] = ['draft', 'approved']
 
 export function StockAdjustmentsListPage() {
@@ -63,7 +59,6 @@ export function StockAdjustmentsListPage() {
         title="Stock Adjustments"
         action={
           <div className="flex gap-2">
-            <ExportCsvButton onExport={async () => exportToCsv('stock-adjustments.csv', csvColumnsFromDataTable(columns), filtered)} />
             {can('stock-adjustments.create') && (
               <Button onClick={() => setFormOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -74,52 +69,42 @@ export function StockAdjustmentsListPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={warehouseId} onValueChange={setWarehouseId}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Warehouse" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All warehouses</SelectItem>
-            {warehouses?.map((w) => (
-              <SelectItem key={w.id} value={String(w.id)}>
-                {w.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[
-            { value: 'reference_number', label: 'Reference' },
-            { value: 'reason', label: 'Reason' },
-          ]}
-          placeholder="Search stock adjustments…"
-          onSearch={(_by, query) => setSearch(query)}
-          onClear={() => setSearch('')}
-        />
-      </div>
-
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load stock adjustments. Please try again.</p>
       ) : (
         <DataTable
+          onSearchChange={setSearch}
+          toolbarExtra={
+            <>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={warehouseId} onValueChange={setWarehouseId}>
+                <SelectTrigger className={pillTrigger}>
+                  <SelectValue placeholder="Warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All warehouses</SelectItem>
+                  {warehouses?.map((w) => (
+                    <SelectItem key={w.id} value={String(w.id)}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          }
           columns={columns}
           data={filtered}
           rowKey={(row) => row.id}

@@ -10,7 +10,6 @@ import { formatDate } from '@/lib/format'
 import type { Company, CompanyStatus } from '@/types/auth'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { FilterBar } from '@/components/layout/FilterBar'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -25,7 +24,7 @@ const STATUS_VARIANT: Record<CompanyStatus, 'success' | 'danger' | 'warning'> = 
   pending: 'warning',
 }
 
-const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
+const pillTrigger = 'h-8 w-40 text-sm'
 
 export function PlatformClientsPage() {
   const navigate = useNavigate()
@@ -97,30 +96,31 @@ export function PlatformClientsPage() {
         }
       />
 
-      <FilterBar>
-        <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
-          <SelectTrigger className={pillTrigger}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterBar>
-
-      <div className="mb-4">
-        <SearchBar
-          options={[{ value: 'search', label: 'Company / Client Code' }]}
-          placeholder="Search clients…"
-          onSearch={(_by, query) => { setSearch(query); setPage(1) }}
-          onClear={() => { setSearch(''); setPage(1) }}
-        />
-      </div>
-
       <DataTable
+        toolbarExtra={
+          <>
+            <Select value={status} onValueChange={(value) => { setStatus(value); setPage(1) }}>
+              <SelectTrigger className={pillTrigger}>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        }
+        searchSlot={
+          <SearchBar
+            options={[{ value: 'search', label: 'Company / Client Code' }]}
+            placeholder="Search clients…"
+            onSearch={(_by, query) => { setSearch(query); setPage(1) }}
+            onClear={() => { setSearch(''); setPage(1) }}
+          />
+        }
+        exportable={false}
         columns={columns}
         data={data?.data ?? []}
         rowKey={(row) => row.id}
