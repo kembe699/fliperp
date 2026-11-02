@@ -147,7 +147,7 @@ export function DashboardPage() {
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">{greetingDate}</p>
         <h1 className="mt-1 text-2xl font-bold text-foreground">
-          Welcome back{firstName ? `, ${firstName}` : ''} — <span className="text-primary">{company?.name}</span>
+          Welcome back{firstName ? `, ${firstName}` : ''}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">Here's what's happening across your business this month.</p>
       </div>
