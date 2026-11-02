@@ -28,6 +28,9 @@ class UpdateChartOfAccountRequest extends FormRequest
                 Rule::exists('chart_of_accounts', 'id')->where('company_id', $this->user()->company_id),
             ],
             'is_active' => ['nullable', 'boolean'],
+            // Posted to the ledger against 3900 Opening Balance Equity (ChartOfAccountService).
+            'opening_balance' => ['sometimes', 'nullable', 'numeric', 'between:-999999999999,999999999999'],
+            'opening_balance_date' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }

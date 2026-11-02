@@ -8,6 +8,8 @@ export interface ChartOfAccountInput {
   code: string
   name: string
   type: ChartOfAccountType
+  opening_balance?: number | null
+  opening_balance_date?: string | null
   parent_id?: number | null
   is_active?: boolean
 }

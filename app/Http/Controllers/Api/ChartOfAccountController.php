@@ -45,6 +45,7 @@ class ChartOfAccountController extends Controller
     public function show(ChartOfAccount $chartOfAccount): JsonResponse
     {
         $this->authorize('view', $chartOfAccount);
+        $this->chartOfAccountService->attachBalances([$chartOfAccount]);
 
         return $this->success(new ChartOfAccountResource($chartOfAccount));
     }

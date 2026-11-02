@@ -17,12 +17,22 @@ class ChartOfAccount extends TenantModel
         'type',
         'parent_id',
         'is_active',
+        'opening_balance',
+        'opening_balance_date',
+        'opening_balance_entry_id',
     ];
+
+    /** Assets and expenses grow with debits; liabilities, equity and revenue with credits. */
+    public const DEBIT_NORMAL_TYPES = ['asset', 'expense'];
+
+    public const OPENING_BALANCE_EQUITY_CODE = '3900';
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'opening_balance' => 'decimal:2',
+            'opening_balance_date' => 'date',
         ];
     }
 

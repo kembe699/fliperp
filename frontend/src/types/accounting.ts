@@ -10,6 +10,10 @@ export interface ChartOfAccount {
   type: ChartOfAccountType
   parent_id: number | null
   is_active: boolean
+  opening_balance?: number
+  opening_balance_date?: string | null
+  opening_balance_entry_id?: number | null
+  balance?: number
 }
 
 export type JournalEntryStatus = 'draft' | 'posted' | 'reversed'

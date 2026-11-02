@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react'
 import { createChartOfAccount, deleteChartOfAccount, updateChartOfAccount } from '@/api/accounting'
 import { fetchChartOfAccounts } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { formatCurrency } from '@/lib/currency'
 import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { usePermissions } from '@/hooks/use-permissions'
 import type { ChartOfAccount, ChartOfAccountType } from '@/types/accounting'
@@ -55,6 +56,8 @@ export function ChartOfAccountsPage() {
   const [type, setType] = useState<ChartOfAccountType>('asset')
   const [parentId, setParentId] = useState('none')
   const [isActive, setIsActive] = useState(true)
+  const [openingBalance, setOpeningBalance] = useState('')
+  const [openingDate, setOpeningDate] = useState('')
 
   useEffect(() => {
     if (!formOpen) return
@@ -63,12 +66,18 @@ export function ChartOfAccountsPage() {
     setType(editing?.type ?? 'asset')
     setParentId(editing?.parent_id ? String(editing.parent_id) : 'none')
     setIsActive(editing?.is_active ?? true)
+    setOpeningBalance(editing?.opening_balance ? String(editing.opening_balance) : '')
+    setOpeningDate(editing?.opening_balance_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10))
   }, [formOpen, editing])
+
+  // 3900 is the other side of every opening balance, so it can't carry one itself.
+  const isOpeningEquity = code === '3900'
 
   const saveMutation = useMutation({
     mutationFn: () => {
       const payload = { code, name, type, parent_id: parentId === 'none' ? null : Number(parentId), is_active: isActive }
-      return editing ? updateChartOfAccount(editing.id, payload) : createChartOfAccount(payload)
+      const withOpening = isOpeningEquity ? payload : { ...payload, opening_balance: openingBalance === '' ? 0 : Number(openingBalance), opening_balance_date: openingDate || null }
+      return editing ? updateChartOfAccount(editing.id, withOpening) : createChartOfAccount(withOpening)
     },
     onSuccess: () => {
       toast.success(editing ? 'Account updated' : 'Account created')
@@ -92,6 +101,8 @@ export function ChartOfAccountsPage() {
     { key: 'name', header: 'Name', accessor: (row) => row.name },
     { key: 'parent_id', header: 'Parent', render: (row) => (row.parent_id ? accounts?.find((a) => a.id === row.parent_id)?.name ?? `#${row.parent_id}` : '—') },
     { key: 'type', header: 'Type', render: (row) => <StatusBadge label={row.type} variant={TYPE_VARIANT[row.type]} /> },
+    { key: 'opening_balance', header: 'Opening Balance', render: (row) => (row.opening_balance ? formatCurrency(row.opening_balance) : '—') },
+    { key: 'balance', header: 'Balance', render: (row) => formatCurrency(row.balance ?? 0) },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge label={row.is_active ? 'Active' : 'Inactive'} variant={row.is_active ? 'success' : 'neutral'} /> },
   ]
 
@@ -209,6 +220,19 @@ export function ChartOfAccountsPage() {
                 </Select>
               </div>
             </div>
+            {!isOpeningEquity && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Opening Balance</Label>
+                  <Input type="number" step="0.01" value={openingBalance} onChange={(event) => setOpeningBalance(event.target.value)} placeholder="0.00" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>As At</Label>
+                  <Input type="date" value={openingDate} onChange={(event) => setOpeningDate(event.target.value)} />
+                </div>
+                <p className="col-span-2 text-xs text-muted-foreground">Posted to the general ledger against 3900 Opening Balance Equity.</p>
+              </div>
+            )}
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} className="h-4 w-4 rounded border-input" />
               Active
