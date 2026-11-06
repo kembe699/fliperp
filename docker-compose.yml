@@ -30,6 +30,10 @@ services:
       APP_PREVIOUS_KEYS: ${APP_PREVIOUS_KEYS:-}
       APP_URL: ${APP_URL:?set APP_URL}
       FRONTEND_URL: ${APP_URL}
+      # The frontend authenticates with bearer tokens only. Here it is served
+      # from the same origin as the API, which Sanctum would otherwise treat as
+      # a cookie/CSRF session ("CSRF token mismatch" on login). No stateful domains.
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-none.invalid}
       APP_TIMEZONE: UTC
       LOG_CHANNEL: stderr
       LOG_LEVEL: warning
