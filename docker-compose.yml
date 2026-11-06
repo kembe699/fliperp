@@ -25,6 +25,9 @@ services:
       APP_ENV: production
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY:?set APP_KEY}
+      # Keys data was encrypted with elsewhere (e.g. the Railway APP_KEY for a
+      # copied database). Decrypt only; new values use APP_KEY.
+      APP_PREVIOUS_KEYS: ${APP_PREVIOUS_KEYS:-}
       APP_URL: ${APP_URL:?set APP_URL}
       FRONTEND_URL: ${APP_URL}
       APP_TIMEZONE: UTC
