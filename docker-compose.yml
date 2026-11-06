@@ -1,0 +1,103 @@
+# Flip ERP — DigitalOcean TEST deployment (branch deploy/digitalocean).
+# Fully separate from IntelliCare: own project name, containers, network,
+# database and volumes. The image comes from GHCR; nothing is built here.
+#
+#   cd /root/flip-erp && docker compose pull && docker compose up -d
+#
+name: fliperp
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  app:
+    image: ${IMAGE:?set IMAGE in .env}
+    container_name: fliperp-app
+    # Temporary: public IP on port 8080. Behind a reverse proxy later, this
+    # becomes "127.0.0.1:8081:8080".
+    ports:
+      - "${APP_PUBLISH:-8080}:8080"
+    environment:
+      APP_NAME: "Flip ERP"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?set APP_KEY}
+      APP_URL: ${APP_URL:?set APP_URL}
+      FRONTEND_URL: ${APP_URL}
+      APP_TIMEZONE: UTC
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: warning
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:?set DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME:?set DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD:?set PLATFORM_ADMIN_PASSWORD}
+      # Low-resource mode: no queue worker (jobs run immediately), no Reverb.
+      QUEUE_CONNECTION: sync
+      BROADCAST_CONNECTION: log
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      FILESYSTEM_DISK: local
+      # Email off for this test deployment (written to the log).
+      MAIL_MAILER: log
+      RESEND_KEY: ""
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - storage:/var/www/html/storage/app
+    mem_limit: ${APP_MEM_LIMIT:-256m}
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - fliperp-net
+
+  db:
+    image: postgres:18-alpine
+    container_name: fliperp-db
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - effective_cache_size=96MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=16MB
+      - -c
+      - max_connections=30
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?set DB_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+      APP_DB_USER: ${DB_USERNAME:?set DB_USERNAME}
+      APP_DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      APP_DB_NAME: ${DB_DATABASE:?set DB_DATABASE}
+    # No `ports:` — reachable only on fliperp-net.
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./deploy/digitalocean/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d \"$$APP_DB_NAME\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: ${DB_MEM_LIMIT:-192m}
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - fliperp-net
+
+volumes:
+  pgdata:
+  storage:
+
+networks:
+  fliperp-net:
+    driver: bridge

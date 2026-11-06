@@ -1,0 +1,65 @@
+name: Build DigitalOcean test image
+
+# Builds the Flip ERP image for the DigitalOcean TEST deployment and pushes it
+# to GHCR. Only the deploy/digitalocean branch (or a manual run) triggers it —
+# main and the Railway deployment are unaffected.
+on:
+  push:
+    branches: [deploy/digitalocean]
+  workflow_dispatch:
+
+concurrency:
+  group: build-digitalocean-image
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: fliperp
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image reference
+        id: ref
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.ref.outputs.image }}:deploy-digitalocean
+            ${{ steps.ref.outputs.image }}:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-check the image
+        run: |
+          set -euo pipefail
+          img="${{ steps.ref.outputs.image }}:sha-${{ github.sha }}"
+          docker run --rm --entrypoint sh "$img" -c '
+            set -e
+            test -f /var/www/frontend/index.html
+            test -f /var/www/html/vendor/autoload.php
+            php -m | grep -qi "^gd$"; php -m | grep -qi "^pdo_pgsql$"; php -m | grep -qi "^zip$"
+            nginx -t
+            php-fpm -t
+            if find /var/www -name ".env" -o -name ".env.*" | grep -q .; then echo "env file in image"; exit 1; fi
+            echo "image OK"
+          '

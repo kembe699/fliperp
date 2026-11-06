@@ -51,7 +51,9 @@ class PlatformCompanySeeder extends Seeder
             'branch_id' => $branch->id,
             'name' => 'Platform Admin',
             'email' => 'platform-admin@nilehc.tech',
-            'password' => Hash::make('PlatformAdmin123!'),
+            // Set PLATFORM_ADMIN_PASSWORD on any server reachable from the
+            // internet — the fallback is in the public repository.
+            'password' => Hash::make(env('PLATFORM_ADMIN_PASSWORD') ?: 'PlatformAdmin123!'),
             'is_active' => true,
             'is_platform_staff' => true,
         ]);
