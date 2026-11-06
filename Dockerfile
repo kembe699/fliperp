@@ -16,9 +16,14 @@ RUN npm run build
 # ── Stage 2: runtime (PHP-FPM + nginx) ───────────────────────────────────────
 FROM php:8.2-fpm-alpine AS runtime
 
-COPY --from=mlocati/php-extension-installer:2.7.10 /usr/bin/install-php-extensions /usr/local/bin/
-RUN install-php-extensions gd zip pdo_pgsql opcache \
- && apk add --no-cache nginx \
+# PHP's own extension tooling: runtime libraries stay, build dependencies are
+# removed in the same layer to keep the image small.
+RUN apk add --no-cache nginx libpng libjpeg-turbo freetype libzip libpq \
+ && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+      libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev postgresql-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install -j"$(nproc)" gd zip pdo_pgsql opcache \
+ && apk del .build-deps \
  && mkdir -p /run/nginx
 
 COPY --from=composer:2.8 /usr/bin/composer /usr/local/bin/composer
