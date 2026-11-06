@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Behind a reverse proxy (Caddy on the DigitalOcean server; the app
+        // itself is bound to localhost only): honour X-Forwarded-Proto/Host so
+        // Laravel knows the request came in over HTTPS and builds https:// URLs.
+        $middleware->trustProxies(at: '*');
+
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
         ]);
