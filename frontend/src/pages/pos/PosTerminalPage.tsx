@@ -7,7 +7,7 @@ import { History, Lock, PauseCircle } from 'lucide-react'
 import { fetchCurrentCashDrawerSession, fetchPaymentTypes, fetchTaxRates, fetchWarehouses } from '@/api/pos'
 import { fetchActiveProducts } from '@/api/products'
 import { fetchCustomers } from '@/api/customers'
-import { addSalePayment, completeSale, createSale, fetchHeldSales, updateSale } from '@/api/sales'
+import { completeSale, createSale, fetchHeldSales, updateSale } from '@/api/sales'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { useAuthStore } from '@/lib/auth-store'
 import { printPdf } from '@/lib/pdf-print'
@@ -149,10 +149,12 @@ export function PosTerminalPage() {
   const completeMutation = useMutation({
     mutationFn: async (rows: { paymentTypeId: number; amount: number }[]) => {
       if (!activeSaleId) throw new Error('No active sale')
-      for (const row of rows) {
-        await addSalePayment(activeSaleId, { payment_type_id: row.paymentTypeId, amount: row.amount })
-      }
-      return completeSale(activeSaleId)
+      // One request: if completing fails nothing is saved, so pressing Pay again
+      // can't add the same payment a second time.
+      return completeSale(
+        activeSaleId,
+        rows.map((row) => ({ payment_type_id: row.paymentTypeId, amount: row.amount })),
+      )
     },
     onSuccess: (sale) => {
       toast.success('Sale completed', {

@@ -336,3 +336,25 @@ it('denies a cashier from recording a recovery against their own shortage', func
     $this->postJson("/api/v1/cash-drawer-sessions/{$sessionId}/recoveries", ['amount' => 100000])
         ->assertStatus(403);
 });
+
+it('counts only completed sales towards the expected cash', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 1000])->assertCreated();
+    $newSale = fn () => $this->postJson('/api/v1/sales', [
+        'warehouse_id' => $this->warehouse->id,
+        'items' => [['product_id' => $this->product->id, 'quantity' => 5, 'unit_price' => 20, 'tax_rate_id' => $this->taxRate->id]],
+    ])->json('data');
+
+    $completed = $newSale();
+    $this->postJson("/api/v1/sales/{$completed['id']}/complete", [
+        'payments' => [['payment_type_id' => $this->paymentTypeCash->id, 'amount' => $completed['total_amount']]],
+    ])->assertOk();
+
+    // A held sale with a payment left on it (not taken) must not count.
+    $held = $newSale();
+    $this->postJson("/api/v1/sales/{$held['id']}/payments", ['payment_type_id' => $this->paymentTypeCash->id, 'amount' => $held['total_amount']])->assertCreated();
+
+    $closing = 1000 + (float) $completed['total_amount'];
+    $this->postJson('/api/v1/cash-drawer/close', ['closing_float' => $closing])->assertOk()
+        ->assertJsonPath('data.expected_closing', fn ($v) => (float) $v === round($closing, 2))
+        ->assertJsonPath('data.variance', fn ($v) => (float) $v === 0.0);
+});
