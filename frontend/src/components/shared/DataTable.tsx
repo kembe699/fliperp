@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
@@ -83,6 +84,8 @@ interface DataTableProps<T> {
   /** Column key the From/To filter applies to; detected from the first date column, false hides it. */
   dateFilterKey?: string | false
   pageSize?: number
+  /** Makes rows expandable: clicking a row drops down this content under it. */
+  renderExpanded?: (row: T) => ReactNode
 }
 
 type SortDirection = 'asc' | 'desc'
@@ -115,7 +118,9 @@ export function DataTable<T>({
   exportFileName,
   dateFilterKey,
   pageSize: initialPageSize = 20,
+  renderExpanded,
 }: DataTableProps<T>) {
+  const [expandedKey, setExpandedKey] = useState<string | number | null>(null)
   const company = useAuthStore((state) => state.company)
   const serverPaged = page !== undefined && pageCount !== undefined
 
@@ -426,15 +431,34 @@ export function DataTable<T>({
               </TableCell>
             </TableRow>
           ) : (
-            visibleRows.map((row, index) => (
+            visibleRows.map((row, index) => {
+              const key = rowKey(row, index)
+              const expanded = renderExpanded !== undefined && expandedKey === key
+              return (
+              <Fragment key={key}>
               <TableRow
-                key={rowKey(row, index)}
-                className={cn(index % 2 === 1 && 'bg-muted/20', onRowClick && 'cursor-pointer')}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={cn(index % 2 === 1 && 'bg-muted/20', (onRowClick || renderExpanded) && 'cursor-pointer', expanded && 'bg-accent/60')}
+                onClick={
+                  renderExpanded
+                    ? () => setExpandedKey(expanded ? null : key)
+                    : onRowClick
+                      ? () => onRowClick(row)
+                      : undefined
+                }
+                aria-expanded={renderExpanded ? expanded : undefined}
               >
-                {columns.map((column) => (
+                {columns.map((column, colIndex) => (
                   <TableCell key={column.key} className={column.className}>
-                    {column.render ? column.render(row) : (column.accessor?.(row) ?? '—')}
+                    {renderExpanded && colIndex === 0 ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        {expanded ? <ChevronDown className="h-3.5 w-3.5 text-primary" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                        {column.render ? column.render(row) : (column.accessor?.(row) ?? '—')}
+                      </span>
+                    ) : column.render ? (
+                      column.render(row)
+                    ) : (
+                      (column.accessor?.(row) ?? '—')
+                    )}
                   </TableCell>
                 ))}
                 {rowActions && (
@@ -460,7 +484,16 @@ export function DataTable<T>({
                   </TableCell>
                 )}
               </TableRow>
-            ))
+              {expanded && (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={columnCount} className="bg-accent/30 p-0">
+                    {renderExpanded(row)}
+                  </TableCell>
+                </TableRow>
+              )}
+              </Fragment>
+              )
+            })
           )}
         </TableBody>
       </Table>

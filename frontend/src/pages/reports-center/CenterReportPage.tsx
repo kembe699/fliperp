@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Calendar, Printer, RefreshCw } from 'lucide-react'
 
-import { fetchCenterReport, type CenterColumn, type CenterReport, type CenterRow } from '@/api/reportsCenter'
+import { fetchCenterReport, type AuditChange, type CenterColumn, type CenterReport, type CenterRow } from '@/api/reportsCenter'
 import { fetchBranches } from '@/api/branches'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
@@ -110,7 +110,7 @@ function CenterReport({ entry }: { entry: CenterEntry }) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <Card className="print:hidden">
+      <Card className="border-t-2 border-t-primary print:hidden">
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           {!entry.noDates && (
             <>
@@ -213,7 +213,7 @@ function CenterReport({ entry }: { entry: CenterEntry }) {
             </Field>
           )}
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => refetch()} disabled={isFetching}>
+            <Button size="sm" className="h-9 gap-1.5" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => window.print()}>
@@ -269,9 +269,9 @@ function KpiGrid({ data }: { data: CenterReport }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 print:grid-cols-4">
       {data.kpis!.map((k) => (
-        <Card key={k.key}>
+        <Card key={k.key} className="border-l-4 border-l-primary">
           <CardContent className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{k.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">{k.label}</p>
             <p className={`mt-1 break-words text-base font-bold tabular-nums sm:text-xl ${k.key === 'net_profit' && k.value < 0 ? 'text-destructive' : 'text-foreground'}`}>
               {formatValue(k.type, k.value)}
             </p>
@@ -312,8 +312,8 @@ function TotalsStrip({ data }: { data: CenterReport }) {
   const shown = data.columns.filter((c) => (c.type === 'money' || c.type === 'number') && data.totals[c.key] !== undefined)
   if (shown.length === 0) return null
   return (
-    <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-border bg-card px-4 py-3">
-      <p className="self-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Totals</p>
+    <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-primary/20 bg-accent px-4 py-3">
+      <p className="self-center text-xs font-semibold uppercase tracking-wide text-primary">Totals</p>
       {shown.map((c) => (
         <div key={c.key}>
           <p className="text-xs text-muted-foreground">{c.label}</p>
@@ -352,6 +352,61 @@ function ReportTable({ entry, data, loading, fileName, title }: { entry: CenterE
       dateFilterKey={false}
       toolbarExtra={<span />}
       pageSize={50}
+      renderExpanded={data?.rows.some((row) => Array.isArray(row.changes)) ? (row) => <AuditDetails row={row} /> : undefined}
     />
+  )
+}
+
+const fieldLabel = (field: string) => field.replace(/_id$/, '').replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
+
+function showValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '—'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+/** What one audit line actually did: each field it changed, from what to what. */
+function AuditDetails({ row }: { row: CenterRow }) {
+  const changes = (row.changes as AuditChange[] | undefined) ?? []
+  const action = String(row.action ?? '')
+  return (
+    <div className="space-y-3 px-6 py-4">
+      <p className="text-sm text-foreground">
+        <span className="font-semibold">{String(row.user ?? '')}</span> {action} <span className="font-semibold">{String(row.module ?? '')}</span>
+        {row.record ? <span className="text-muted-foreground"> {String(row.record)}</span> : null}
+        <span className="text-muted-foreground"> on {String(row.when ?? '')}</span>
+      </p>
+      {changes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No field details were recorded for this action.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-md border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2 font-semibold">Field</th>
+                {action !== 'created' && <th className="px-3 py-2 font-semibold">Before</th>}
+                {action !== 'deleted' && <th className="px-3 py-2 font-semibold">{action === 'created' ? 'Value' : 'After'}</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {changes.map((change) => (
+                <tr key={change.field} className="border-b border-border last:border-0 align-top">
+                  <td className="whitespace-nowrap px-3 py-2 font-medium text-foreground">{fieldLabel(change.field)}</td>
+                  {action !== 'created' && <td className="break-all px-3 py-2 text-muted-foreground line-through decoration-destructive/50">{showValue(change.from)}</td>}
+                  {action !== 'deleted' && <td className="break-all px-3 py-2 font-medium text-primary">{showValue(change.to)}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {(row.ip || row.device) && (
+        <p className="text-xs text-muted-foreground">
+          {row.ip ? `IP ${String(row.ip)}` : ''}
+          {row.device ? ` · ${String(row.device)}` : ''}
+        </p>
+      )}
+    </div>
   )
 }

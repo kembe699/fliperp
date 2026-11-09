@@ -19,7 +19,9 @@ class StoreEmployeeRequest extends FormRequest
         return [
             'branch_id' => ['required', Rule::exists('branches', 'id')->where('company_id', $companyId)],
             'department_id' => ['required', Rule::exists('departments', 'id')->where('company_id', $companyId)],
-            'position_id' => ['required', Rule::exists('positions', 'id')->where('company_id', $companyId)],
+            // A typed position title (found or created in the department) or an existing position.
+            'position_id' => ['required_without:position_title', 'nullable', Rule::exists('positions', 'id')->where('company_id', $companyId)],
+            'position_title' => ['nullable', 'string', 'max:255'],
             'user_id' => ['nullable', Rule::exists('users', 'id')->where('company_id', $companyId)],
             'employee_code' => ['required', 'string', 'max:50', Rule::unique('employees', 'employee_code')->where('company_id', $companyId)],
             'first_name' => ['required', 'string', 'max:255'],

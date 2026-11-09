@@ -47,6 +47,12 @@ class SalePolicy
         return $user->can('sales.void') && $sale->company_id === $user->company_id;
     }
 
+    /** Cancelling a held sale: whoever can hold (park) a sale, or void one. */
+    public function cancelHeld(User $user, Sale $sale): bool
+    {
+        return ($user->can('sales.hold') || $user->can('sales.void')) && $sale->company_id === $user->company_id;
+    }
+
     public function refund(User $user, Sale $sale): bool
     {
         return $user->can('sales.refund') && $sale->company_id === $user->company_id;

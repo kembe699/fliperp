@@ -33,7 +33,7 @@ export function EmployeeFormDialog({
 
   const [branchId, setBranchId] = useState('')
   const [departmentId, setDepartmentId] = useState('')
-  const [positionId, setPositionId] = useState('')
+  const [positionTitle, setPositionTitle] = useState('')
   const [employeeCode, setEmployeeCode] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -51,7 +51,7 @@ export function EmployeeFormDialog({
     if (!open) return
     setBranchId(employee ? String(employee.branch_id) : '')
     setDepartmentId(employee ? String(employee.department_id) : '')
-    setPositionId(employee ? String(employee.position_id) : '')
+    setPositionTitle('')
     setEmployeeCode(employee?.employee_code ?? '')
     setFirstName(employee?.first_name ?? '')
     setLastName(employee?.last_name ?? '')
@@ -79,12 +79,18 @@ export function EmployeeFormDialog({
 
   const filteredPositions = positions?.filter((position) => !departmentId || position.department_id === Number(departmentId))
 
+  // Editing: show the employee's current position title once the list is loaded.
+  useEffect(() => {
+    if (!open || !employee || !positions) return
+    setPositionTitle((current) => current || (positions.find((position) => position.id === employee.position_id)?.title ?? ''))
+  }, [open, employee, positions])
+
   const mutation = useMutation({
     mutationFn: async () => {
       const payload = {
         branch_id: Number(branchId),
         department_id: Number(departmentId),
-        position_id: Number(positionId),
+        position_title: positionTitle.trim(),
         employee_code: employeeCode,
         first_name: firstName,
         last_name: lastName,
@@ -107,12 +113,14 @@ export function EmployeeFormDialog({
     onSuccess: () => {
       toast.success(employee ? 'Employee updated' : 'Employee created')
       queryClient.invalidateQueries({ queryKey: ['employees'] })
+      // A typed title may have created a new position; the list shows titles from it.
+      queryClient.invalidateQueries({ queryKey: ['positions'] })
       onOpenChange(false)
     },
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
-  const canSubmit = branchId && departmentId && positionId && employeeCode && firstName && lastName && hireDate
+  const canSubmit = branchId && departmentId && positionTitle.trim() && employeeCode && firstName && lastName && hireDate
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -188,7 +196,7 @@ export function EmployeeFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label required>Department</Label>
-              <Select value={departmentId} onValueChange={(value) => { setDepartmentId(value); setPositionId('') }}>
+              <Select value={departmentId} onValueChange={setDepartmentId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
@@ -203,18 +211,19 @@ export function EmployeeFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label required>Position</Label>
-              <Select value={positionId} onValueChange={setPositionId} disabled={!departmentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select position" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredPositions?.map((position) => (
-                    <SelectItem key={position.id} value={String(position.id)}>
-                      {position.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Typed, not picked: a new title becomes a position in the department. */}
+              <Input
+                value={positionTitle}
+                onChange={(event) => setPositionTitle(event.target.value)}
+                placeholder="e.g. Accountant"
+                list="employee-position-titles"
+                maxLength={255}
+              />
+              <datalist id="employee-position-titles">
+                {filteredPositions?.map((position) => (
+                  <option key={position.id} value={position.title} />
+                ))}
+              </datalist>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

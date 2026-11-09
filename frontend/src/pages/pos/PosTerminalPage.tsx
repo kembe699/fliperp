@@ -261,7 +261,14 @@ export function PosTerminalPage() {
         onComplete={(rows) => completeMutation.mutate(rows)}
       />
 
-      <HeldSalesDialog open={heldSalesOpen} onOpenChange={setHeldSalesOpen} onResume={handleResume} />
+      <HeldSalesDialog
+        open={heldSalesOpen}
+        onOpenChange={setHeldSalesOpen}
+        onResume={handleResume}
+        onCancelled={(sale) => {
+          if (sale.id === activeSaleId) resetCart()
+        }}
+      />
 
       {drawerSession && (
         <CloseDrawerDialog open={closeDrawerOpen} onOpenChange={setCloseDrawerOpen} session={drawerSession} />

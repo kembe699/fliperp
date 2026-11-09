@@ -90,3 +90,23 @@ it('only allows editing and deleting a sale while it is held', function () {
         ->assertStatus(422)
         ->assertJsonPath('success', false);
 });
+
+it('cancels a held sale: it leaves the held list and nothing is posted', function () {
+    $this->postJson('/api/v1/cash-drawer/open', ['branch_id' => $this->branch->id, 'opening_float' => 0])->assertCreated();
+    $cash = createPaymentType($this->company);
+    $sale = $this->postJson('/api/v1/sales', [
+        'warehouse_id' => $this->warehouse->id,
+        'items' => [['product_id' => $this->product->id, 'quantity' => 1, 'unit_price' => 100]],
+    ])->assertCreated()->json('data');
+    $this->postJson("/api/v1/sales/{$sale['id']}/payments", ['payment_type_id' => $cash->id, 'amount' => $sale['total_amount']])->assertCreated();
+    expect(collect($this->getJson('/api/v1/sales/held')->json('data'))->pluck('id'))->toContain($sale['id']);
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/cancel")->assertOk()->assertJsonPath('data.status', 'voided');
+
+    expect(\App\Models\SalePayment::where('sale_id', $sale['id'])->count())->toBe(0)
+        ->and(\App\Models\StockMovement::where('reference_id', $sale['id'])->where('reference_type', \App\Models\Sale::class)->count())->toBe(0)
+        ->and(collect($this->getJson('/api/v1/sales/held')->json('data'))->pluck('id'))->not->toContain($sale['id']);
+
+    // Only a held sale can be cancelled this way.
+    $this->postJson("/api/v1/sales/{$sale['id']}/cancel")->assertStatus(422);
+});

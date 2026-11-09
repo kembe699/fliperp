@@ -43,7 +43,9 @@ export interface Employee {
 export interface EmployeeFormValues {
   branch_id: number
   department_id: number
-  position_id: number
+  /** Either an existing position, or a typed title (found or created in the department). */
+  position_id?: number
+  position_title?: string
   employee_code: string
   first_name: string
   last_name: string

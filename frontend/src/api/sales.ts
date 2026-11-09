@@ -54,6 +54,12 @@ export async function completeSale(saleId: number, payments?: { payment_type_id:
   return data.data
 }
 
+/** Cancels a held (parked) sale: nothing was taken for it, so it just leaves the held list. */
+export async function cancelHeldSale(saleId: number): Promise<Sale> {
+  const { data } = await api.post<ApiResponse<Sale>>(`/sales/${saleId}/cancel`)
+  return data.data
+}
+
 export async function voidSale(saleId: number): Promise<Sale> {
   const { data } = await api.post<ApiResponse<Sale>>(`/sales/${saleId}/void`)
   return data.data

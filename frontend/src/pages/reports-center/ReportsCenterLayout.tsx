@@ -117,6 +117,11 @@ export function ReportsCenterLayout() {
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" onClick={() => setOpen(!open)} aria-label="Toggle sidebar">
             {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
           </Button>
+          {current && (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <current.icon className="h-4 w-4" />
+            </div>
+          )}
           <div className="min-w-0">
             <h1 className="truncate text-lg font-bold text-foreground">{current?.label ?? 'Reports'}</h1>
             <p className="truncate text-xs text-muted-foreground">{current?.desc ?? 'Every report in one place'}</p>
