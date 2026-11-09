@@ -69,7 +69,9 @@ class CashDrawerService
 
     protected function calculateExpectedClosing(CashDrawerSession $session): float
     {
-        $saleIds = Sale::query()->where('cash_drawer_session_id', $session->id)->pluck('id');
+        // Only completed sales put money in the drawer: a held sale's payments are
+        // not taken yet, and a voided or refunded sale's money went back out.
+        $saleIds = Sale::query()->where('cash_drawer_session_id', $session->id)->where('status', 'completed')->pluck('id');
 
         $cashCollected = (float) SalePayment::query()
             ->whereIn('sale_id', $saleIds)

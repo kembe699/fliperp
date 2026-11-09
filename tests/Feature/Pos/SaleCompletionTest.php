@@ -159,3 +159,44 @@ it('rejects completing a sale with no items', function () {
         ->assertStatus(422)
         ->assertJsonPath('success', false);
 });
+
+it('completes with the payments sent in the same request, and a failed attempt saves none', function () {
+    $sale = ($this->createHeldSale)(60); // more than the 50 in stock: completing fails
+    $total = (float) $sale['total_amount'];
+    $pay = ['payments' => [['payment_type_id' => $this->paymentTypeCash->id, 'amount' => $total]]];
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/complete", $pay)->assertStatus(422);
+    expect(\App\Models\SalePayment::where('sale_id', $sale['id'])->count())->toBe(0);
+
+    // The cashier fixes the quantity and presses Pay again: paid once, not twice.
+    $this->putJson("/api/v1/sales/{$sale['id']}", [
+        'items' => [['product_id' => $this->product->id, 'quantity' => 4, 'unit_price' => 200, 'tax_rate_id' => $this->taxRate->id]],
+    ])->assertOk();
+    $total = (float) $this->getJson("/api/v1/sales/{$sale['id']}")->json('data.total_amount');
+
+    $done = $this->postJson("/api/v1/sales/{$sale['id']}/complete", [
+        'payments' => [['payment_type_id' => $this->paymentTypeCash->id, 'amount' => $total]],
+    ])->assertOk();
+
+    expect($done->json('data.status'))->toBe('completed')
+        ->and((float) $done->json('data.amount_paid'))->toBe($total)
+        ->and(\App\Models\SalePayment::where('sale_id', $sale['id'])->count())->toBe(1);
+});
+
+it('replaces payments left on a held sale by earlier failed attempts', function () {
+    $sale = ($this->createHeldSale)();
+    $total = (float) $sale['total_amount'];
+
+    // Five tries with the old till: the same cash payment saved five times.
+    foreach (range(1, 5) as $_) {
+        $this->postJson("/api/v1/sales/{$sale['id']}/payments", ['payment_type_id' => $this->paymentTypeCash->id, 'amount' => $total])->assertCreated();
+    }
+    $this->postJson("/api/v1/sales/{$sale['id']}/complete")->assertStatus(422)
+        ->assertJsonPath('errors.payments.0', 'Sale payments ('.round($total * 5, 2).') must equal the total amount ('.round($total, 2).') unless the customer has credit terms.');
+
+    $this->postJson("/api/v1/sales/{$sale['id']}/complete", [
+        'payments' => [['payment_type_id' => $this->paymentTypeCash->id, 'amount' => $total]],
+    ])->assertOk()->assertJsonPath('data.status', 'completed');
+
+    expect((float) \App\Models\SalePayment::where('sale_id', $sale['id'])->sum('amount'))->toBe($total);
+});

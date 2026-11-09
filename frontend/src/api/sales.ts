@@ -48,8 +48,9 @@ export async function addSalePayment(
   return data.data
 }
 
-export async function completeSale(saleId: number): Promise<Sale> {
-  const { data } = await api.post<ApiResponse<Sale>>(`/sales/${saleId}/complete`)
+/** Completes a held sale. Payments sent here replace any the sale already has, in one step on the server. */
+export async function completeSale(saleId: number, payments?: { payment_type_id: number; amount: number }[]): Promise<Sale> {
+  const { data } = await api.post<ApiResponse<Sale>>(`/sales/${saleId}/complete`, payments ? { payments } : undefined)
   return data.data
 }
 

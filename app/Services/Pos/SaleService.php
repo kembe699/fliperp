@@ -238,7 +238,15 @@ class SaleService
         });
     }
 
-    public function complete(Sale $sale): Sale
+    /**
+     * Completes a held sale. $payments are the payments taken at the till: when
+     * given they replace whatever payments the sale already has (leftovers of an
+     * earlier attempt that failed), in the same transaction as the completion —
+     * so a failed completion saves nothing and a retry can't pay the sale twice.
+     *
+     * @param  array<int, array{payment_type_id:int, amount:float|string, reference_number?:string|null}>|null  $payments
+     */
+    public function complete(Sale $sale, ?array $payments = null): Sale
     {
         if ($sale->status !== 'held') {
             throw ValidationException::withMessages([
@@ -246,7 +254,7 @@ class SaleService
             ]);
         }
 
-        return DB::transaction(function () use ($sale) {
+        return DB::transaction(function () use ($sale, $payments) {
             $sale = Sale::query()->lockForUpdate()->with('items', 'payments', 'customer')->findOrFail($sale->id);
 
             // Re-check after the lock: a double-click or duplicate retry that
@@ -265,6 +273,21 @@ class SaleService
                 throw ValidationException::withMessages([
                     'items' => ['A sale with no items cannot be completed.'],
                 ]);
+            }
+
+            // A held sale's payments are not posted anywhere yet (the ledger entry
+            // and stock movements happen below), so replacing them is safe.
+            if ($payments !== null) {
+                $sale->payments()->delete();
+                foreach ($payments as $payment) {
+                    $sale->payments()->create([
+                        'payment_type_id' => $payment['payment_type_id'],
+                        'amount' => round((float) $payment['amount'], 2),
+                        'reference_number' => $payment['reference_number'] ?? null,
+                        'paid_at' => now(),
+                    ]);
+                }
+                $sale->load('payments');
             }
 
             $paid = round((float) $sale->payments->sum('amount'), 2);

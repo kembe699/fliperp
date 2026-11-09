@@ -15,6 +15,7 @@ use App\Support\Url;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Response;
 use chillerlan\QRCode\Output\QRGdImagePNG;
 use chillerlan\QRCode\QRCode;
@@ -80,11 +81,20 @@ class SaleController extends Controller
         return $this->success(new SaleResource($sale), 'Sale held successfully.');
     }
 
-    public function complete(Sale $sale): JsonResponse
+    public function complete(Request $request, Sale $sale): JsonResponse
     {
         $this->authorize('complete', $sale);
 
-        $sale = $this->saleService->complete($sale);
+        // The till sends its payments with the completion (one request, one
+        // transaction). Without them the sale completes with the payments it has.
+        $validated = $request->validate([
+            'payments' => ['sometimes', 'array'],
+            'payments.*.payment_type_id' => ['required', Rule::exists('payment_types', 'id')->where('company_id', $request->user()->company_id)],
+            'payments.*.amount' => ['required', 'numeric', 'gt:0'],
+            'payments.*.reference_number' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $sale = $this->saleService->complete($sale, $validated['payments'] ?? null);
 
         return $this->success(new SaleResource($sale), 'Sale completed successfully.');
     }
