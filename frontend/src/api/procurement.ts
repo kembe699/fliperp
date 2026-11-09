@@ -129,6 +129,8 @@ export interface GrnInput {
   reference_number: string
   received_date: string
   notes?: string | null
+  /** Receive now (stock, ledger entry, supplier bill) instead of saving a draft. */
+  receive?: boolean
   items: {
     product_id: number
     product_variant_id?: number | null

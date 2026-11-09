@@ -92,7 +92,7 @@ export function GrnDetailPage() {
             {canConfirm && (
               <Button disabled={confirmMutation.isPending} onClick={() => confirmMutation.mutate()}>
                 <CheckCircle2 className="h-4 w-4" />
-                Confirm
+                Receive goods & create bill
               </Button>
             )}
           </div>

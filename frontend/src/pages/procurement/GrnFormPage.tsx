@@ -8,6 +8,7 @@ import { createGoodsReceivedNote, fetchPurchaseOrder, fetchReceivingStatus, fetc
 import { fetchWarehouses } from '@/api/inventory'
 import { fetchActiveProducts } from '@/api/products'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { usePermissions } from '@/hooks/use-permissions'
 import type { GrnItemCondition } from '@/types/procurement'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -31,6 +32,7 @@ const CONDITIONS: GrnItemCondition[] = ['good', 'damaged', 'rejected']
 
 export function GrnFormPage() {
   const navigate = useNavigate()
+  const { can } = usePermissions()
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const purchaseOrderId = searchParams.get('purchase_order_id')
@@ -89,8 +91,9 @@ export function GrnFormPage() {
   const updateRow = (key: string, patch: Partial<Row>) => setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)))
 
   const mutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (receive: boolean) =>
       createGoodsReceivedNote({
+        receive,
         purchase_order_id: purchaseOrderId ? Number(purchaseOrderId) : null,
         warehouse_id: Number(warehouseId),
         supplier_id: Number(supplierId),
@@ -107,8 +110,9 @@ export function GrnFormPage() {
             condition: row.condition,
           })),
       }),
-    onSuccess: (grn) => {
-      toast.success('Goods received note created')
+    onSuccess: (grn, receive) => {
+      toast.success(receive ? 'Goods received — stock updated and supplier bill created' : 'Saved as a draft — receive it when the goods arrive')
+      queryClient.invalidateQueries({ queryKey: ['supplier-bills'] })
       queryClient.invalidateQueries({ queryKey: ['goods-received-notes'] })
       if (purchaseOrderId) queryClient.invalidateQueries({ queryKey: ['purchase-order', purchaseOrderId] })
       navigate(`/goods-received-notes/${grn.id}`)
@@ -228,9 +232,15 @@ export function GrnFormPage() {
         <Button variant="outline" onClick={() => navigate(-1)}>
           Cancel
         </Button>
-        <Button disabled={!canSubmit || mutation.isPending} onClick={() => mutation.mutate()}>
-          Create Goods Received Note
+        <Button variant="outline" disabled={!canSubmit || mutation.isPending} onClick={() => mutation.mutate(false)}>
+          Save as draft
         </Button>
+        {/* Receiving is the moment the goods arrive: stock in, ledger entry and the supplier bill, in one step. */}
+        {can('goods-received-notes.confirm') && (
+          <Button disabled={!canSubmit || mutation.isPending} onClick={() => mutation.mutate(true)}>
+            {mutation.isPending ? 'Receiving…' : 'Receive goods & create bill'}
+          </Button>
+        )}
       </div>
     </div>
   )

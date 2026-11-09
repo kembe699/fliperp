@@ -30,10 +30,19 @@ class GoodsReceivedNoteController extends Controller
     public function store(StoreGoodsReceivedNoteRequest $request): JsonResponse
     {
         $this->authorize('create', GoodsReceivedNote::class);
+        $receive = $request->boolean('receive');
+        if ($receive) {
+            // Receiving posts stock and the supplier bill: the same right as confirming.
+            abort_unless($request->user()->can('goods-received-notes.confirm'), 403, 'You can save this as a draft; receiving it needs the confirm permission.');
+        }
 
         $grn = $this->grnService->create($request->validated());
 
-        return $this->success(new GoodsReceivedNoteResource($grn), 'Goods received note created successfully.', 201);
+        return $this->success(
+            new GoodsReceivedNoteResource($grn),
+            $receive ? 'Goods received — stock updated and supplier bill created.' : 'Goods received note saved as a draft.',
+            201,
+        );
     }
 
     public function show(GoodsReceivedNote $goodsReceivedNote): JsonResponse

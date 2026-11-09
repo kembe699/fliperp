@@ -62,6 +62,9 @@ export interface PurchaseOrder {
   created_by: number
   approved_by: number | null
   items: PurchaseOrderItem[]
+  /** The receipts and supplier bills this order led to (on the detail view). */
+  goods_received_notes?: { id: number; reference_number: string; received_date: string | null; status: string }[]
+  supplier_bills?: { id: number; reference_number: string; bill_date: string | null; total_amount: number; amount_paid: number; status: string }[]
   created_at: string
   updated_at: string
 }

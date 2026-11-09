@@ -47,7 +47,7 @@ class PurchaseOrderController extends Controller
     {
         $this->authorize('view', $purchaseOrder);
 
-        return $this->success(new PurchaseOrderResource($purchaseOrder->load('items')));
+        return $this->success(new PurchaseOrderResource($purchaseOrder->load('items', 'goodsReceivedNotes', 'bills')));
     }
 
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): JsonResponse
