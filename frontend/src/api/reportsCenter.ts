@@ -17,7 +17,14 @@ export interface CenterKpi {
   sub?: string
 }
 
-export type CenterRow = Record<string, string | number | null>
+export interface AuditChange {
+  field: string
+  from: unknown
+  to: unknown
+}
+
+/** Most cells are text or numbers; an audit line also carries the fields it changed. */
+export type CenterRow = Record<string, string | number | null | AuditChange[]>
 
 /** Every Reports Center report comes back in this one shape. */
 export interface CenterReport {

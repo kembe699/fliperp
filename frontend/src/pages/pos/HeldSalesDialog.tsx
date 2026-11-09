@@ -1,6 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
-import { fetchHeldSales } from '@/api/sales'
+import { cancelHeldSale, fetchHeldSales } from '@/api/sales'
+import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
 import type { Sale } from '@/types/sale'
@@ -14,10 +17,25 @@ interface HeldSalesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onResume: (sale: Sale) => void
+  /** Called after a held sale is cancelled (the terminal clears its cart if it was that sale). */
+  onCancelled?: (sale: Sale) => void
 }
 
-export function HeldSalesDialog({ open, onOpenChange, onResume }: HeldSalesDialogProps) {
+export function HeldSalesDialog({ open, onOpenChange, onResume, onCancelled }: HeldSalesDialogProps) {
+  const queryClient = useQueryClient()
   const { data: heldSales, isLoading } = useQuery({ queryKey: ['held-sales'], queryFn: fetchHeldSales, enabled: open })
+  const [confirmId, setConfirmId] = useState<number | null>(null)
+
+  const cancelMutation = useMutation({
+    mutationFn: (sale: Sale) => cancelHeldSale(sale.id),
+    onSuccess: (sale) => {
+      toast.success(`Held sale ${sale.reference_number} cancelled`)
+      setConfirmId(null)
+      queryClient.invalidateQueries({ queryKey: ['held-sales'] })
+      onCancelled?.(sale)
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,11 +62,27 @@ export function HeldSalesDialog({ open, onOpenChange, onResume }: HeldSalesDialo
                     {sale.items.length} item{sale.items.length === 1 ? '' : 's'} · {formatDate(sale.sale_date)}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-foreground">{formatCurrency(sale.total_amount)}</span>
-                  <Button size="sm" onClick={() => onResume(sale)}>
-                    Resume
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <span className="mr-1 text-sm font-semibold text-foreground">{formatCurrency(sale.total_amount)}</span>
+                  {confirmId === sale.id ? (
+                    <>
+                      <Button size="sm" variant="destructive" disabled={cancelMutation.isPending} onClick={() => cancelMutation.mutate(sale)}>
+                        {cancelMutation.isPending ? 'Cancelling…' : 'Yes, cancel it'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setConfirmId(null)}>
+                        Keep
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setConfirmId(sale.id)}>
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={() => onResume(sale)}>
+                        Resume
+                      </Button>
+                    </>
+                  )}
                 </div>
               </li>
             ))}

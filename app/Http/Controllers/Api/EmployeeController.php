@@ -8,6 +8,7 @@ use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
 use App\Http\Resources\EmployeeResource;
 use App\Models\Employee;
+use App\Models\Position;
 use App\Services\Hr\EmployeeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,9 +30,35 @@ class EmployeeController extends Controller
     {
         $this->authorize('create', Employee::class);
 
-        $employee = $this->employeeService->create($request->validated());
+        $employee = $this->employeeService->create($this->withPosition($request->validated()));
 
         return $this->success(new EmployeeResource($employee), 'Employee created successfully.', 201);
+    }
+
+    /**
+     * A typed position title becomes position_id: the department's position with
+     * that title (any letter case), or a new one in that department.
+     */
+    protected function withPosition(array $data, ?Employee $employee = null): array
+    {
+        $title = trim((string) ($data['position_title'] ?? ''));
+        unset($data['position_title']);
+        if ($title === '') {
+            return $data;
+        }
+
+        $companyId = request()->user()->company_id;
+        $departmentId = $data['department_id'] ?? $employee?->department_id;
+        $position = Position::query()
+            ->where('company_id', $companyId)
+            ->where('department_id', $departmentId)
+            ->whereRaw('LOWER(title) = ?', [mb_strtolower($title)])
+            ->first()
+            ?? Position::create(['company_id' => $companyId, 'department_id' => $departmentId, 'title' => $title]);
+
+        $data['position_id'] = $position->id;
+
+        return $data;
     }
 
     public function show(Employee $employee): JsonResponse
@@ -45,7 +72,7 @@ class EmployeeController extends Controller
     {
         $this->authorize('update', $employee);
 
-        $employee = $this->employeeService->update($employee, $request->validated());
+        $employee = $this->employeeService->update($employee, $this->withPosition($request->validated(), $employee));
 
         return $this->success(new EmployeeResource($employee), 'Employee updated successfully.');
     }

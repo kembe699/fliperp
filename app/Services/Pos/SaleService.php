@@ -358,6 +358,29 @@ class SaleService
         });
     }
 
+    /**
+     * Cancels a held (parked) sale. Nothing was taken or posted for it yet — no
+     * stock movement, no ledger entry — so cancelling only drops any payment
+     * rows left on it and marks it voided, which takes it off the held list.
+     */
+    public function cancelHeld(Sale $sale): Sale
+    {
+        return DB::transaction(function () use ($sale) {
+            $sale = Sale::query()->lockForUpdate()->findOrFail($sale->id);
+
+            if ($sale->status !== 'held') {
+                throw ValidationException::withMessages([
+                    'status' => ['Only a held sale can be cancelled. Void a completed sale instead.'],
+                ]);
+            }
+
+            $sale->payments()->delete();
+            $sale->update(['status' => 'voided']);
+
+            return $sale->fresh(['items', 'payments']);
+        });
+    }
+
     public function void(Sale $sale): Sale
     {
         return $this->reverse($sale, 'voided');

@@ -20,7 +20,9 @@ class UpdateEmployeeRequest extends FormRequest
         return [
             'branch_id' => ['sometimes', 'required', Rule::exists('branches', 'id')->where('company_id', $companyId)],
             'department_id' => ['sometimes', 'required', Rule::exists('departments', 'id')->where('company_id', $companyId)],
-            'position_id' => ['sometimes', 'required', Rule::exists('positions', 'id')->where('company_id', $companyId)],
+            // A typed position title (found or created in the department) or an existing position.
+            'position_id' => ['sometimes', 'required_without:position_title', 'nullable', Rule::exists('positions', 'id')->where('company_id', $companyId)],
+            'position_title' => ['nullable', 'string', 'max:255'],
             'user_id' => ['nullable', Rule::exists('users', 'id')->where('company_id', $companyId)],
             'employee_code' => [
                 'sometimes', 'required', 'string', 'max:50',

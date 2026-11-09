@@ -99,6 +99,15 @@ class SaleController extends Controller
         return $this->success(new SaleResource($sale), 'Sale completed successfully.');
     }
 
+    public function cancel(Sale $sale): JsonResponse
+    {
+        $this->authorize('cancelHeld', $sale);
+
+        $sale = $this->saleService->cancelHeld($sale);
+
+        return $this->success(new SaleResource($sale), 'Held sale cancelled.');
+    }
+
     public function void(Sale $sale): JsonResponse
     {
         $this->authorize('void', $sale);

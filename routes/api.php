@@ -337,6 +337,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('sales', SaleController::class);
         Route::post('sales/{sale}/hold', [SaleController::class, 'hold']);
         Route::post('sales/{sale}/complete', [SaleController::class, 'complete']);
+        Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel']);
         Route::post('sales/{sale}/void', [SaleController::class, 'void']);
         Route::post('sales/{sale}/refund', [SaleController::class, 'refund']);
         Route::post('sales/{sale}/payments', [SaleController::class, 'addPayment']);

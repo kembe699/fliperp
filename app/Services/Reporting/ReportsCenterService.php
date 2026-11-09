@@ -571,11 +571,20 @@ class ReportsCenterService
 
         if ($groupBy === 'document') {
             $rows = $q->orderByDesc('audit_logs.created_at')->limit(5000)
-                ->get(['audit_logs.created_at', 'audit_logs.action', 'audit_logs.module', 'audit_logs.record_id', 'audit_logs.ip_address', 'users.name AS user'])
-                ->map(fn ($a) => [
-                    'when' => substr((string) $a->created_at, 0, 16), 'user' => $a->user ?: 'System', 'module' => $a->module ?: '—',
-                    'action' => $a->action, 'record' => $a->record_id ? (string) $a->record_id : '', 'ip' => $a->ip_address ?: '',
-                ]);
+                ->get(['audit_logs.created_at', 'audit_logs.action', 'audit_logs.module', 'audit_logs.record_id', 'audit_logs.ip_address', 'audit_logs.user_agent', 'audit_logs.old_values', 'audit_logs.new_values', 'users.name AS user'])
+                ->map(function ($a) {
+                    $old = is_string($a->old_values) ? (json_decode($a->old_values, true) ?: []) : (array) ($a->old_values ?? []);
+                    $new = is_string($a->new_values) ? (json_decode($a->new_values, true) ?: []) : (array) ($a->new_values ?? []);
+                    $label = $new['reference_number'] ?? $old['reference_number'] ?? $new['name'] ?? $old['name'] ?? null;
+
+                    return [
+                        'when' => substr((string) $a->created_at, 0, 19), 'user' => $a->user ?: 'System', 'module' => $a->module ?: '—',
+                        'action' => $a->action, 'record' => trim(($a->record_id ? '#'.$a->record_id : '').($label ? ' · '.$label : '')), 'ip' => $a->ip_address ?: '',
+                        // What actually changed — shown when the line is opened.
+                        'changes' => $this->auditChanges($a->action, $old, $new),
+                        'device' => $a->user_agent ?: '',
+                    ];
+                });
 
             return [
                 'columns' => [$this->col('when', 'When', 'text'), $this->col('user', 'User', 'text'), $this->col('module', 'Module', 'text'), $this->col('action', 'Action', 'text'), $this->col('record', 'Record', 'text'), $this->col('ip', 'IP address', 'text')],
@@ -594,6 +603,38 @@ class ReportsCenterService
             'rows' => $rows->all(),
             'totals' => $this->sumColumns($rows, ['actions']),
         ];
+    }
+
+    /**
+     * The fields an audit entry touched: for an update, each changed field from
+     * its old value to its new one; for a create or delete, every field it had.
+     *
+     * @return array<int, array{field:string, from:mixed, to:mixed}>
+     */
+    protected function auditChanges(string $action, array $old, array $new): array
+    {
+        $skip = ['updated_at', 'created_at', 'id', 'company_id'];
+        $out = [];
+        if ($action === 'deleted') {
+            foreach ($old as $field => $value) {
+                if (! in_array($field, $skip, true)) {
+                    $out[] = ['field' => $field, 'from' => $value, 'to' => null];
+                }
+            }
+        } else {
+            foreach ($new as $field => $value) {
+                if (in_array($field, $skip, true)) {
+                    continue;
+                }
+                $from = $action === 'created' ? null : ($old[$field] ?? null);
+                if ($action !== 'created' && $from == $value) {
+                    continue;
+                }
+                $out[] = ['field' => $field, 'from' => $from, 'to' => $value];
+            }
+        }
+
+        return $out;
     }
 
     // ── Shared pieces ───────────────────────────────────────────────────────
