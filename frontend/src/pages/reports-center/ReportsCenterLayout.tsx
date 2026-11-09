@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, Outlet, useMatch } from 'react-router-dom'
-import { ArrowLeft, ChevronRight, PanelLeft, PanelLeftClose, Search } from 'lucide-react'
+import { ArrowLeft, Building2, PanelLeft, PanelLeftClose, Search } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/auth-store'
@@ -34,86 +34,86 @@ export function ReportsCenterLayout() {
 
   return (
     <div className="flex h-screen bg-background print:block print:h-auto">
-      <aside
-        className={cn(
-          'flex shrink-0 flex-col bg-gradient-to-b from-primary to-primary-hover text-primary-foreground transition-all duration-200 print:hidden',
-          open ? 'w-64' : 'w-[68px]',
-        )}
-      >
-        <div className="flex items-center gap-3 border-b border-white/10 p-4">
-          {company?.logo_url ? (
-            <img src={company.logo_url} alt="" className="h-9 w-9 shrink-0 rounded bg-white object-contain p-0.5" />
-          ) : (
-            <img src="/logo.png" alt="" className="h-8 w-8 shrink-0 rounded bg-white object-contain p-0.5" />
-          )}
-          {open && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{company?.name ?? 'Company'}</p>
-              <p className="text-[11px] uppercase tracking-widest text-white/80">Reports Center</p>
-            </div>
-          )}
+      {/* Same look as the main app sidebar (AppSidebar): white, bordered, pill items. */}
+      <aside className={cn('flex h-screen shrink-0 flex-col border-r border-border bg-sidebar transition-all duration-200 print:hidden', open ? 'w-[260px]' : 'w-[68px]')}>
+        <div className={cn('border-b border-border py-4', open ? 'px-5' : 'px-3')}>
+          <img src="/logo.png" alt="FlipErp" className={cn('h-8 w-auto', !open && 'mx-auto h-6')} />
         </div>
 
-        {open && (
-          <div className="border-b border-white/10 p-3">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-white/60" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search reports..."
-                className="h-8 border-white/15 bg-white/10 pl-8 text-xs text-white placeholder:text-white/50 focus-visible:ring-white/40"
-              />
+        {open ? (
+          <div className="px-5 pb-4 pt-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
+                {company?.logo_url ? <img src={company.logo_url} alt="" className="h-8 w-8 rounded object-contain" /> : <Building2 className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">{company?.name ?? 'Company'}</p>
+                <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-primary">Reports Center</p>
+              </div>
+            </div>
+            <div className="relative mt-4">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reports..." className="h-8 pl-8 text-xs" />
+            </div>
+            <div className="mt-4 h-px w-full bg-primary/20" />
+          </div>
+        ) : (
+          <div className="flex justify-center py-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-primary">
+              <Building2 className="h-5 w-5" />
             </div>
           </div>
         )}
 
-        <nav className="flex-1 overflow-y-auto p-2">
+        <nav className={cn('flex-1 overflow-y-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', open ? 'px-3' : 'px-2')}>
           {GROUPS.map((group) => {
             const entries = visible.filter((entry) => entry.group === group)
             if (entries.length === 0) return null
             return (
-              <div key={group} className="mb-2">
-                {open && <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-widest text-white/70">{group}</p>}
-                {entries.map((entry) => {
-                  const Icon = entry.icon
-                  const active = entry.id === reportId
-                  return (
-                    <Link
-                      key={entry.id}
-                      to={`/reports-center/${entry.id}`}
-                      title={entry.label}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-sm transition-colors',
-                        active ? 'border-white/25 bg-white/15' : 'border-transparent hover:bg-white/10',
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {open && (
-                        <>
-                          <span className="flex-1 truncate text-left">{entry.label}</span>
-                          {active && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/70" />}
-                        </>
-                      )}
-                    </Link>
-                  )
-                })}
+              <div key={group} className="mb-3">
+                {open && <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{group}</p>}
+                <ul className="space-y-0.5">
+                  {entries.map((entry) => {
+                    const Icon = entry.icon
+                    const active = entry.id === reportId
+                    return (
+                      <li key={entry.id}>
+                        <Link
+                          to={`/reports-center/${entry.id}`}
+                          title={entry.label}
+                          className={cn(
+                            'flex items-center gap-2.5 rounded-full py-2 text-sm font-medium transition-colors',
+                            open ? 'px-3' : 'justify-center px-0',
+                            active ? 'bg-accent text-primary' : 'text-foreground hover:bg-accent/60',
+                          )}
+                        >
+                          <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
+                          {open && <span className="flex-1 truncate">{entry.label}</span>}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
             )
           })}
-          {visible.length === 0 && open && <p className="px-3 py-4 text-xs text-white/70">No reports match.</p>}
+          {visible.length === 0 && open && <p className="px-2 py-4 text-xs text-muted-foreground">No reports match.</p>}
         </nav>
 
-        <div className="border-t border-white/10 p-3">
-          <Link to="/dashboard" className="flex h-9 items-center gap-2 rounded-md px-2 text-xs hover:bg-white/10">
-            <ArrowLeft className="h-4 w-4" />
+        <div className="shrink-0 border-t border-border p-3">
+          <Link
+            to="/dashboard"
+            title="Back to the app"
+            className={cn('flex h-9 items-center gap-2.5 rounded-full text-sm font-medium text-foreground transition-colors hover:bg-accent/60', open ? 'px-3' : 'justify-center')}
+          >
+            <ArrowLeft className="h-4 w-4 text-muted-foreground" />
             {open && 'Back to the app'}
           </Link>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
-        <header className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-6 py-3 print:hidden">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card px-6 print:hidden">
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" onClick={() => setOpen(!open)} aria-label="Toggle sidebar">
             {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
           </Button>
@@ -122,7 +122,7 @@ export function ReportsCenterLayout() {
             <p className="truncate text-xs text-muted-foreground">{current?.desc ?? 'Every report in one place'}</p>
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-muted/30 p-6 print:overflow-visible print:bg-white print:p-0">
+        <main className="flex-1 overflow-auto bg-background p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:bg-white print:p-0">
           <Outlet />
         </main>
       </div>
