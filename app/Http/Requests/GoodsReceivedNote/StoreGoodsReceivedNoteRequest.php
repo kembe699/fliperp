@@ -28,6 +28,8 @@ class StoreGoodsReceivedNoteRequest extends FormRequest
             ],
             'received_date' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
+            // Receive now (stock, ledger, supplier bill) instead of saving a draft.
+            'receive' => ['sometimes', 'boolean'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'items.*.product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],

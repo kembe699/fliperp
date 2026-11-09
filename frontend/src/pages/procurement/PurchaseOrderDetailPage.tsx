@@ -203,6 +203,53 @@ export function PurchaseOrderDetailPage() {
         </CardContent>
       </Card>
 
+      {((po.goods_received_notes?.length ?? 0) > 0 || (po.supplier_bills?.length ?? 0) > 0) && (
+        <Card className="mb-4">
+          <CardContent className="grid gap-6 p-6 md:grid-cols-2">
+            <div>
+              <p className="mb-3 text-sm font-semibold text-foreground">Goods received</p>
+              {(po.goods_received_notes ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nothing received yet.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {po.goods_received_notes!.map((grn) => (
+                    <li key={grn.id} className="flex items-center justify-between py-2 text-sm">
+                      <button type="button" className="font-medium text-primary hover:underline" onClick={() => navigate(`/goods-received-notes/${grn.id}`)}>
+                        {grn.reference_number}
+                      </button>
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        {grn.received_date ? formatDate(grn.received_date) : ''}
+                        <StatusBadge label={grn.status === 'draft' ? 'Not received yet' : 'Received'} variant={grn.status === 'draft' ? 'warning' : 'success'} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <p className="mb-3 text-sm font-semibold text-foreground">Supplier bills</p>
+              {(po.supplier_bills ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No bill yet — one is created when the goods are received.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {po.supplier_bills!.map((bill) => (
+                    <li key={bill.id} className="flex items-center justify-between py-2 text-sm">
+                      <button type="button" className="font-medium text-primary hover:underline" onClick={() => navigate(`/supplier-bills/${bill.id}`)}>
+                        {bill.reference_number}
+                      </button>
+                      <span className="flex items-center gap-2">
+                        <span className="tabular-nums text-foreground">{formatCurrency(bill.total_amount)}</span>
+                        <StatusBadge label={bill.status.replace('_', ' ')} variant={bill.status === 'paid' ? 'success' : bill.status === 'overdue' ? 'danger' : 'warning'} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {receivingStatus && (
         <Card>
           <CardContent className="p-6">

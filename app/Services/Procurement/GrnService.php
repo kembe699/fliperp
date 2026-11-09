@@ -5,6 +5,7 @@ namespace App\Services\Procurement;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\GoodsReceivedNote;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -40,8 +41,17 @@ class GrnService
         return GoodsReceivedNote::query()->with('items')->latest('received_date')->paginate($perPage);
     }
 
+    /**
+     * Records a goods received note. With $data['receive'] the goods are received
+     * straight away — stock in, inventory/payable entry, supplier bill — in the
+     * same transaction, so receiving is one step and a failure leaves nothing.
+     */
     public function create(array $data): GoodsReceivedNote
     {
+        if (! empty($data['receive'])) {
+            return DB::transaction(fn () => $this->confirm($this->create(['receive' => false] + $data)));
+        }
+
         return DB::transaction(function () use ($data) {
             $grn = GoodsReceivedNote::create([
                 'purchase_order_id' => $data['purchase_order_id'] ?? null,
@@ -109,6 +119,16 @@ class GrnService
             if ($grn->status !== 'draft') {
                 throw ValidationException::withMessages([
                     'status' => ['Only draft GRNs can be confirmed.'],
+                ]);
+            }
+
+            // The supplier bill is built from these costs: a good item received at
+            // 0 would silently leave the receipt without a bill.
+            $uncosted = $grn->items->filter(fn ($item) => $item->condition === 'good' && (float) $item->unit_cost <= 0);
+            if ($uncosted->isNotEmpty()) {
+                $names = Product::query()->whereIn('id', $uncosted->pluck('product_id'))->pluck('name')->implode(', ');
+                throw ValidationException::withMessages([
+                    'items' => ["Enter the unit cost for {$names} — the supplier bill is made from the cost of the goods received."],
                 ]);
             }
 
