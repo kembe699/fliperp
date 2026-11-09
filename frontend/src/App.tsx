@@ -102,6 +102,8 @@ import { BalanceSheetReportPage } from '@/pages/accounting/BalanceSheetReportPag
 import { GeneralLedgerReportPage } from '@/pages/accounting/GeneralLedgerReportPage'
 import { CashFlowReportPage } from '@/pages/accounting/CashFlowReportPage'
 import { ShiftReportPage } from '@/pages/accounting/ShiftReportPage'
+import { ReportsCenterLayout } from '@/pages/reports-center/ReportsCenterLayout'
+import { CenterReportPage } from '@/pages/reports-center/CenterReportPage'
 
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { CompanySettingsPage } from '@/pages/settings/CompanySettingsPage'
@@ -178,6 +180,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/reports/general-ledger',
   '/reports/cash-flow',
   '/reports/shift-report',
+  '/reports-center',
   '/settings/company',
   '/settings/branches',
   '/settings/users',
@@ -338,6 +341,17 @@ function App() {
               element={<ComingSoonPage title={route.title} parent={route.parent} />}
             />
           ))}
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <ReportsCenterLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/reports-center" element={<Navigate to="/reports-center/overview" replace />} />
+          <Route path="/reports-center/:reportId" element={<CenterReportPage />} />
         </Route>
 
         <Route

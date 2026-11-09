@@ -66,6 +66,7 @@ use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\ReportsCenterController;
 use App\Http\Controllers\Api\RestaurantTableController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SalaryStructureController;
@@ -381,6 +382,7 @@ Route::prefix('v1')->group(function () {
             Route::get('reports/receivables', [ReportController::class, 'receivables']);
             Route::get('reports/payables', [ReportController::class, 'payables']);
             Route::get('reports/snapshots', [ReportController::class, 'snapshots']);
+            Route::get('reports/center/{report}', [ReportsCenterController::class, 'show']);
         });
         Route::post('reports/{type}/snapshot', [ReportController::class, 'snapshot'])
             ->middleware('permission:reports.snapshot');
