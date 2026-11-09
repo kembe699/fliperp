@@ -272,7 +272,7 @@ function KpiGrid({ data }: { data: CenterReport }) {
         <Card key={k.key}>
           <CardContent className="p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{k.label}</p>
-            <p className={`mt-1 text-xl font-bold tabular-nums ${k.key === 'net_profit' && k.value < 0 ? 'text-destructive' : 'text-foreground'}`}>
+            <p className={`mt-1 break-words text-base font-bold tabular-nums sm:text-xl ${k.key === 'net_profit' && k.value < 0 ? 'text-destructive' : 'text-foreground'}`}>
               {formatValue(k.type, k.value)}
             </p>
             {k.sub && <p className="text-xs text-muted-foreground">{k.sub}</p>}
