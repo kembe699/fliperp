@@ -24,6 +24,7 @@ class ReportsCenterController extends Controller
             'group_by' => ['nullable', 'string', 'max:30'],
             'source' => ['nullable', Rule::in(['all', 'pos', 'invoice'])],
             'status' => ['nullable', 'string', 'max:30'],
+            'account_type' => ['nullable', Rule::in(['asset', 'liability', 'equity', 'revenue', 'expense'])],
         ]);
         $filters['from'] ??= now()->startOfMonth()->toDateString();
         $filters['to'] ??= now()->toDateString();

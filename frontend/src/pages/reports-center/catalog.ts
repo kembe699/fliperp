@@ -52,9 +52,12 @@ export interface CenterEntry extends Base {
   report: string
   groupBy?: Option[]
   source?: Option[]
-  status?: { label: string; options: Option[] }
+  /** allLabel names the default (no filter) choice, "All" when not set. */
+  status?: { label: string; options: Option[]; allLabel?: string }
   /** Stock on hand is "as at now": no date range. */
   noDates?: boolean
+  /** Offer an account type filter (asset, liability, …). */
+  accountType?: boolean
 }
 
 /** An existing accounting report page, shown inside the Reports Center. */
@@ -135,7 +138,12 @@ export const CATALOG: CatalogEntry[] = [
   { kind: 'page', id: 'profit-and-loss', label: 'Profit & Loss', desc: 'Income statement for the period', group: 'Accounting', icon: FileBarChart, component: ProfitAndLossReportPage },
   { kind: 'page', id: 'balance-sheet', label: 'Balance Sheet', desc: 'Assets, liabilities and equity at a date', group: 'Accounting', icon: Scale, component: BalanceSheetReportPage },
   { kind: 'page', id: 'trial-balance', label: 'Trial Balance', desc: 'Every account balance, debits against credits', group: 'Accounting', icon: ClipboardList, component: TrialBalanceReportPage },
-  { kind: 'page', id: 'general-ledger', label: 'General Ledger', desc: 'Every posting to an account', group: 'Accounting', icon: BookOpen, component: GeneralLedgerReportPage },
+  {
+    kind: 'center', id: 'general-ledger', report: 'general-ledger', label: 'General Ledger', desc: 'Every journal entry — open a line to see its accounts', group: 'Accounting', icon: BookOpen,
+    accountType: true,
+    status: { label: 'Status', allLabel: 'Posted & reversed', options: [{ value: 'posted', label: 'Posted' }, { value: 'reversed', label: 'Reversed' }, { value: 'draft', label: 'Draft' }, { value: 'all', label: 'Every status' }] },
+  },
+  { kind: 'page', id: 'account-ledger', label: 'Account Ledger', desc: 'One account: every posting and its running balance', group: 'Accounting', icon: BookOpen, component: GeneralLedgerReportPage },
   { kind: 'page', id: 'cash-flow', label: 'Cash Flow', desc: 'Cash in and out by activity', group: 'Accounting', icon: Waves, component: CashFlowReportPage },
 
   {
