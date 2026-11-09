@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Calendar, Printer, RefreshCw } from 'lucide-react'
 
-import { fetchCenterReport, type AuditChange, type CenterColumn, type CenterReport, type CenterRow } from '@/api/reportsCenter'
+import { fetchCenterReport, type AuditChange, type CenterColumn, type CenterReport, type CenterRow, type JournalLine } from '@/api/reportsCenter'
 import { fetchBranches } from '@/api/branches'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
@@ -89,6 +89,7 @@ function CenterReport({ entry }: { entry: CenterEntry }) {
   const [groupBy, setGroupBy] = useState(entry.groupBy?.[0]?.value ?? '')
   const [source, setSource] = useState(entry.source?.[0]?.value ?? 'all')
   const [status, setStatus] = useState(ALL)
+  const [accountType, setAccountType] = useState(ALL)
 
   const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches, staleTime: 5 * 60_000 })
   const params = {
@@ -98,6 +99,7 @@ function CenterReport({ entry }: { entry: CenterEntry }) {
     group_by: groupBy || undefined,
     source: entry.source ? source : undefined,
     status: status === ALL ? undefined : status,
+    account_type: entry.accountType && accountType !== ALL ? accountType : undefined,
   }
   const { data, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['reports-center', entry.report, params],
@@ -202,10 +204,27 @@ function CenterReport({ entry }: { entry: CenterEntry }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>All</SelectItem>
+                  <SelectItem value={ALL}>{entry.status.allLabel ?? 'All'}</SelectItem>
                   {entry.status.options.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
                       {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+          {entry.accountType && (
+            <Field label="Account type">
+              <Select value={accountType} onValueChange={setAccountType}>
+                <SelectTrigger className="h-9 w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>All types</SelectItem>
+                  {['asset', 'liability', 'equity', 'revenue', 'expense'].map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -352,8 +371,62 @@ function ReportTable({ entry, data, loading, fileName, title }: { entry: CenterE
       dateFilterKey={false}
       toolbarExtra={<span />}
       pageSize={50}
-      renderExpanded={data?.rows.some((row) => Array.isArray(row.changes)) ? (row) => <AuditDetails row={row} /> : undefined}
+      renderExpanded={
+        data?.rows.some((row) => Array.isArray(row.changes))
+          ? (row) => <AuditDetails row={row} />
+          : data?.rows.some((row) => Array.isArray(row.lines))
+            ? (row) => <JournalLines row={row} />
+            : undefined
+      }
     />
+  )
+}
+
+/** One journal entry's account lines (the IntelliCare general-ledger drop-down). */
+function JournalLines({ row }: { row: CenterRow }) {
+  const lines = (row.lines as JournalLine[] | undefined) ?? []
+  const totalDebit = lines.reduce((s, l) => s + Number(l.debit), 0)
+  const totalCredit = lines.reduce((s, l) => s + Number(l.credit), 0)
+  return (
+    <div className="px-6 py-4">
+      <div className="ml-6 overflow-x-auto rounded-lg border border-border bg-card">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="px-4 py-2.5 font-semibold">Account</th>
+              <th className="px-4 py-2.5 font-semibold">Type</th>
+              <th className="px-4 py-2.5 text-right font-semibold">Debit</th>
+              <th className="px-4 py-2.5 text-right font-semibold">Credit</th>
+              <th className="px-4 py-2.5 font-semibold">Description</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {lines.map((l, i) => (
+              <tr key={i}>
+                <td className="whitespace-nowrap px-4 py-2.5">
+                  <span className="font-mono text-xs text-primary">{l.code}</span> <span className="text-foreground">{l.account}</span>
+                </td>
+                <td className="px-4 py-2.5 capitalize text-muted-foreground">{l.type}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{Number(l.debit) ? formatCurrency(Number(l.debit)) : '—'}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{Number(l.credit) ? formatCurrency(Number(l.credit)) : '—'}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{l.description || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-border bg-muted/30 font-semibold">
+              <td className="px-4 py-2.5" colSpan={2}>
+                Total
+                {row.posted_by ? <span className="ml-2 text-xs font-normal text-muted-foreground">posted by {String(row.posted_by)}</span> : null}
+              </td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{formatCurrency(totalDebit)}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{formatCurrency(totalCredit)}</td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
   )
 }
 

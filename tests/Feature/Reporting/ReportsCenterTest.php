@@ -103,3 +103,19 @@ it('needs reports.view', function () {
     Sanctum::actingAs(createUserWithRole('cashier', $this->company, $this->branch), ['*']);
     $this->getJson('/api/v1/reports/center/overview')->assertForbidden();
 });
+
+it('general ledger lists each journal entry with its lines, and the lines balance', function () {
+    $data = center('general-ledger');
+
+    expect($data['rows'])->not->toBeEmpty();
+    foreach ($data['rows'] as $row) {
+        $lines = collect($row['lines']);
+        expect($lines)->not->toBeEmpty()
+            ->and(round($lines->sum('debit'), 2))->toBe(round($lines->sum('credit'), 2))
+            ->and((float) $row['debit'])->toBe(round($lines->sum('debit'), 2));
+    }
+
+    // Revenue-type filter: only entries touching revenue, totals count the revenue lines.
+    $revenue = center('general-ledger', ['account_type' => 'revenue']);
+    expect((float) $revenue['totals']['credit'])->toBe(3000.0);
+});

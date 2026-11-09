@@ -17,6 +17,15 @@ export interface CenterKpi {
   sub?: string
 }
 
+export interface JournalLine {
+  code: string
+  account: string
+  type: string
+  debit: number
+  credit: number
+  description: string
+}
+
 export interface AuditChange {
   field: string
   from: unknown
@@ -24,7 +33,7 @@ export interface AuditChange {
 }
 
 /** Most cells are text or numbers; an audit line also carries the fields it changed. */
-export type CenterRow = Record<string, string | number | null | AuditChange[]>
+export type CenterRow = Record<string, string | number | null | AuditChange[] | JournalLine[]>
 
 /** Every Reports Center report comes back in this one shape. */
 export interface CenterReport {
@@ -44,6 +53,7 @@ export interface CenterParams {
   group_by?: string
   source?: string
   status?: string
+  account_type?: string
 }
 
 export async function fetchCenterReport(report: string, params: CenterParams): Promise<CenterReport> {

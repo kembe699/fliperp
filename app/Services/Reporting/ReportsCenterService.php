@@ -25,7 +25,7 @@ class ReportsCenterService
 {
     public const REPORTS = [
         'overview', 'revenue-accounts', 'expense-accounts', 'revenue', 'collections',
-        'purchases', 'supplier-payments', 'stock', 'stock-movements', 'payroll', 'audit',
+        'purchases', 'supplier-payments', 'stock', 'stock-movements', 'payroll', 'audit', 'general-ledger',
     ];
 
     /** Invoice statuses that count as revenue (raised and not withdrawn). */
@@ -50,6 +50,7 @@ class ReportsCenterService
             'stock-movements' => $this->stockMovements($companyId, $f),
             'payroll' => $this->payroll($companyId, $f),
             'audit' => $this->audit($companyId, $f),
+            'general-ledger' => $this->generalLedger($companyId, $f),
             default => throw new InvalidArgumentException("Unknown report {$report}"),
         };
     }
@@ -557,6 +558,80 @@ class ReportsCenterService
             'columns' => [$this->col('group', $label, 'text'), $this->col('payslips', 'Payslips', 'number'), $this->col('gross', 'Gross pay', 'money'), $this->col('deductions', 'Deductions', 'money'), $this->col('net', 'Net pay', 'money')],
             'rows' => $out->all(),
             'totals' => $this->sumColumns($out, ['payslips', 'gross', 'deductions', 'net']),
+        ];
+    }
+
+    // ── General ledger (journal entries, each opening to its lines) ────────
+
+    /**
+     * Every journal entry in the period — one row each with its totals, and its
+     * account lines for the drop-down. status: posted (default: posted and
+     * reversed, the entries the ledger counts), draft, reversed or all.
+     * account_type keeps entries touching that type of account.
+     */
+    protected function generalLedger(int $companyId, array $f): array
+    {
+        $status = $f['status'] ?? null;
+        $statuses = match ($status) {
+            'all' => null,
+            'posted', 'draft', 'reversed' => [$status],
+            default => JournalEntry::LEDGER_STATUSES,
+        };
+        $type = $f['account_type'] ?? null;
+
+        $entries = DB::table('journal_entries')
+            ->leftJoin('branches', 'branches.id', '=', 'journal_entries.branch_id')
+            ->leftJoin('users', 'users.id', '=', 'journal_entries.posted_by')
+            ->where('journal_entries.company_id', $companyId)
+            ->whereBetween('journal_entries.entry_date', [$f['from'], $f['to']])
+            ->when($statuses, fn ($q) => $q->whereIn('journal_entries.status', $statuses))
+            ->when($f['branch_id'] ?? null, fn ($q, $b) => $q->where('journal_entries.branch_id', $b))
+            ->when($type, fn ($q) => $q->whereExists(fn ($sub) => $sub->selectRaw('1')->from('journal_entry_lines')
+                ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_entry_lines.account_id')
+                ->whereColumn('journal_entry_lines.journal_entry_id', 'journal_entries.id')
+                ->where('chart_of_accounts.type', $type)))
+            ->orderBy('journal_entries.entry_date')->orderBy('journal_entries.id')
+            ->limit(5000)
+            ->get(['journal_entries.id', 'journal_entries.entry_date', 'journal_entries.reference_number', 'journal_entries.description', 'journal_entries.source_module', 'journal_entries.status', 'branches.name AS branch', 'users.name AS posted_by']);
+
+        $lines = DB::table('journal_entry_lines')
+            ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_entry_lines.account_id')
+            ->whereIn('journal_entry_lines.journal_entry_id', $entries->pluck('id'))
+            ->orderBy('journal_entry_lines.id')
+            ->get(['journal_entry_lines.journal_entry_id', 'journal_entry_lines.debit', 'journal_entry_lines.credit', 'journal_entry_lines.description', 'chart_of_accounts.code', 'chart_of_accounts.name', 'chart_of_accounts.type'])
+            ->groupBy('journal_entry_id');
+
+        $rows = $entries->map(function ($e) use ($lines, $type) {
+            $own = collect($lines->get($e->id, []));
+            // With an account-type filter the totals count only that type's lines (the others still show).
+            $counted = $type ? $own->where('type', $type) : $own;
+
+            return [
+                'date' => substr((string) $e->entry_date, 0, 10),
+                'reference' => $e->reference_number,
+                'source' => $e->source_module ? ucfirst(str_replace('_', ' ', $e->source_module)) : 'Manual',
+                'description' => $e->description ?: '',
+                'branch' => $e->branch ?: '—',
+                'status' => $e->status,
+                'debit' => round($counted->sum('debit'), 2),
+                'credit' => round($counted->sum('credit'), 2),
+                'posted_by' => $e->posted_by ?: '',
+                'lines' => $own->map(fn ($l) => [
+                    'code' => $l->code, 'account' => $l->name, 'type' => $l->type,
+                    'debit' => round((float) $l->debit, 2), 'credit' => round((float) $l->credit, 2),
+                    'description' => $l->description ?: '',
+                ])->values()->all(),
+            ];
+        });
+
+        return [
+            'columns' => [
+                $this->col('date', 'Date', 'date'), $this->col('reference', 'Entry', 'text'), $this->col('source', 'Type', 'text'),
+                $this->col('description', 'Description', 'text'), $this->col('branch', 'Branch', 'text'), $this->col('status', 'Status', 'text'),
+                $this->col('debit', 'Debit', 'money'), $this->col('credit', 'Credit', 'money'),
+            ],
+            'rows' => $rows->all(),
+            'totals' => $this->sumColumns($rows, ['debit', 'credit']),
         ];
     }
 

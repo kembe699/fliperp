@@ -121,7 +121,7 @@ export interface LeaveRequest {
   approved_by: number | null
 }
 
-export type PayrollRunStatus = 'draft' | 'processed'
+export type PayrollRunStatus = 'draft' | 'processed' | 'paid'
 
 export interface PayrollRun {
   id: number
@@ -142,6 +142,22 @@ export interface Payslip {
   total_deductions: number
   net_pay: number
   breakdown: { basic_salary: number; allowances: Record<string, number>; deductions: Record<string, number> }
+  employee_name?: string
+  employee_code?: string
+  department?: string | null
+  /** Set once the salary has been paid out. */
+  paid_at?: string | null
+  paid_by_name?: string | null
+  payment_type_name?: string | null
+  payment_account_name?: string | null
+  payment_reference?: string | null
+}
+
+export interface SalaryPaymentInput {
+  payment_type_id?: number
+  account_id?: number
+  reference?: string
+  paid_at?: string
 }
 
 export interface SalaryStructure {

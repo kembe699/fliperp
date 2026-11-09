@@ -14,6 +14,12 @@ class Payslip extends Model
         'total_deductions',
         'net_pay',
         'breakdown',
+        'paid_at',
+        'paid_by',
+        'payment_type_id',
+        'payment_account_id',
+        'payment_reference',
+        'payment_journal_entry_id',
     ];
 
     protected function casts(): array
@@ -23,6 +29,7 @@ class Payslip extends Model
             'total_deductions' => 'decimal:2',
             'net_pay' => 'decimal:2',
             'breakdown' => 'array',
+            'paid_at' => 'datetime',
         ];
     }
 
@@ -34,5 +41,20 @@ class Payslip extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function paidBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    public function paymentType(): BelongsTo
+    {
+        return $this->belongsTo(PaymentType::class);
+    }
+
+    public function paymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'payment_account_id');
     }
 }

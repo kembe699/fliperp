@@ -26,4 +26,10 @@ class PayrollRunPolicy
     {
         return $user->can('payroll-runs.process') && $payrollRun->company_id === $user->company_id;
     }
+
+    /** Paying salaries out: whoever can process the run. */
+    public function pay(User $user, PayrollRun $payrollRun): bool
+    {
+        return $this->process($user, $payrollRun);
+    }
 }

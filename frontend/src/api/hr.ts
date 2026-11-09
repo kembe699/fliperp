@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { downloadFile } from '@/lib/pdf-download'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
 import type {
   Attendance,
@@ -12,6 +13,7 @@ import type {
   LeaveType,
   PayrollRun,
   Payslip,
+  SalaryPaymentInput,
   Position,
   SalaryStructure,
   StatutoryDeductionRule,
@@ -260,6 +262,22 @@ export async function processPayrollRun(id: number): Promise<PayrollRun> {
 export async function fetchPayslips(payrollRunId: number): Promise<Payslip[]> {
   const { data } = await api.get<ApiResponse<Payslip[]>>(`/payroll-runs/${payrollRunId}/payslips`)
   return data.data
+}
+
+/** Pay one employee's salary from a processed run. */
+export async function payPayslip(payrollRunId: number, payslipId: number, values: SalaryPaymentInput): Promise<Payslip> {
+  const { data } = await api.post<ApiResponse<Payslip>>(`/payroll-runs/${payrollRunId}/payslips/${payslipId}/pay`, values)
+  return data.data
+}
+
+/** Pay everyone in the run who hasn't been paid yet. */
+export async function payAllPayslips(payrollRunId: number, values: SalaryPaymentInput): Promise<{ paid: number }> {
+  const { data } = await api.post<ApiResponse<{ paid: number }>>(`/payroll-runs/${payrollRunId}/pay-all`, values)
+  return data.data
+}
+
+export function downloadPayrollExcel(payrollRunId: number, filename: string): Promise<void> {
+  return downloadFile(`/payroll-runs/${payrollRunId}/export`, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }
 
 // Statutory deduction rules

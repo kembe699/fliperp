@@ -222,6 +222,9 @@ Route::prefix('v1')->group(function () {
         Route::get('payroll-runs/{payroll_run}', [PayrollRunController::class, 'show']);
         Route::post('payroll-runs/{payroll_run}/process', [PayrollRunController::class, 'process']);
         Route::get('payroll-runs/{payroll_run}/payslips', [PayrollRunController::class, 'payslips']);
+        Route::post('payroll-runs/{payroll_run}/payslips/{payslip}/pay', [PayrollRunController::class, 'pay']);
+        Route::post('payroll-runs/{payroll_run}/pay-all', [PayrollRunController::class, 'payAll']);
+        Route::get('payroll-runs/{payroll_run}/export', [PayrollRunController::class, 'export']);
 
         Route::apiResource('salary-structures', SalaryStructureController::class);
         Route::apiResource('statutory-deduction-rules', StatutoryDeductionRuleController::class);

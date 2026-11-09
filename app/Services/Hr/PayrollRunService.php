@@ -24,6 +24,9 @@ class PayrollRunService
 
     public const NET_SALARIES_PAYABLE_ACCOUNT_CODE = '2200';
 
+    /** Salaries are paid out of cash unless another cash/bank account is chosen. */
+    public const CASH_ACCOUNT_CODE = '1000';
+
     public function __construct(
         protected JournalEntryService $journalEntryService,
         protected NotificationRecipientResolver $recipientResolver,
@@ -134,6 +137,83 @@ class PayrollRunService
 
             return $payrollRun->fresh(['payslips', 'journalEntry.lines']);
         });
+    }
+
+    /**
+     * Pays one employee's net salary: Dr Net Salaries Payable, Cr the cash/bank
+     * account it left from. Once every payslip of the run is paid, the run is paid.
+     *
+     * @param  array{payment_type_id?:int|null, account_id?:int|null, reference?:string|null, paid_at?:string|null}  $data
+     */
+    public function payPayslip(Payslip $payslip, array $data = []): Payslip
+    {
+        return DB::transaction(function () use ($payslip, $data) {
+            $payslip = Payslip::query()->lockForUpdate()->with('payrollRun', 'employee')->findOrFail($payslip->id);
+            $run = $payslip->payrollRun;
+
+            if (! in_array($run->status, ['processed', 'paid'], true)) {
+                throw ValidationException::withMessages(['payroll_run' => ['Process the payroll run before paying salaries.']]);
+            }
+            if ($payslip->paid_at) {
+                throw ValidationException::withMessages(['payslip' => ["{$this->employeeName($payslip)} was already paid on {$payslip->paid_at->toDateString()}."]]);
+            }
+
+            $companyId = $run->company_id;
+            $payable = $this->resolveAccount($companyId, self::NET_SALARIES_PAYABLE_ACCOUNT_CODE);
+            $from = ! empty($data['account_id'])
+                ? ChartOfAccount::query()->where('company_id', $companyId)->where('type', 'asset')->findOrFail($data['account_id'])
+                : $this->resolveAccount($companyId, self::CASH_ACCOUNT_CODE);
+            $paidAt = ! empty($data['paid_at']) ? \Illuminate\Support\Carbon::parse($data['paid_at']) : now();
+            $amount = round((float) $payslip->net_pay, 2);
+
+            $entry = $amount > 0 ? $this->journalEntryService->postModuleEntry([
+                'branch_id' => $run->branch_id,
+                'reference_number' => 'SALPAY-'.$payslip->id.'-'.now()->format('YmdHis'),
+                'entry_date' => $paidAt->toDateString(),
+                'description' => "Salary paid to {$this->employeeName($payslip)} ({$run->period_start} to {$run->period_end})",
+                'source_module' => 'payroll',
+                'source_id' => $run->id,
+                'lines' => [
+                    ['account_id' => $payable->id, 'debit' => $amount, 'credit' => 0, 'description' => 'Net salary settled'],
+                    ['account_id' => $from->id, 'debit' => 0, 'credit' => $amount, 'description' => 'Salary paid'],
+                ],
+            ]) : null;
+
+            $payslip->update([
+                'paid_at' => $paidAt,
+                'paid_by' => Auth::id(),
+                'payment_type_id' => $data['payment_type_id'] ?? null,
+                'payment_account_id' => $from->id,
+                'payment_reference' => $data['reference'] ?? null,
+                'payment_journal_entry_id' => $entry?->id,
+            ]);
+
+            if (! $run->payslips()->whereNull('paid_at')->exists()) {
+                $run->update(['status' => 'paid']);
+            }
+
+            return $payslip->fresh(['paidBy', 'paymentType', 'paymentAccount']);
+        });
+    }
+
+    /** Pays every unpaid payslip of the run (one journal entry each, so each payment can be traced). */
+    public function payAll(PayrollRun $payrollRun, array $data = []): int
+    {
+        $unpaid = $payrollRun->payslips()->whereNull('paid_at')->get();
+        DB::transaction(function () use ($unpaid, $data) {
+            foreach ($unpaid as $payslip) {
+                $this->payPayslip($payslip, $data);
+            }
+        });
+
+        return $unpaid->count();
+    }
+
+    protected function employeeName(Payslip $payslip): string
+    {
+        $employee = $payslip->employee;
+
+        return $employee ? trim($employee->first_name.' '.$employee->last_name) : 'Employee #'.$payslip->employee_id;
     }
 
     protected function postPayrollJournal(PayrollRun $payrollRun, float $totalGross, float $totalDeductions, float $totalNet)
