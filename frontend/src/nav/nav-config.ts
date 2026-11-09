@@ -12,6 +12,7 @@ import {
   Settings,
   Contact,
   HandCoins,
+  FileBarChart,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -149,6 +150,8 @@ export const navConfig: NavItem[] = [
       { label: 'Shift Report', path: '/reports/shift-report', requiredPermission: 'cash-drawer-sessions.view' },
     ],
   },
+  // Every report in one full-screen place (sidebar of reports, filters, CSV/PDF/print).
+  { label: 'Reports Center', path: '/reports-center', icon: FileBarChart, requiredPermission: 'reports.view' },
   {
     label: 'Settings',
     path: '/settings',
