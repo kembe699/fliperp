@@ -119,3 +119,16 @@ it('general ledger lists each journal entry with its lines, and the lines balanc
     $revenue = center('general-ledger', ['account_type' => 'revenue']);
     expect((float) $revenue['totals']['credit'])->toBe(3000.0);
 });
+
+it('general ledger names the account debited and the account credited on each transaction', function () {
+    $rows = collect(center('general-ledger')['rows']);
+
+    // The supplier payment: accounts payable debited, cash credited.
+    $payment = $rows->first(fn ($r) => str_contains($r['debited'], '2000') && str_contains($r['credited'], '1000'));
+    expect($payment)->not->toBeNull()
+        ->and((float) $payment['debit'])->toBe(3000.0);
+
+    foreach ($rows as $row) {
+        expect($row['debited'])->not->toBe('—')->and($row['credited'])->not->toBe('—');
+    }
+});

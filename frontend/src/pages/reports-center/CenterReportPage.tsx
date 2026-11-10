@@ -81,7 +81,7 @@ export function CenterReportPage() {
   return <CenterReport key={entry.id} entry={entry} />
 }
 
-function CenterReport({ entry }: { entry: CenterEntry }) {
+export function CenterReport({ entry }: { entry: CenterEntry }) {
   const company = useAuthStore((state) => state.company)
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
@@ -350,7 +350,7 @@ function ReportTable({ entry, data, loading, fileName, title }: { entry: CenterE
         key: c.key,
         header: c.label,
         sortable: true,
-        className: c.type === 'money' || c.type === 'number' || c.type === 'percent' ? 'text-right tabular-nums' : undefined,
+        className: c.type === 'money' || c.type === 'number' || c.type === 'percent' ? 'whitespace-nowrap text-right tabular-nums' : c.type === 'date' ? 'whitespace-nowrap' : undefined,
         accessor: (row) => (c.type === 'text' || c.type === 'date' ? (row[c.key] as string | null) : Number(row[c.key] ?? 0)),
         render: (row) => formatValue(c.type, row[c.key]),
         filterable: false,
