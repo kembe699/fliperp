@@ -156,9 +156,9 @@ class RfqService
     }
 
     /**
-     * Turns the RFQ into a draft purchase order for the chosen supplier, at the
-     * prices that supplier quoted (an item they didn't price uses the
-     * product's cost price). The PO then follows the usual submit / approve.
+     * Turns the RFQ into a purchase order for the chosen supplier, at the prices
+     * that supplier quoted (an item they didn't price uses the product's cost
+     * price), and submits it for approval like a PO raised from the form.
      *
      * @param  array{warehouse_id?:int|null, branch_id?:int|null, order_date?:string|null, expected_delivery_date?:string|null}  $data
      */
@@ -195,6 +195,11 @@ class RfqService
             ]);
 
             $rfq->update(['status' => 'converted', 'selected_supplier_id' => $supplierId, 'purchase_order_id' => $po->id]);
+
+            // Like a PO raised from the form: straight to approval, when this user may submit.
+            if (Auth::user()?->can('purchase-orders.submit')) {
+                $po = $this->purchaseOrderService->submit($po);
+            }
 
             return $po;
         });

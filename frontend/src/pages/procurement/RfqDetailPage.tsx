@@ -503,7 +503,7 @@ function ConvertDialog({
             <Label>Order date</Label>
             <Input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
           </div>
-          <p className="text-xs text-muted-foreground">The purchase order is created as a draft; submit and approve it as usual. This RFQ is then closed.</p>
+          <p className="text-xs text-muted-foreground">The purchase order is created and sent for approval, like one raised from the form. This RFQ is then closed.</p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
