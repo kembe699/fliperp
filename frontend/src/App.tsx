@@ -99,7 +99,7 @@ import { AccountingPeriodsPage } from '@/pages/accounting/AccountingPeriodsPage'
 import { TrialBalanceReportPage } from '@/pages/accounting/TrialBalanceReportPage'
 import { ProfitAndLossReportPage } from '@/pages/accounting/ProfitAndLossReportPage'
 import { BalanceSheetReportPage } from '@/pages/accounting/BalanceSheetReportPage'
-import { GeneralLedgerReportPage } from '@/pages/accounting/GeneralLedgerReportPage'
+import { GeneralLedgerJournalPage } from '@/pages/accounting/GeneralLedgerJournalPage'
 import { CashFlowReportPage } from '@/pages/accounting/CashFlowReportPage'
 import { ShiftReportPage } from '@/pages/accounting/ShiftReportPage'
 import { ReportsCenterLayout } from '@/pages/reports-center/ReportsCenterLayout'
@@ -320,7 +320,7 @@ function App() {
           <Route path="/reports/trial-balance" element={<TrialBalanceReportPage />} />
           <Route path="/reports/profit-and-loss" element={<ProfitAndLossReportPage />} />
           <Route path="/reports/balance-sheet" element={<BalanceSheetReportPage />} />
-          <Route path="/reports/general-ledger" element={<GeneralLedgerReportPage />} />
+          <Route path="/reports/general-ledger" element={<GeneralLedgerJournalPage />} />
           <Route path="/reports/cash-flow" element={<CashFlowReportPage />} />
           <Route path="/reports/shift-report" element={<ShiftReportPage />} />
 

@@ -606,9 +606,15 @@ class ReportsCenterService
             // With an account-type filter the totals count only that type's lines (the others still show).
             $counted = $type ? $own->where('type', $type) : $own;
 
+            // Which accounts were debited and which credited, readable on the line itself.
+            $named = fn ($side) => $own->filter(fn ($l) => (float) $l->{$side} > 0)
+                ->map(fn ($l) => $l->code.' '.$l->name)->unique()->implode(', ');
+
             return [
                 'date' => substr((string) $e->entry_date, 0, 10),
                 'reference' => $e->reference_number,
+                'debited' => $named('debit') ?: '—',
+                'credited' => $named('credit') ?: '—',
                 'source' => $e->source_module ? ucfirst(str_replace('_', ' ', $e->source_module)) : 'Manual',
                 'description' => $e->description ?: '',
                 'branch' => $e->branch ?: '—',
@@ -626,9 +632,10 @@ class ReportsCenterService
 
         return [
             'columns' => [
-                $this->col('date', 'Date', 'date'), $this->col('reference', 'Entry', 'text'), $this->col('source', 'Type', 'text'),
-                $this->col('description', 'Description', 'text'), $this->col('branch', 'Branch', 'text'), $this->col('status', 'Status', 'text'),
+                $this->col('date', 'Date', 'date'), $this->col('reference', 'Transaction no.', 'text'), $this->col('description', 'Description', 'text'),
+                $this->col('debited', 'Debit account', 'text'), $this->col('credited', 'Credit account', 'text'),
                 $this->col('debit', 'Debit', 'money'), $this->col('credit', 'Credit', 'money'),
+                $this->col('source', 'Type', 'text'), $this->col('branch', 'Branch', 'text'), $this->col('status', 'Status', 'text'),
             ],
             'rows' => $rows->all(),
             'totals' => $this->sumColumns($rows, ['debit', 'credit']),
