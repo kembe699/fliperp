@@ -18,7 +18,7 @@ class AccountAssignmentService
             ->when(array_key_exists('active', $filters) && $filters['active'] !== null, function ($query) use ($filters) {
                 $filters['active'] ? $query->active() : $query->whereNotNull('unassigned_at');
             })
-            ->latest('assigned_at')
+            ->latest('assigned_at')->latest('id')
             ->paginate($perPage);
     }
 

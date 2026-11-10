@@ -30,7 +30,7 @@ class SupplierPaymentService
         return SupplierPayment::query()
             ->when($filters['supplier_bill_id'] ?? null, fn ($query, $id) => $query->where('supplier_bill_id', $id))
             ->when($filters['supplier_id'] ?? null, fn ($query, $id) => $query->where('supplier_id', $id))
-            ->latest('payment_date')
+            ->latest('payment_date')->latest('id')
             ->paginate($perPage);
     }
 

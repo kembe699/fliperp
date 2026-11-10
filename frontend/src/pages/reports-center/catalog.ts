@@ -4,32 +4,17 @@ import {
   Activity,
   BookOpen,
   Boxes,
-  ClipboardList,
   Coins,
-  FileBarChart,
   HandCoins,
   LayoutDashboard,
   Landmark,
   PackageSearch,
-  Receipt,
-  Scale,
   ShoppingCart,
   TrendingDown,
   TrendingUp,
-  Truck,
   Users,
-  Wallet,
-  Waves,
 } from 'lucide-react'
 
-import { TrialBalanceReportPage } from '@/pages/accounting/TrialBalanceReportPage'
-import { ProfitAndLossReportPage } from '@/pages/accounting/ProfitAndLossReportPage'
-import { BalanceSheetReportPage } from '@/pages/accounting/BalanceSheetReportPage'
-import { GeneralLedgerReportPage } from '@/pages/accounting/GeneralLedgerReportPage'
-import { CashFlowReportPage } from '@/pages/accounting/CashFlowReportPage'
-import { ShiftReportPage } from '@/pages/accounting/ShiftReportPage'
-import { ReceivablesPage } from '@/pages/accounting/ReceivablesPage'
-import { PayablesPage } from '@/pages/accounting/PayablesPage'
 
 export interface Option {
   value: string
@@ -68,7 +53,7 @@ export interface PageEntry extends Base {
 
 export type CatalogEntry = CenterEntry | PageEntry
 
-export const GROUPS = ['Overview', 'Revenue & Sales', 'Expenses & Purchases', 'Inventory', 'Accounting', 'Human Resources', 'Administration']
+export const GROUPS = ['Overview', 'Revenue & Sales', 'Expenses & Purchases', 'Inventory', 'Human Resources', 'Administration']
 
 const SOURCES: Option[] = [
   { value: 'all', label: 'POS sales and invoices' },
@@ -100,8 +85,6 @@ export const CATALOG: CatalogEntry[] = [
     ],
     source: SOURCES,
   },
-  { kind: 'page', id: 'receivables', label: 'Accounts Receivable', desc: 'Open invoices aged by customer', group: 'Revenue & Sales', icon: Receipt, component: ReceivablesPage },
-  { kind: 'page', id: 'shift-report', label: 'Shift Report', desc: 'Cash drawer sessions and variances', group: 'Revenue & Sales', icon: Wallet, component: ShiftReportPage, permission: 'cash-drawer-sessions.view' },
 
   {
     kind: 'center', id: 'expense-accounts', report: 'expense-accounts', label: 'Expenses by Account', desc: 'Every expense account, cost of sales and operating costs', group: 'Expenses & Purchases', icon: TrendingDown,
@@ -116,7 +99,6 @@ export const CATALOG: CatalogEntry[] = [
     kind: 'center', id: 'supplier-payments', report: 'supplier-payments', label: 'Supplier Payments', desc: 'Money paid to suppliers', group: 'Expenses & Purchases', icon: Coins,
     groupBy: [{ value: 'supplier', label: 'By supplier' }, { value: 'method', label: 'By payment method' }, { value: 'staff', label: 'By staff member' }, { value: 'month', label: 'By month' }, { value: 'document', label: 'Every payment' }],
   },
-  { kind: 'page', id: 'payables', label: 'Accounts Payable', desc: 'Open supplier bills aged by supplier', group: 'Expenses & Purchases', icon: Truck, component: PayablesPage },
 
   {
     kind: 'center', id: 'stock', report: 'stock', label: 'Stock on Hand & Valuation', desc: 'What is in stock now, at cost and at selling price', group: 'Inventory', icon: Boxes, noDates: true,
@@ -135,16 +117,6 @@ export const CATALOG: CatalogEntry[] = [
     },
   },
 
-  { kind: 'page', id: 'profit-and-loss', label: 'Profit & Loss', desc: 'Income statement for the period', group: 'Accounting', icon: FileBarChart, component: ProfitAndLossReportPage },
-  { kind: 'page', id: 'balance-sheet', label: 'Balance Sheet', desc: 'Assets, liabilities and equity at a date', group: 'Accounting', icon: Scale, component: BalanceSheetReportPage },
-  { kind: 'page', id: 'trial-balance', label: 'Trial Balance', desc: 'Every account balance, debits against credits', group: 'Accounting', icon: ClipboardList, component: TrialBalanceReportPage },
-  {
-    kind: 'center', id: 'general-ledger', report: 'general-ledger', label: 'General Ledger', desc: 'Every journal entry — open a line to see its accounts', group: 'Accounting', icon: BookOpen,
-    accountType: true,
-    status: { label: 'Status', allLabel: 'Posted & reversed', options: [{ value: 'posted', label: 'Posted' }, { value: 'reversed', label: 'Reversed' }, { value: 'draft', label: 'Draft' }, { value: 'all', label: 'Every status' }] },
-  },
-  { kind: 'page', id: 'account-ledger', label: 'Account Ledger', desc: 'One account: every posting and its running balance', group: 'Accounting', icon: BookOpen, component: GeneralLedgerReportPage },
-  { kind: 'page', id: 'cash-flow', label: 'Cash Flow', desc: 'Cash in and out by activity', group: 'Accounting', icon: Waves, component: CashFlowReportPage },
 
   {
     kind: 'center', id: 'payroll', report: 'payroll', label: 'Payroll Summary', desc: 'Gross pay, deductions and net pay of processed payroll runs', group: 'Human Resources', icon: Users,
@@ -156,5 +128,15 @@ export const CATALOG: CatalogEntry[] = [
     groupBy: [{ value: 'document', label: 'Every action' }, { value: 'user', label: 'By user' }, { value: 'module', label: 'By module' }, { value: 'action', label: 'By action' }],
   },
 ]
+
+/**
+ * The general ledger (every journal entry, opening to its lines). It lives in the
+ * main app (Accounting > General Ledger), so it is not listed in the Reports Center.
+ */
+export const GENERAL_LEDGER: CenterEntry = {
+    kind: 'center', id: 'general-ledger', report: 'general-ledger', label: 'General Ledger', desc: 'Every journal entry — open a line to see its accounts', group: 'Accounting', icon: BookOpen,
+    accountType: true,
+    status: { label: 'Status', allLabel: 'Posted & reversed', options: [{ value: 'posted', label: 'Posted' }, { value: 'reversed', label: 'Reversed' }, { value: 'draft', label: 'Draft' }, { value: 'all', label: 'Every status' }] },
+  }
 
 export const findEntry = (id: string | undefined) => CATALOG.find((entry) => entry.id === id)

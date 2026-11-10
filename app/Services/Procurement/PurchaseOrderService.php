@@ -26,7 +26,7 @@ class PurchaseOrderService
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->when($filters['supplier_id'] ?? null, fn ($query, $id) => $query->where('supplier_id', $id))
             ->when($filters['branch_id'] ?? null, fn ($query, $id) => $query->where('branch_id', $id))
-            ->latest('order_date')
+            ->latest('order_date')->latest('id')
             ->paginate($perPage);
     }
 

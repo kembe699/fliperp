@@ -196,9 +196,31 @@ export function DataTable<T>({
   // Back to page 1 whenever a filter narrows the list.
   useEffect(() => setCurrentPage(1), [search, dateFrom, dateTo, columnFilters])
 
+  // Until a column header is clicked, newest first: by the first column holding
+  // dates (lists the server pages arrive in its own, newest-first, order).
+  const defaultDateColumn = useMemo(() => {
+    if (serverPaged) return null
+    const sample = data.slice(0, 50)
+    if (sample.length === 0) return null
+    return (
+      allColumns.find((column) => {
+        const values = sample.map((row) => valueOf(column, row)).filter((v) => v !== null && v !== undefined && v !== '')
+        return values.length > 0 && values.filter(isIsoDate).length / values.length >= 0.6
+      }) ?? null
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverPaged, data, allColumns])
+
   const sortedData = useMemo(() => {
     const column = allColumns.find((col) => col.key === sortKey)
-    if (!column) return filteredData
+    if (!column) {
+      if (!defaultDateColumn) return filteredData
+      return [...filteredData].sort((a, b) => {
+        const aVal = String(valueOf(defaultDateColumn, a) ?? '')
+        const bVal = String(valueOf(defaultDateColumn, b) ?? '')
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
+      })
+    }
     return [...filteredData].sort((a, b) => {
       const aVal = (valueOf(column, a) ?? '') as string | number
       const bVal = (valueOf(column, b) ?? '') as string | number
@@ -207,7 +229,7 @@ export function DataTable<T>({
       return 0
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredData, sortKey, sortDir, allColumns])
+  }, [filteredData, sortKey, sortDir, allColumns, defaultDateColumn])
 
   const totalPages = serverPaged ? pageCount : Math.max(1, Math.ceil(sortedData.length / pageSize))
   const visibleRows = serverPaged ? sortedData : sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize)

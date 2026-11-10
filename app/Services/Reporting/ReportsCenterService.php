@@ -90,7 +90,7 @@ class ReportsCenterService
                 'period' => $period,
                 'revenue' => round($g->where('t', 'revenue')->sum(fn ($r) => $r->cr - $r->dr), 2),
                 'expenses' => round($g->where('t', 'expense')->sum(fn ($r) => $r->dr - $r->cr), 2),
-            ])->sortKeys()->values();
+            ])->sortKeysDesc()->values();
 
         $kpis = [
             ['key' => 'revenue', 'label' => 'Revenue', 'value' => $pl['revenue']['total'], 'type' => 'money'],
@@ -147,7 +147,7 @@ class ReportsCenterService
                     $a = $accounts->firstWhere('id', (int) $id);
 
                     return ['month' => $month, 'code' => $a->code ?? '', 'name' => $a->name ?? '', 'amount' => $amount($g)];
-                })->sortBy(fn ($r) => $r['month'].$r['code'])->values();
+                })->sortBy(fn ($r) => $r['code'])->sortByDesc('month')->values();
 
             return [
                 'columns' => [$this->col('month', 'Month', 'text'), $this->col('code', 'Code', 'text'), $this->col('name', 'Account', 'text'), $this->col('amount', 'Amount', 'money')],
@@ -198,7 +198,7 @@ class ReportsCenterService
         }
 
         if ($groupBy === 'document') {
-            $rows = $rows->sortBy('date')->values();
+            $rows = $rows->sortByDesc('date')->values(); // newest first
 
             return [
                 'columns' => [
@@ -235,7 +235,7 @@ class ReportsCenterService
             $sumKeys = ['documents', 'revenue', 'tax', 'total', 'paid', 'balance'];
         }
 
-        $sorted = in_array($groupBy, ['day', 'month'], true) ? $grouped->sortKeys() : $grouped->sortByDesc('revenue');
+        $sorted = in_array($groupBy, ['day', 'month'], true) ? $grouped->sortKeysDesc() : $grouped->sortByDesc('revenue');
         $total = $grouped->sum('revenue');
         $out = $sorted->values()->map(fn ($r) => $r + ['share' => $total != 0 ? round($r['revenue'] / $total * 100, 2) : 0.0]);
 
@@ -321,7 +321,7 @@ class ReportsCenterService
         $rows = collect($this->collectionRows($companyId, $f, $f['source'] ?? 'all'));
 
         if ($groupBy === 'document') {
-            $rows = $rows->sortBy('date')->values();
+            $rows = $rows->sortByDesc('date')->values(); // newest first
 
             return [
                 'columns' => [$this->col('date', 'Date', 'date'), $this->col('reference', 'Reference', 'text'), $this->col('source', 'For', 'text'), $this->col('customer', 'Customer', 'text'), $this->col('method', 'Method', 'text'), $this->col('staff', 'Received by', 'text'), $this->col('amount', 'Amount', 'money')],
@@ -395,7 +395,7 @@ class ReportsCenterService
             });
 
         if ($groupBy === 'document') {
-            $rows = $rows->sortBy('date')->values();
+            $rows = $rows->sortByDesc('date')->values(); // newest first
 
             return [
                 'columns' => [$this->col('date', 'Bill date', 'date'), $this->col('due', 'Due', 'date'), $this->col('reference', 'Reference', 'text'), $this->col('supplier', 'Supplier', 'text'), $this->col('status', 'Status', 'text'), $this->col('amount', 'Amount', 'money'), $this->col('paid', 'Paid', 'money'), $this->col('balance', 'Balance', 'money')],
@@ -425,7 +425,7 @@ class ReportsCenterService
             ]);
 
         if ($groupBy === 'document') {
-            $rows = $rows->sortBy('date')->values();
+            $rows = $rows->sortByDesc('date')->values(); // newest first
 
             return [
                 'columns' => [$this->col('date', 'Date', 'date'), $this->col('reference', 'Reference', 'text'), $this->col('bill', 'Bill', 'text'), $this->col('supplier', 'Supplier', 'text'), $this->col('method', 'Method', 'text'), $this->col('staff', 'Paid by', 'text'), $this->col('amount', 'Amount', 'money')],
@@ -507,7 +507,7 @@ class ReportsCenterService
             });
 
         if ($groupBy === 'document') {
-            $rows = $rows->sortBy('date')->values();
+            $rows = $rows->sortByDesc('date')->values(); // newest first
 
             return [
                 'columns' => [$this->col('date', 'Date', 'date'), $this->col('product', 'Product', 'text'), $this->col('warehouse', 'Warehouse', 'text'), $this->col('type', 'Movement', 'text'), $this->col('in', 'In', 'number'), $this->col('out', 'Out', 'number'), $this->col('staff', 'By', 'text'), $this->col('reason', 'Reason', 'text')],
@@ -590,7 +590,7 @@ class ReportsCenterService
                 ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_entry_lines.account_id')
                 ->whereColumn('journal_entry_lines.journal_entry_id', 'journal_entries.id')
                 ->where('chart_of_accounts.type', $type)))
-            ->orderBy('journal_entries.entry_date')->orderBy('journal_entries.id')
+            ->orderByDesc('journal_entries.entry_date')->orderByDesc('journal_entries.id') // newest first
             ->limit(5000)
             ->get(['journal_entries.id', 'journal_entries.entry_date', 'journal_entries.reference_number', 'journal_entries.description', 'journal_entries.source_module', 'journal_entries.status', 'branches.name AS branch', 'users.name AS posted_by']);
 
@@ -774,7 +774,7 @@ class ReportsCenterService
 
             return $row;
         });
-        $sorted = in_array($groupBy, ['day', 'month'], true) ? $grouped->sortKeys() : $grouped->sortByDesc($amountKey);
+        $sorted = in_array($groupBy, ['day', 'month'], true) ? $grouped->sortKeysDesc() : $grouped->sortByDesc($amountKey);
         $total = $grouped->sum($amountKey);
         $out = $sorted->values()->map(fn ($r) => $r + ['share' => $total != 0 ? round($r[$amountKey] / $total * 100, 2) : 0.0]);
 

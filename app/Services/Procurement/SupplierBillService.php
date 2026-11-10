@@ -46,7 +46,7 @@ class SupplierBillService
                     ->where('reference_number', 'ilike', "%{$search}%")
                     ->orWhereHas('supplier', fn ($supplierQuery) => $supplierQuery->where('name', 'ilike', "%{$search}%"))
             ))
-            ->latest('bill_date')
+            ->latest('bill_date')->latest('id')
             ->paginate($perPage);
     }
 

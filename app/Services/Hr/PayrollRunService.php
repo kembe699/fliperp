@@ -34,7 +34,7 @@ class PayrollRunService
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return PayrollRun::query()->latest('period_start')->paginate($perPage);
+        return PayrollRun::query()->latest('period_start')->latest('id')->paginate($perPage);
     }
 
     public function create(array $data): PayrollRun

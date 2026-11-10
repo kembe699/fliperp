@@ -13,7 +13,7 @@ class CustomerServiceRecordService
         return CrmCustomerService::query()
             ->with(['service', 'deal'])
             ->where('customer_id', $customerId)
-            ->latest('start_date')
+            ->latest('start_date')->latest('id')
             ->paginate($perPage);
     }
 

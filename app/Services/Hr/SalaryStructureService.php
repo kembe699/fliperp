@@ -12,7 +12,7 @@ class SalaryStructureService
         return SalaryStructure::query()
             ->whereHas('employee')
             ->when($filters['employee_id'] ?? null, fn ($query, $id) => $query->where('employee_id', $id))
-            ->latest('effective_date')
+            ->latest('effective_date')->latest('id')
             ->paginate($perPage);
     }
 

@@ -28,7 +28,7 @@ class QuotationService
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->when($filters['branch_id'] ?? null, fn ($query, $id) => $query->where('branch_id', $id))
             ->when($filters['customer_id'] ?? null, fn ($query, $id) => $query->where('customer_id', $id))
-            ->latest('quotation_date')
+            ->latest('quotation_date')->latest('id')
             ->paginate($perPage);
     }
 

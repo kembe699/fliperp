@@ -12,7 +12,7 @@ class DispatchService
 {
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return Dispatch::query()->with('items')->latest('dispatch_date')->paginate($perPage);
+        return Dispatch::query()->with('items')->latest('dispatch_date')->latest('id')->paginate($perPage);
     }
 
     public function create(array $data): Dispatch
