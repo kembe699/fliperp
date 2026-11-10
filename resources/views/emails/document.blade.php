@@ -21,6 +21,8 @@
                             </p>
                             @if ($documentType === 'Purchase Order')
                             <p style="margin:0 0 16px;">Please review the attached order and confirm receipt.</p>
+                            @elseif ($documentType === 'Request for Quotation')
+                            <p style="margin:0 0 16px;">Please send us your best prices and delivery time for the items listed in the attached request, by the date shown on it.</p>
                             @elseif ($documentType === 'Invoice')
                             <p style="margin:0 0 16px;">Please arrange payment by the due date shown on the attached invoice.</p>
                             @else

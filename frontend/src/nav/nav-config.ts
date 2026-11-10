@@ -71,6 +71,7 @@ export const navConfig: NavItem[] = [
     icon: Truck,
     children: [
       { label: 'Suppliers', path: '/suppliers', requiredPermission: 'suppliers.view' },
+      { label: 'Requests for Quotation', path: '/rfqs', requiredPermission: 'purchase-orders.view' },
       { label: 'Purchase Orders', path: '/purchase-orders', requiredPermission: 'purchase-orders.view' },
       { label: 'Goods Received Notes', path: '/goods-received-notes', requiredPermission: 'goods-received-notes.view' },
       { label: 'Supplier Bills', path: '/supplier-bills', requiredPermission: 'supplier-bills.view' },
