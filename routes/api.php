@@ -67,6 +67,7 @@ use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReportsCenterController;
+use App\Http\Controllers\Api\RfqController;
 use App\Http\Controllers\Api\RestaurantTableController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SalaryStructureController;
@@ -304,6 +305,13 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('suppliers', SupplierController::class);
         Route::get('suppliers/{supplier}/statement', [SupplierController::class, 'statement']);
 
+        // Requests for quotation
+        Route::apiResource('rfqs', RfqController::class);
+        Route::get('rfqs/{rfq}/pdf', [RfqController::class, 'pdf']);
+        Route::post('rfqs/{rfq}/send', [RfqController::class, 'send']);
+        Route::post('rfqs/{rfq}/quote', [RfqController::class, 'quote']);
+        Route::post('rfqs/{rfq}/convert', [RfqController::class, 'convert']);
+        Route::post('rfqs/{rfq}/cancel', [RfqController::class, 'cancel']);
         Route::apiResource('purchase-orders', PurchaseOrderController::class);
         Route::post('purchase-orders/{purchase_order}/submit', [PurchaseOrderController::class, 'submit'])->middleware('permission:purchase-orders.submit');
         Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])->middleware('permission:purchase-orders.approve');
