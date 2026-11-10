@@ -63,7 +63,7 @@ class SaleService
             ->when($filters['search'] ?? null, fn ($query, $search) => $query->where('reference_number', 'like', "%{$search}%"))
             ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('sale_date', '>=', $from))
             ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('sale_date', '<=', $to))
-            ->latest('sale_date')
+            ->latest('sale_date')->latest('id')
             ->paginate($perPage);
     }
 

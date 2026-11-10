@@ -14,7 +14,7 @@ class ReportSnapshotService
             ->when($filters['report_type'] ?? null, fn ($query, $type) => $query->where('report_type', $type))
             ->when($filters['from'] ?? null, fn ($query, $from) => $query->where('period_start', '>=', $from))
             ->when($filters['to'] ?? null, fn ($query, $to) => $query->where('period_end', '<=', $to))
-            ->latest('generated_at')
+            ->latest('generated_at')->latest('id')
             ->paginate($perPage);
     }
 

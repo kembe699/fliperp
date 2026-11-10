@@ -27,7 +27,7 @@ class CustomerPaymentService
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return CustomerPayment::query()->latest('payment_date')->paginate($perPage);
+        return CustomerPayment::query()->latest('payment_date')->latest('id')->paginate($perPage);
     }
 
     public function create(array $data): CustomerPayment

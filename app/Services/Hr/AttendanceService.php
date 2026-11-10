@@ -25,7 +25,7 @@ class AttendanceService
                     ->where('employee_code', 'like', "%{$search}%")
                     ->orWhereRaw("first_name || ' ' || last_name like ?", ["%{$search}%"]),
             ))
-            ->latest('date')
+            ->latest('date')->latest('id')
             ->paginate($perPage);
     }
 

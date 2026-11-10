@@ -47,7 +47,7 @@ class InvoiceService
             ->when($filters['customer_id'] ?? null, fn ($query, $id) => $query->where('customer_id', $id))
             ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('invoice_date', '>=', $from))
             ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('invoice_date', '<=', $to))
-            ->latest('invoice_date')
+            ->latest('invoice_date')->latest('id')
             ->paginate($perPage);
     }
 

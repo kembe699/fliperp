@@ -39,7 +39,7 @@ class JournalEntryService
         return JournalEntry::query()
             ->with('lines.account')
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
-            ->latest('entry_date')
+            ->latest('entry_date')->latest('id')
             ->paginate($perPage);
     }
 

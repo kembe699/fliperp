@@ -13,7 +13,7 @@ class AccountingPeriodService
 {
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return AccountingPeriod::query()->latest('start_date')->paginate($perPage);
+        return AccountingPeriod::query()->latest('start_date')->latest('id')->paginate($perPage);
     }
 
     public function create(array $data): AccountingPeriod

@@ -13,7 +13,7 @@ class MeResultService
         return MeResult::query()
             ->whereHas('indicator.project')
             ->when($filters['me_indicator_id'] ?? null, fn ($query, $id) => $query->where('me_indicator_id', $id))
-            ->latest('recorded_at')
+            ->latest('recorded_at')->latest('id')
             ->paginate($perPage);
     }
 

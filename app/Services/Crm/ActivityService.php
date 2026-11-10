@@ -18,7 +18,7 @@ class ActivityService
             ->when($filters['deal_id'] ?? null, fn ($query, $id) => $query->where('deal_id', $id))
             ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('type', $type))
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
-            ->latest('activity_date')
+            ->latest('activity_date')->latest('id')
             ->paginate($perPage);
     }
 

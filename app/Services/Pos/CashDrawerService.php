@@ -46,7 +46,7 @@ class CashDrawerService
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('opened_at', '>=', $from))
             ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('opened_at', '<=', $to))
-            ->latest('opened_at')
+            ->latest('opened_at')->latest('id')
             ->paginate($perPage);
     }
 

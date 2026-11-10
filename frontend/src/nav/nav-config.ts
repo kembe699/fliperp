@@ -146,6 +146,7 @@ export const navConfig: NavItem[] = [
       { label: 'Profit & Loss', path: '/reports/profit-and-loss', requiredPermission: 'reports.view' },
       { label: 'Balance Sheet', path: '/reports/balance-sheet', requiredPermission: 'reports.view' },
       { label: 'General Ledger', path: '/reports/general-ledger', requiredPermission: 'reports.view' },
+      { label: 'Account Ledger', path: '/reports/account-ledger', requiredPermission: 'reports.view' },
       { label: 'Cash Flow', path: '/reports/cash-flow', requiredPermission: 'reports.view' },
       { label: 'Shift Report', path: '/reports/shift-report', requiredPermission: 'cash-drawer-sessions.view' },
     ],

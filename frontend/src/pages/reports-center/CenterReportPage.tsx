@@ -112,7 +112,7 @@ export function CenterReport({ entry }: { entry: CenterEntry }) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <Card className="border-t-2 border-t-primary print:hidden">
+      <Card className="print:hidden">
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           {!entry.noDates && (
             <>
@@ -288,9 +288,9 @@ function KpiGrid({ data }: { data: CenterReport }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 print:grid-cols-4">
       {data.kpis!.map((k) => (
-        <Card key={k.key} className="border-l-4 border-l-primary">
+        <Card key={k.key}>
           <CardContent className="p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">{k.label}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{k.label}</p>
             <p className={`mt-1 break-words text-base font-bold tabular-nums sm:text-xl ${k.key === 'net_profit' && k.value < 0 ? 'text-destructive' : 'text-foreground'}`}>
               {formatValue(k.type, k.value)}
             </p>
@@ -311,7 +311,8 @@ function TrendChart({ data }: { data: CenterReport }) {
     <Card className="print:hidden">
       <CardContent className="h-64 p-4">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data.rows} margin={{ left: 8, right: 8 }}>
+          {/* Rows come newest first for the table; the chart reads oldest → newest. */}
+          <BarChart data={[...data.rows].reverse()} margin={{ left: 8, right: 8 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey={label.key} tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => Intl.NumberFormat(undefined, { notation: 'compact' }).format(Number(v))} />
@@ -331,8 +332,8 @@ function TotalsStrip({ data }: { data: CenterReport }) {
   const shown = data.columns.filter((c) => (c.type === 'money' || c.type === 'number') && data.totals[c.key] !== undefined)
   if (shown.length === 0) return null
   return (
-    <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-primary/20 bg-accent px-4 py-3">
-      <p className="self-center text-xs font-semibold uppercase tracking-wide text-primary">Totals</p>
+    <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-border bg-card px-4 py-3">
+      <p className="self-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Totals</p>
       {shown.map((c) => (
         <div key={c.key}>
           <p className="text-xs text-muted-foreground">{c.label}</p>

@@ -9,7 +9,7 @@ class BudgetPeriodService
 {
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return BudgetPeriod::query()->latest('start_date')->paginate($perPage);
+        return BudgetPeriod::query()->latest('start_date')->latest('id')->paginate($perPage);
     }
 
     public function create(array $data): BudgetPeriod

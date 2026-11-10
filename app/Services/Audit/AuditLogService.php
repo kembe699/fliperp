@@ -19,7 +19,7 @@ class AuditLogService
             ->when($filters['user_id'] ?? null, fn ($query, $userId) => $query->where('user_id', $userId))
             ->when($filters['date_from'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
             ->when($filters['date_to'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
-            ->latest('created_at')
+            ->latest('created_at')->latest('id')
             ->paginate($perPage);
     }
 

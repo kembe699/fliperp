@@ -38,7 +38,7 @@ class GrnService
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return GoodsReceivedNote::query()->with('items')->latest('received_date')->paginate($perPage);
+        return GoodsReceivedNote::query()->with('items')->latest('received_date')->latest('id')->paginate($perPage);
     }
 
     /**
