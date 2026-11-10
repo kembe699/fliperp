@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Ban, CheckCircle2, Download, Mail, PackageCheck } from 'lucide-react'
+import { Ban, CheckCircle2, Download, Mail, PackageCheck, Send } from 'lucide-react'
 
-import { approvePurchaseOrder, cancelPurchaseOrder, emailPurchaseOrder, fetchPurchaseOrder, fetchReceivingStatus, fetchSuppliers } from '@/api/procurement'
+import { approvePurchaseOrder, cancelPurchaseOrder, emailPurchaseOrder, fetchPurchaseOrder, fetchReceivingStatus, fetchSuppliers, submitPurchaseOrder } from '@/api/procurement'
 import { fetchWarehouses } from '@/api/inventory'
 import { fetchActiveProducts } from '@/api/products'
 import { formatCurrency } from '@/lib/currency'
@@ -47,6 +47,16 @@ export function PurchaseOrderDetailPage() {
     queryClient.invalidateQueries({ queryKey: ['purchase-order', poId] })
     queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
   }
+
+  // A draft (saved as draft, or created from an RFQ) goes for approval from here.
+  const submitMutation = useMutation({
+    mutationFn: () => submitPurchaseOrder(poId),
+    onSuccess: () => {
+      toast.success('Purchase order submitted for approval')
+      invalidate()
+    },
+    onError: (error) => toast.error(getApiErrorInfo(error).message),
+  })
 
   const approveMutation = useMutation({
     mutationFn: () => approvePurchaseOrder(poId),
@@ -92,6 +102,7 @@ export function PurchaseOrderDetailPage() {
   // Orders are coded once for the whole order, so the coding shows once above the
   // lines; an older order coded differently per line keeps the per-line column.
   const sharedCoding = new Set(po.items.map((item) => codingSummary(item) ?? '')).size <= 1 ? codingSummary(po.items[0] ?? {}) : undefined
+  const canSubmit = can('purchase-orders.submit') && po.status === 'draft'
   const canApprove = can('purchase-orders.approve') && po.status === 'submitted'
   const canCancel = can('purchase-orders.cancel') && ['draft', 'submitted', 'approved'].includes(po.status)
   const canReceive = can('goods-received-notes.create') && ['approved', 'partially_received'].includes(po.status)
@@ -111,6 +122,12 @@ export function PurchaseOrderDetailPage() {
               <Button variant="outline" disabled={emailMutation.isPending} onClick={() => emailMutation.mutate()}>
                 <Mail className="h-4 w-4" />
                 {emailMutation.isPending ? 'Sending…' : 'Email Supplier'}
+              </Button>
+            )}
+            {canSubmit && (
+              <Button disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
+                <Send className="h-4 w-4" />
+                {submitMutation.isPending ? 'Submitting…' : 'Submit for approval'}
               </Button>
             )}
             {canApprove && (

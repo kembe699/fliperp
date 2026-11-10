@@ -71,7 +71,7 @@ it('records quotes and converts to a purchase order at the chosen supplier\'s pr
 
     $order = PurchaseOrder::with('items')->find($po['id']);
     expect($order->supplier_id)->toBe($this->b->id)
-        ->and($order->status)->toBe('draft')
+        ->and($order->status)->toBe('submitted') // goes straight to approval
         ->and($order->reference_number)->toBe('PO-RFQ-0001')
         ->and($order->items->pluck('unit_cost', 'product_id')->map(fn ($v) => (float) $v)->all())->toBe([$this->rice->id => 38.0, $this->oil->id => 52.5]);
 
