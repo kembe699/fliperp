@@ -25,6 +25,9 @@ class RoleAndPermissionSeeder extends Seeder
         'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
         'journal-entries' => ['view', 'create', 'update', 'delete', 'post', 'reverse'],
         'exchange-rates' => ['view', 'create', 'update', 'delete'],
+        // Payment requests: raised, approved in steps by amount, then paid by Finance.
+        'payment-requests' => ['view', 'create', 'update', 'delete', 'submit', 'approve', 'pay', 'cancel'],
+        'payment-approval-rules' => ['view', 'manage'],
         'donors' => ['view', 'create', 'update', 'delete'],
         'grants' => ['view', 'create', 'update', 'delete'],
         'cost-centres' => ['view', 'create', 'update', 'delete'],
@@ -147,6 +150,8 @@ class RoleAndPermissionSeeder extends Seeder
      */
     protected array $rolePermissions = [
         'company_admin' => [
+            'payment-requests' => ['view', 'create', 'update', 'delete', 'submit', 'approve', 'pay', 'cancel'],
+            'payment-approval-rules' => ['view', 'manage'],
             'companies' => ['view', 'update'],
             'branches' => ['view', 'create', 'update', 'delete'],
             'users' => ['view', 'create', 'update', 'delete'],
@@ -306,6 +311,7 @@ class RoleAndPermissionSeeder extends Seeder
         ],
 
         'branch_manager' => [
+            'payment-requests' => ['view', 'create', 'update', 'submit', 'approve', 'cancel'],
             'branches' => ['view'],
             'users' => ['view', 'create', 'update'],
             'audit-logs' => ['view'],
@@ -376,6 +382,8 @@ class RoleAndPermissionSeeder extends Seeder
             'support-tickets' => ['view', 'create', 'reply'],
         ],
         'accountant' => [
+            'payment-requests' => ['view', 'create', 'update', 'delete', 'submit', 'pay', 'cancel'],
+            'payment-approval-rules' => ['view'],
             'branches' => ['view'],
             'audit-logs' => ['view'],
             'chart-of-accounts' => ['view', 'create', 'update', 'delete'],
@@ -417,6 +425,7 @@ class RoleAndPermissionSeeder extends Seeder
             'support-tickets' => ['view', 'create', 'reply'],
         ],
         'procurement_officer' => [
+            'payment-requests' => ['view', 'create', 'update', 'submit', 'cancel'],
             'branches' => ['view'],
             'vehicles' => ['view', 'create', 'update', 'delete'],
             'dispatches' => ['view', 'create', 'update', 'delete', 'track'],

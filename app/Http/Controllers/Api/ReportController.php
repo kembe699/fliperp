@@ -18,11 +18,13 @@ use App\Services\Reporting\ProfitAndLossService;
 use App\Services\Reporting\ReportCurrencyConverter;
 use App\Services\Reporting\ReportSnapshotService;
 use App\Services\Reporting\TrialBalanceService;
+use App\Services\Reporting\Export\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReportController extends Controller
 {
@@ -37,6 +39,7 @@ class ReportController extends Controller
         protected ReportSnapshotService $reportSnapshotService,
         protected ReportCurrencyConverter $currencyConverter,
         protected AgingReportService $agingReportService,
+        protected ReportExportService $exporter,
     ) {}
 
     /** Accounts receivable as at a date: open invoices aged, per customer, against control account 1100. */
@@ -57,6 +60,16 @@ class ReportController extends Controller
 
     public function trialBalance(TrialBalanceRequest $request): JsonResponse
     {
+        return $this->success($this->trialBalanceData($request));
+    }
+
+    public function trialBalanceExport(TrialBalanceRequest $request): Response
+    {
+        return $this->export($request, $this->exporter->trialBalance($this->trialBalanceData($request)));
+    }
+
+    protected function trialBalanceData(TrialBalanceRequest $request): array
+    {
         $data = $this->trialBalanceService->generate(
             $request->user()->company_id,
             $request->string('from')->toString(),
@@ -65,17 +78,25 @@ class ReportController extends Controller
             $this->dimensionFilters($request),
         );
 
-        $data = $this->currencyConverter->convert(
+        return $this->currencyConverter->convert(
             $data,
             $request->user()->company_id,
             $request->input('currency'),
             $request->string('to')->toString(),
         );
-
-        return $this->success($data);
     }
 
     public function profitAndLoss(ProfitAndLossRequest $request): JsonResponse
+    {
+        return $this->success($this->profitAndLossData($request));
+    }
+
+    public function profitAndLossExport(ProfitAndLossRequest $request): Response
+    {
+        return $this->export($request, $this->exporter->profitAndLoss($this->profitAndLossData($request)));
+    }
+
+    protected function profitAndLossData(ProfitAndLossRequest $request): array
     {
         $data = $this->profitAndLossService->generate(
             $request->user()->company_id,
@@ -85,17 +106,25 @@ class ReportController extends Controller
             $this->dimensionFilters($request),
         );
 
-        $data = $this->currencyConverter->convert(
+        return $this->currencyConverter->convert(
             $data,
             $request->user()->company_id,
             $request->input('currency'),
             $request->string('to')->toString(),
         );
-
-        return $this->success($data);
     }
 
     public function balanceSheet(BalanceSheetRequest $request): JsonResponse
+    {
+        return $this->success($this->balanceSheetData($request));
+    }
+
+    public function balanceSheetExport(BalanceSheetRequest $request): Response
+    {
+        return $this->export($request, $this->exporter->balanceSheet($this->balanceSheetData($request)));
+    }
+
+    protected function balanceSheetData(BalanceSheetRequest $request): array
     {
         $data = $this->balanceSheetService->generate(
             $request->user()->company_id,
@@ -103,17 +132,25 @@ class ReportController extends Controller
             $request->integer('branch_id') ?: null,
         );
 
-        $data = $this->currencyConverter->convert(
+        return $this->currencyConverter->convert(
             $data,
             $request->user()->company_id,
             $request->input('currency'),
             $request->string('as_of')->toString(),
         );
-
-        return $this->success($data);
     }
 
     public function generalLedger(GeneralLedgerRequest $request): JsonResponse
+    {
+        return $this->success($this->generalLedgerData($request));
+    }
+
+    public function generalLedgerExport(GeneralLedgerRequest $request): Response
+    {
+        return $this->export($request, $this->exporter->generalLedger($this->generalLedgerData($request)));
+    }
+
+    protected function generalLedgerData(GeneralLedgerRequest $request): array
     {
         $args = [
             $request->string('from')->toString(),
@@ -125,14 +162,12 @@ class ReportController extends Controller
             ? $this->generalLedgerService->generate($request->user()->company_id, $request->integer('account_id'), ...$args)
             : $this->generalLedgerService->generateAll($request->user()->company_id, ...$args);
 
-        $data = $this->currencyConverter->convert(
+        return $this->currencyConverter->convert(
             $data,
             $request->user()->company_id,
             $request->input('currency'),
             $request->string('to')->toString(),
         );
-
-        return $this->success($data);
     }
 
     public function cashFlow(CashFlowRequest $request): JsonResponse
@@ -224,6 +259,17 @@ class ReportController extends Controller
             : $this->generalLedgerService->generate($companyId, $validated['account_id'], $validated['from'], $validated['to'], $branchId);
 
         return [$validated['from'], $validated['to'], $data];
+    }
+
+    /**
+     * Downloads a report table as CSV, Excel or PDF (?format=csv|xlsx|pdf),
+     * built from the very same data the JSON endpoint returns for these filters.
+     */
+    protected function export(Request $request, array $table): Response
+    {
+        $format = $request->validate(['format' => ['required', Rule::in(ReportExportService::FORMATS)]])['format'];
+
+        return $this->exporter->download($table, $format, $request->user(), $request->only(['branch_id', ...DimensionService::KEYS, 'department_id']));
     }
 
     /** The SOF/DEA/project/cost-centre and department filters given on a report request. */

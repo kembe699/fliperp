@@ -13,6 +13,10 @@ use App\Services\Grants\DimensionService;
 use App\Services\Reporting\ReportCurrencyConverter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Services\Reporting\Export\ReportExportService;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
+
 
 class BudgetPeriodController extends Controller
 {
@@ -74,17 +78,35 @@ class BudgetPeriodController extends Controller
     {
         $this->authorize('view', $budgetPeriod);
 
+        return $this->success($this->vsActualData($request, $budgetPeriod));
+    }
+
+    /** Budget vs Actual as CSV, Excel or PDF (?format=csv|xlsx|pdf), same coding filters and currency as the screen. */
+    public function vsActualExport(Request $request, BudgetPeriod $budgetPeriod, ReportExportService $exporter): Response
+    {
+        $this->authorize('view', $budgetPeriod);
+        $format = $request->validate(['format' => ['required', Rule::in(ReportExportService::FORMATS)]])['format'];
+
+        $table = $exporter->budgetVsActual(
+            $this->vsActualData($request, $budgetPeriod),
+            $budgetPeriod->name,
+            "{$budgetPeriod->start_date->toDateString()} to {$budgetPeriod->end_date->toDateString()}",
+        );
+
+        return $exporter->download($table, $format, $request->user(), $request->only(DimensionService::KEYS));
+    }
+
+    protected function vsActualData(Request $request, BudgetPeriod $budgetPeriod): array
+    {
         $request->validate(DimensionService::filterRules() + ['currency' => ['nullable', 'string', 'size:3']]);
 
         $lines = $this->budgetVsActualService->compare($budgetPeriod, DimensionService::of($request->only(DimensionService::KEYS)));
         $budgeted = round(array_sum(array_column($lines, 'budgeted_amount')), 2);
         $actual = round(array_sum(array_column($lines, 'actual_amount')), 2);
 
-        $data = $this->currencyConverter->convert([
+        return $this->currencyConverter->convert([
             'lines' => $lines,
             'totals' => ['budgeted_amount' => $budgeted, 'actual_amount' => $actual, 'variance' => round($budgeted - $actual, 2)],
         ], $budgetPeriod->company_id, $request->input('currency'), $budgetPeriod->end_date->toDateString());
-
-        return $this->success($data);
     }
 }

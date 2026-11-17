@@ -49,6 +49,8 @@ use App\Http\Controllers\Api\MeIndicatorController;
 use App\Http\Controllers\Api\MeProjectController;
 use App\Http\Controllers\Api\MeResultController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PaymentApprovalRuleController;
+use App\Http\Controllers\Api\PaymentRequestController;
 use App\Http\Controllers\Api\PaymentTypeController;
 use App\Http\Controllers\Api\PayrollRunController;
 use App\Http\Controllers\Api\PermissionController;
@@ -198,6 +200,19 @@ Route::prefix('v1')->group(function () {
         Route::post('journal-entries/{journal_entry}/post', [JournalEntryController::class, 'post']);
         Route::post('journal-entries/{journal_entry}/reverse', [JournalEntryController::class, 'reverse']);
 
+        // Payment requests: raised, approved in steps by amount, then paid by Finance.
+        Route::apiResource('payment-requests', PaymentRequestController::class);
+        Route::post('payment-requests/{payment_request}/submit', [PaymentRequestController::class, 'submit']);
+        Route::post('payment-requests/{payment_request}/approve', [PaymentRequestController::class, 'approve']);
+        Route::post('payment-requests/{payment_request}/reject', [PaymentRequestController::class, 'reject']);
+        Route::post('payment-requests/{payment_request}/pay', [PaymentRequestController::class, 'pay']);
+        Route::post('payment-requests/{payment_request}/cancel', [PaymentRequestController::class, 'cancel']);
+        Route::get('payment-requests/{payment_request}/pdf', [PaymentRequestController::class, 'pdf']);
+        Route::post('payment-requests/{payment_request}/attachments', [PaymentRequestController::class, 'storeAttachments']);
+        Route::get('payment-requests/{payment_request}/attachments/{attachment}', [PaymentRequestController::class, 'downloadAttachment']);
+        Route::delete('payment-requests/{payment_request}/attachments/{attachment}', [PaymentRequestController::class, 'destroyAttachment']);
+        Route::apiResource('payment-approval-rules', PaymentApprovalRuleController::class)->except('show');
+
         // HR & Payroll
         Route::apiResource('departments', DepartmentController::class);
         Route::apiResource('positions', PositionController::class);
@@ -248,6 +263,7 @@ Route::prefix('v1')->group(function () {
         // Budgeting
         Route::apiResource('budget-periods', BudgetPeriodController::class);
         Route::get('budget-periods/{budget_period}/vs-actual', [BudgetPeriodController::class, 'vsActual']);
+        Route::get('budget-periods/{budget_period}/vs-actual/export', [BudgetPeriodController::class, 'vsActualExport']);
         Route::apiResource('budget-lines', BudgetLineController::class);
 
         // Grants & dimensions (Save the Children coding: SOF, DEA, project, cost centre)
@@ -395,6 +411,13 @@ Route::prefix('v1')->group(function () {
             Route::get('reports/payables', [ReportController::class, 'payables']);
             Route::get('reports/snapshots', [ReportController::class, 'snapshots']);
             Route::get('reports/center/{report}', [ReportsCenterController::class, 'show']);
+
+            // Downloads of the same reports: ?format=csv|xlsx|pdf, same filters as the screen.
+            Route::get('reports/trial-balance/export', [ReportController::class, 'trialBalanceExport']);
+            Route::get('reports/profit-and-loss/export', [ReportController::class, 'profitAndLossExport']);
+            Route::get('reports/balance-sheet/export', [ReportController::class, 'balanceSheetExport']);
+            Route::get('reports/general-ledger/export', [ReportController::class, 'generalLedgerExport']);
+            Route::get('reports/center/{report}/export', [ReportsCenterController::class, 'export']);
         });
         Route::post('reports/{type}/snapshot', [ReportController::class, 'snapshot'])
             ->middleware('permission:reports.snapshot');

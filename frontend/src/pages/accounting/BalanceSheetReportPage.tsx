@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Camera, Download } from 'lucide-react'
+import { Camera } from 'lucide-react'
 
-import { downloadReport, fetchBalanceSheet, saveReportSnapshot } from '@/api/reports'
+import { fetchBalanceSheet, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { useBaseCurrency } from '@/hooks/use-base-currency'
@@ -12,6 +12,7 @@ import { toISODate } from '@/lib/format'
 import type { ReportAccountLine } from '@/types/accounting'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ExportMenu } from '@/components/shared/ExportMenu'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,7 +50,6 @@ export function BalanceSheetReportPage() {
   const [showIn, setShowIn] = useState(baseCurrency)
   const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [asOf, setAsOf] = useState(() => toISODate(new Date()))
-  const [downloading, setDownloading] = useState(false)
 
   const { data, isLoading, isError } = useQuery({ queryKey: ['balance-sheet', asOf, showIn], queryFn: () => fetchBalanceSheet({ as_of: asOf, currency: currencyParam }) })
   const currencyCode = data?.currency?.code
@@ -59,15 +59,6 @@ export function BalanceSheetReportPage() {
     onSuccess: () => toast.success('Snapshot saved'),
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
-
-  const handleDownload = async () => {
-    setDownloading(true)
-    try {
-      await downloadReport('balance-sheet', asOf, asOf, currencyParam)
-    } finally {
-      setDownloading(false)
-    }
-  }
 
   return (
     <div>
@@ -80,10 +71,7 @@ export function BalanceSheetReportPage() {
               <Camera className="h-4 w-4" />
               Save Snapshot
             </Button>
-            <Button onClick={handleDownload} disabled={downloading}>
-              <Download className="h-4 w-4" />
-              {downloading ? 'Downloading…' : 'Download'}
-            </Button>
+            <ExportMenu path="/reports/balance-sheet/export" params={{ as_of: asOf, currency: currencyParam }} fileName={`balance-sheet-as-of-${asOf}`} />
           </div>
         }
       />

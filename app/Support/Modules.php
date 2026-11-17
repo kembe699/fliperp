@@ -77,8 +77,8 @@ class Modules
         ],
         'accounting' => [
             'label' => 'Accounting',
-            'description' => 'Chart of accounts, journal entries, periods, exchange rates and the financial reports.',
-            'groups' => ['chart-of-accounts', 'journal-entries', 'exchange-rates', 'accounting-periods', 'reports'],
+            'description' => 'Chart of accounts, journal entries, periods, exchange rates, payment requests and approvals, and the financial reports.',
+            'groups' => ['chart-of-accounts', 'journal-entries', 'exchange-rates', 'accounting-periods', 'reports', 'payment-requests', 'payment-approval-rules'],
         ],
     ];
 
