@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom
 
 import { navConfig } from '@/nav/nav-config'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { PosLayout } from '@/components/layout/PosLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PortalProtectedRoute } from '@/routes/PortalProtectedRoute'
 import { PortalShell } from '@/components/portal/PortalShell'
@@ -256,7 +257,6 @@ function App() {
           <Route path="/customers" element={<CustomersListPage />} />
           <Route path="/customers/:id/statement" element={<CustomerStatementPage />} />
 
-          <Route path="/pos" element={<PosTerminalPage />} />
           <Route path="/receipts" element={<ReceiptsListPage />} />
 
           <Route path="/invoices" element={<InvoicesListPage />} />
@@ -364,6 +364,17 @@ function App() {
               element={<ComingSoonPage title={route.title} parent={route.parent} />}
             />
           ))}
+        </Route>
+
+        {/* POS terminal: full screen, no sidebar; a bar at the top leads back to the Dashboard. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <PosLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/pos" element={<PosTerminalPage />} />
         </Route>
 
         <Route
