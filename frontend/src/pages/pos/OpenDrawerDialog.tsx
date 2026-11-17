@@ -65,9 +65,9 @@ export function OpenDrawerDialog({ branchId }: { branchId?: number }) {
             variant="outline"
             className="w-full"
             disabled={mutation.isPending}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/dashboard')}
           >
-            Cancel
+            Back to Dashboard
           </Button>
         </form>
       </DialogContent>
