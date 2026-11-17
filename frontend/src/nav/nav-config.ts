@@ -138,6 +138,7 @@ export const navConfig: NavItem[] = [
     icon: Calculator,
     children: [
       { label: 'Chart of Accounts', path: '/chart-of-accounts', requiredPermission: 'chart-of-accounts.view' },
+      { label: 'Payment Requests', path: '/payment-requests', requiredPermission: 'payment-requests.view' },
       { label: 'Journal Entries', path: '/journal-entries', requiredPermission: 'journal-entries.view' },
       { label: 'Accounting Periods', path: '/accounting-periods', requiredPermission: 'accounting-periods.view' },
       { label: 'Exchange Rates', path: '/exchange-rates', requiredPermission: 'exchange-rates.view' },
@@ -165,6 +166,7 @@ export const navConfig: NavItem[] = [
       { label: 'Roles', path: '/settings/roles', requiredPermission: 'roles.view' },
       { label: 'Tax Rates', path: '/settings/tax-rates', requiredPermission: 'tax-rates.view' },
       { label: 'Payment Types', path: '/settings/payment-types', requiredPermission: 'payment-types.view' },
+      { label: 'Payment Approvals', path: '/settings/payment-approvals', requiredPermission: 'payment-approval-rules.view' },
       { label: 'Support Tickets', path: '/settings/support-tickets', requiredPermission: 'support-tickets.view' },
     ],
   },

@@ -5,9 +5,12 @@ import {
   Bell,
   CalendarCheck,
   CalendarClock,
+  CheckCircle2,
   ClipboardCheck,
   FileWarning,
   PackageX,
+  Wallet,
+  XCircle,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -20,6 +23,11 @@ export const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   sale_voided: Ban,
   purchase_order_approval_needed: ClipboardCheck,
   cash_drawer_variance_flagged: AlertTriangle,
+  payment_request_approval_needed: ClipboardCheck,
+  payment_request_approved: CheckCircle2,
+  payment_request_rejected: XCircle,
+  payment_request_paid: Wallet,
+  payment_request_ready_to_pay: Wallet,
 }
 
 export function iconForCategory(category: string): LucideIcon {
@@ -35,6 +43,11 @@ export const CATEGORY_LABELS: Record<string, string> = {
   sale_voided: 'Sale Voided',
   purchase_order_approval_needed: 'Purchase Order',
   cash_drawer_variance_flagged: 'Cash Drawer',
+  payment_request_approval_needed: 'Payment Request',
+  payment_request_approved: 'Payment Request',
+  payment_request_rejected: 'Payment Request',
+  payment_request_paid: 'Payment Request',
+  payment_request_ready_to_pay: 'Payment Request',
 }
 
 export function labelForCategory(category: string): string {
@@ -53,6 +66,9 @@ const TOAST_CATEGORIES = new Set([
   'purchase_order_approval_needed',
   'low_stock_alert',
   'sale_voided',
+  'payment_request_approval_needed',
+  'payment_request_rejected',
+  'payment_request_ready_to_pay',
 ])
 
 export function isToastWorthy(category: string): boolean {

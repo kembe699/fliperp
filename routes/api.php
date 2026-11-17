@@ -49,6 +49,8 @@ use App\Http\Controllers\Api\MeIndicatorController;
 use App\Http\Controllers\Api\MeProjectController;
 use App\Http\Controllers\Api\MeResultController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PaymentApprovalRuleController;
+use App\Http\Controllers\Api\PaymentRequestController;
 use App\Http\Controllers\Api\PaymentTypeController;
 use App\Http\Controllers\Api\PayrollRunController;
 use App\Http\Controllers\Api\PermissionController;
@@ -197,6 +199,19 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('journal-entries', JournalEntryController::class);
         Route::post('journal-entries/{journal_entry}/post', [JournalEntryController::class, 'post']);
         Route::post('journal-entries/{journal_entry}/reverse', [JournalEntryController::class, 'reverse']);
+
+        // Payment requests: raised, approved in steps by amount, then paid by Finance.
+        Route::apiResource('payment-requests', PaymentRequestController::class);
+        Route::post('payment-requests/{payment_request}/submit', [PaymentRequestController::class, 'submit']);
+        Route::post('payment-requests/{payment_request}/approve', [PaymentRequestController::class, 'approve']);
+        Route::post('payment-requests/{payment_request}/reject', [PaymentRequestController::class, 'reject']);
+        Route::post('payment-requests/{payment_request}/pay', [PaymentRequestController::class, 'pay']);
+        Route::post('payment-requests/{payment_request}/cancel', [PaymentRequestController::class, 'cancel']);
+        Route::get('payment-requests/{payment_request}/pdf', [PaymentRequestController::class, 'pdf']);
+        Route::post('payment-requests/{payment_request}/attachments', [PaymentRequestController::class, 'storeAttachments']);
+        Route::get('payment-requests/{payment_request}/attachments/{attachment}', [PaymentRequestController::class, 'downloadAttachment']);
+        Route::delete('payment-requests/{payment_request}/attachments/{attachment}', [PaymentRequestController::class, 'destroyAttachment']);
+        Route::apiResource('payment-approval-rules', PaymentApprovalRuleController::class)->except('show');
 
         // HR & Payroll
         Route::apiResource('departments', DepartmentController::class);

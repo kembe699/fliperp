@@ -56,6 +56,10 @@ import { PurchaseOrdersListPage } from '@/pages/procurement/PurchaseOrdersListPa
 import { PurchaseOrderFormPage } from '@/pages/procurement/PurchaseOrderFormPage'
 import { PurchaseOrderDetailPage } from '@/pages/procurement/PurchaseOrderDetailPage'
 import { RfqsListPage } from '@/pages/procurement/RfqsListPage'
+import { PaymentRequestsListPage } from '@/pages/payment-requests/PaymentRequestsListPage'
+import { PaymentRequestFormPage } from '@/pages/payment-requests/PaymentRequestFormPage'
+import { PaymentRequestDetailPage } from '@/pages/payment-requests/PaymentRequestDetailPage'
+import { PaymentApprovalsSettingsPage } from '@/pages/settings/PaymentApprovalsSettingsPage'
 import { RfqFormPage } from '@/pages/procurement/RfqFormPage'
 import { RfqDetailPage } from '@/pages/procurement/RfqDetailPage'
 import { GoodsReceivedNotesListPage } from '@/pages/procurement/GoodsReceivedNotesListPage'
@@ -175,6 +179,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/cost-centres',
   '/chart-of-accounts',
   '/journal-entries',
+  '/payment-requests',
   '/accounting-periods',
   '/exchange-rates',
   '/reports/receivables',
@@ -193,6 +198,7 @@ const IMPLEMENTED_PATHS = new Set([
   '/settings/roles',
   '/settings/tax-rates',
   '/settings/payment-types',
+  '/settings/payment-approvals',
   '/settings/support-tickets',
 ])
 
@@ -280,6 +286,10 @@ function App() {
           <Route path="/rfqs/new" element={<RfqFormPage />} />
           <Route path="/rfqs/:id" element={<RfqDetailPage />} />
           <Route path="/rfqs/:id/edit" element={<RfqFormPage />} />
+          <Route path="/payment-requests" element={<PaymentRequestsListPage />} />
+          <Route path="/payment-requests/new" element={<PaymentRequestFormPage />} />
+          <Route path="/payment-requests/:id" element={<PaymentRequestDetailPage />} />
+          <Route path="/payment-requests/:id/edit" element={<PaymentRequestFormPage />} />
           <Route path="/purchase-orders" element={<PurchaseOrdersListPage />} />
           <Route path="/purchase-orders/new" element={<PurchaseOrderFormPage />} />
           <Route path="/purchase-orders/:id" element={<PurchaseOrderDetailPage />} />
@@ -342,6 +352,7 @@ function App() {
           <Route path="/settings/users" element={<UsersSettingsPage />} />
           <Route path="/settings/roles" element={<RolesSettingsPage />} />
           <Route path="/settings/tax-rates" element={<TaxRatesSettingsPage />} />
+          <Route path="/settings/payment-approvals" element={<PaymentApprovalsSettingsPage />} />
           <Route path="/settings/payment-types" element={<PaymentTypesSettingsPage />} />
           <Route path="/settings/support-tickets" element={<SupportTicketsPage />} />
 
