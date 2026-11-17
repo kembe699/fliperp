@@ -204,9 +204,8 @@ export function PosTerminalPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="flex h-full flex-col">
       <PageHeader
-        parent="Sales"
         title="POS Terminal"
         action={
           <div className="flex gap-2">
