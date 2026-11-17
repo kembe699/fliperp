@@ -174,7 +174,7 @@ export function PaymentApprovalsSettingsPage() {
       </div>
 
       <Dialog open={editing !== null} onOpenChange={(isOpen) => !isOpen && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editing === 'new' ? 'New approval rule' : 'Edit approval rule'}</DialogTitle>
           </DialogHeader>
@@ -204,13 +204,13 @@ export function PaymentApprovalsSettingsPage() {
             <p className="text-sm font-medium">Approvers, in order</p>
             {errors.steps && <p className="text-xs text-destructive">{errors.steps}</p>}
             {draft.steps.map((step, index) => (
-              <div key={index} className="grid grid-cols-12 items-start gap-2 rounded-lg border border-border p-2">
-                <span className="col-span-1 pt-2 text-sm font-semibold">{index + 1}.</span>
-                <div className="col-span-4">
+              <div key={index} className="flex flex-wrap items-start gap-2 rounded-lg border border-border p-3">
+                <span className="w-6 shrink-0 pt-2 text-sm font-semibold">{index + 1}.</span>
+                <div className="min-w-[160px] flex-[2]">
                   <Input placeholder="Label, e.g. Program Officer" value={step.label} onChange={(e) => setStep(index, { label: e.target.value })} />
                   {errors[`steps.${index}.label`] && <p className="text-xs text-destructive">{errors[`steps.${index}.label`]}</p>}
                 </div>
-                <div className="col-span-2">
+                <div className="w-28 shrink-0">
                   <Select value={step.kind} onValueChange={(value) => setStep(index, { kind: value as StepDraft['kind'], id: '' })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -221,7 +221,7 @@ export function PaymentApprovalsSettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-3">
+                <div className="min-w-[150px] flex-[2]">
                   <Select value={step.id} onValueChange={(value) => setStep(index, { id: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder={step.kind === 'role' ? 'Choose role' : 'Choose person'} />
@@ -236,7 +236,7 @@ export function PaymentApprovalsSettingsPage() {
                   </Select>
                   {(errors[`steps.${index}.role_id`] || errors[`steps.${index}.user_id`]) && <p className="text-xs text-destructive">{errors[`steps.${index}.role_id`] ?? errors[`steps.${index}.user_id`]}</p>}
                 </div>
-                <div className="col-span-2 flex justify-end gap-1">
+                <div className="ml-auto flex shrink-0 gap-0.5">
                   <Button type="button" variant="ghost" size="sm" disabled={index === 0} aria-label="Move up" onClick={() => moveStep(index, -1)}>
                     <ArrowUp className="h-4 w-4" />
                   </Button>
