@@ -27,6 +27,7 @@ import { CrmDealFormDialog } from '@/components/crm/CrmDealFormDialog'
 import { LostReasonDialog } from '@/components/crm/LostReasonDialog'
 import { CustomerServiceLogDialog } from '@/components/crm/CustomerServiceLogDialog'
 import { ManagePipelineStagesDialog } from '@/components/crm/ManagePipelineStagesDialog'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 // Cycled by stage position so every column gets a distinct, consistent tint
 // out of the box — no per-stage configuration required.
@@ -208,7 +209,7 @@ export function CrmPipelinePage() {
       />
 
       {isLoading || !columns ? (
-        <p className="text-sm text-muted-foreground">Loading pipeline…</p>
+        <FlipLoaderBlock label="Loading pipeline…" />
       ) : (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex items-start gap-4 overflow-x-auto pb-4">

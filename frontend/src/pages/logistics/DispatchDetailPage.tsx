@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT: Record<DispatchStatus, 'warning' | 'info' | 'success' | 'danger'> = {
   pending: 'warning',
@@ -55,7 +56,7 @@ export function DispatchDetailPage() {
   })
 
   if (isLoading || !dispatch) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading dispatch…</div>
+    return <FlipLoaderBlock label="Loading dispatch…" />
   }
 
   const timeline = [...dispatch.tracking].sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime())

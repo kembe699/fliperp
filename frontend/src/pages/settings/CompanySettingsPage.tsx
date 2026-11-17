@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function CompanySettingsPage() {
   const queryClient = useQueryClient()
@@ -133,7 +134,7 @@ export function CompanySettingsPage() {
           You don't have permission to view company settings, or the company could not be loaded.
         </p>
       ) : isLoading || !company ? (
-        <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+        <FlipLoaderBlock />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">

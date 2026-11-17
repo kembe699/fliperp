@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const NONE = '__none'
 const today = () => {
@@ -69,7 +70,7 @@ export function PayrollRunDetailPage() {
   }, [payslips])
 
   if (isLoading || !run) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading payroll run…</div>
+    return <FlipLoaderBlock label="Loading payroll run…" />
   }
 
   const canProcess = can('payroll-runs.process') && run.status === 'draft'

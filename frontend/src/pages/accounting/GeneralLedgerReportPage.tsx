@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function GeneralLedgerReportPage() {
   const baseCurrency = useBaseCurrency()
@@ -79,7 +80,7 @@ export function GeneralLedgerReportPage() {
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this report. Please try again.</p>
       ) : isLoading || !data ? (
-        <p className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Loading…</p>
+        <FlipLoaderBlock className="rounded-xl border border-border bg-card" />
       ) : data.accounts.length === 0 ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">No ledger activity or balances for this period.</p>
       ) : (

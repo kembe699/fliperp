@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -73,7 +74,7 @@ export function ProfilePage() {
       <PageHeader title="My Profile" />
 
       {!user ? (
-        <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+        <FlipLoaderBlock />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>

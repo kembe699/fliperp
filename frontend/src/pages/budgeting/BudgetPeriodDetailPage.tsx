@@ -30,6 +30,7 @@ import { codingSummary, useDimensionOptions, type DimensionFilterValue } from '@
 import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
 import { ExportMenu } from '@/components/shared/ExportMenu'
 import type { DataTableColumn } from '@/components/shared/DataTable'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function BudgetPeriodDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -113,7 +114,7 @@ export function BudgetPeriodDetailPage() {
   })
 
   if (isLoading || !period) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading budget period…</div>
+    return <FlipLoaderBlock label="Loading budget period…" />
   }
 
   const totalBudgeted = report?.totals.budgeted_amount ?? 0

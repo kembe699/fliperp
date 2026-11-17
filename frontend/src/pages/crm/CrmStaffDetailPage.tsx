@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const EMAIL_STATUS_VARIANT: Record<CrmEmail['status'], 'warning' | 'success' | 'danger'> = {
   queued: 'warning',
@@ -73,7 +74,7 @@ export function CrmStaffDetailPage() {
   ]
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading staff member…</div>
+    return <FlipLoaderBlock label="Loading staff member…" />
   }
 
   if (!staff) {

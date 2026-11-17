@@ -25,6 +25,7 @@ import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { LineItemsEditor, type LineItemRow } from '@/components/sales/LineItemsEditor'
 import { TotalsFooter } from '@/components/sales/TotalsFooter'
 import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function InvoiceFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -165,7 +166,7 @@ export function InvoiceFormPage() {
   }
 
   if (isEdit && invoiceLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading invoice…</div>
+    return <FlipLoaderBlock label="Loading invoice…" />
   }
 
   if (isEdit && existingInvoice && existingInvoice.status !== 'draft') {

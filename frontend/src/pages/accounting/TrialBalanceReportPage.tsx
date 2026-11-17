@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function TrialBalanceReportPage() {
   const baseCurrency = useBaseCurrency()
@@ -75,7 +76,7 @@ export function TrialBalanceReportPage() {
         <Card>
           <CardContent className="p-8">
             {isLoading || !data ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <FlipLoaderBlock />
             ) : (
               <>
                 <table className="w-full text-sm">

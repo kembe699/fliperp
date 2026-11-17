@@ -29,6 +29,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT: Record<AssetStatus, 'success' | 'neutral' | 'warning' | 'danger'> = {
   in_use: 'success',
@@ -96,7 +97,7 @@ export function AssetDetailPage() {
   })
 
   if (isLoading || !asset) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading asset…</div>
+    return <FlipLoaderBlock label="Loading asset…" />
   }
 
   const assignedEmployeeName = asset.assigned_to_employee_id

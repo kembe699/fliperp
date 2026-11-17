@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusBadge, type StatusVariant } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export const RFQ_STATUS_VARIANT: Record<RfqStatus, StatusVariant> = { draft: 'neutral', sent: 'info', converted: 'success', cancelled: 'danger' }
 
@@ -78,7 +79,7 @@ export function RfqDetailPage() {
     return { perItem, lowestTotal }
   }, [rfq])
 
-  if (isLoading || !rfq) return <div className="p-6 text-sm text-muted-foreground">Loading request for quotation…</div>
+  if (isLoading || !rfq) return <FlipLoaderBlock label="Loading request for quotation…" />
 
   const open = rfq.status === 'draft' || rfq.status === 'sent'
   const canManage = can('purchase-orders.create')

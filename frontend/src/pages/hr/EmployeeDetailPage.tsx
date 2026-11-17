@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const CONTRACT_STATUS_VARIANT: Record<EmployeeContract['status'], 'neutral' | 'info' | 'success'> = {
   draft: 'neutral',
@@ -106,7 +107,7 @@ export function EmployeeDetailPage() {
   })
 
   if (isLoading || !employee) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading employee…</div>
+    return <FlipLoaderBlock label="Loading employee…" />
   }
 
   const currentYear = new Date().getFullYear()

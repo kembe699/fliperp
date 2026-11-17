@@ -52,7 +52,7 @@ export function AppTopbar() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
           {company?.name?.[0]?.toUpperCase() ?? 'F'}
         </div>
-        <span className="text-base font-semibold text-foreground">{company?.name ?? 'FlipErp'}</span>
+        <span className="text-base font-semibold text-foreground">{company?.name ?? 'FlipERP'}</span>
       </div>
 
       <div className="flex items-center gap-3">

@@ -1,6 +1,12 @@
-{{-- Expects: $companyName. Renders a thin rule + quiet "Company · Page X of Y" via dompdf's page_text API. --}}
+{{-- Expects: $companyName. Renders a thin rule + quiet "Company · Page X of Y" via dompdf's page_text API, and a small "Powered by FlipERP" mark. --}}
+@php($fliperpLogo = \App\Support\Brand::logoDataUri())
 <div class="footer">
     <hr class="rule" style="margin-top: 0;">
+    @if ($fliperpLogo)
+        <div style="text-align: right; margin-top: 2px; font-size: 7pt; color: #9CA3AF;">
+            Powered by <img src="{{ $fliperpLogo }}" alt="FlipERP" style="height: 13px; width: auto; vertical-align: middle;">
+        </div>
+    @endif
 </div>
 <script type="text/php">
 if (isset($pdf)) {

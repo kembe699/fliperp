@@ -21,7 +21,6 @@ import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/format'
 import { useAuthStore } from '@/lib/auth-store'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -33,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export interface DataTableColumn<T> {
   key: string
@@ -437,15 +437,11 @@ export function DataTable<T>({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, rowIndex) => (
-              <TableRow key={`skeleton-${rowIndex}`}>
-                {Array.from({ length: columnCount }).map((__, colIndex) => (
-                  <TableCell key={`skeleton-cell-${colIndex}`}>
-                    <Skeleton className="h-4 w-full max-w-32" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={columnCount} className="p-0">
+                <FlipLoaderBlock className="min-h-[220px]" />
+              </TableCell>
+            </TableRow>
           ) : visibleRows.length === 0 ? (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={columnCount} className="p-0">

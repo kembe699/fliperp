@@ -12,6 +12,7 @@ import { CrmDrawerMeetingsTab } from '@/components/crm/drawer/CrmDrawerMeetingsT
 import { CrmDrawerEmailsTab } from '@/components/crm/drawer/CrmDrawerEmailsTab'
 import { CrmDrawerActivitiesTab } from '@/components/crm/drawer/CrmDrawerActivitiesTab'
 import { CrmDrawerQuotationTab } from '@/components/crm/drawer/CrmDrawerQuotationTab'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT = { open: 'info', converted: 'success', disqualified: 'neutral' } as const
 
@@ -26,7 +27,7 @@ export function CrmLeadDetailPage() {
   })
 
   if (isLoading || !detail) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading lead…</div>
+    return <FlipLoaderBlock label="Loading lead…" />
   }
 
   const { lead, services, meetings, emails, activities } = detail

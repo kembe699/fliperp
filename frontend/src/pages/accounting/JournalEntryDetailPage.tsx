@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT: Record<JournalEntryStatus, 'neutral' | 'success' | 'danger'> = {
   draft: 'neutral',
@@ -59,7 +60,7 @@ export function JournalEntryDetailPage() {
   })
 
   if (isLoading || !entry) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading journal entry…</div>
+    return <FlipLoaderBlock label="Loading journal entry…" />
   }
 
   const totalDebit = entry.total_debit ?? entry.lines.reduce((sum, l) => sum + l.debit, 0)

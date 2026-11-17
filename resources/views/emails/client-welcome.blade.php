@@ -13,7 +13,7 @@
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#ffffff; border:1px solid #e5e7eb; border-top:3px solid #1B5FAE;">
                     <tr>
                         <td style="padding:28px 40px 0;">
-                            <span style="font-size:18px; font-weight:700; letter-spacing:-0.2px; color:#111827;">Flip<span style="color:#1B5FAE;">ERP</span></span>
+                            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="FlipERP" width="160" style="display:block; width:160px; height:auto; border:0;">
                         </td>
                     </tr>
                     <tr>

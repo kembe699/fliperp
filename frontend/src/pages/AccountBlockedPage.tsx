@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Ban, Clock, Mail } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 
 /**
  * Landed on when the api.ts response interceptor catches a 403 with
@@ -20,6 +21,7 @@ export function AccountBlockedPage() {
       <div className="absolute inset-0 bg-[#0A2E52]/60" />
 
       <div className="relative w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-xl">
+        <BrandLogo className="mx-auto mb-6 h-9" />
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-danger-bg">
           {isSuspended ? <Ban className="h-7 w-7 text-danger" /> : <Clock className="h-7 w-7 text-danger" />}
         </div>

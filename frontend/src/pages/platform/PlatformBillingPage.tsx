@@ -11,6 +11,7 @@ import { StatCard } from '@/components/shared/StatCard'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT: Record<CompanyStatus, 'success' | 'danger' | 'warning'> = {
   active: 'success',
@@ -62,7 +63,7 @@ export function PlatformBillingPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">Loading…</p>
+            <FlipLoaderBlock />
           ) : !data || data.by_client.length === 0 ? (
             <p className="px-6 pb-6 text-sm text-muted-foreground">No billable clients yet.</p>
           ) : (

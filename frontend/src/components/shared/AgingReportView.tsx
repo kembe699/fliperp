@@ -19,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const BUCKETS: { key: AgingBucket; label: string }[] = [
   { key: 'd0_30', label: '0–30 days' },
@@ -158,7 +159,7 @@ export function AgingReportView({ kind }: Props) {
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this report. Please try again.</p>
       ) : isLoading || !data ? (
-        <p className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Loading…</p>
+        <FlipLoaderBlock className="rounded-xl border border-border bg-card" />
       ) : (
         <>
           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

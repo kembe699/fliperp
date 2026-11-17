@@ -6,6 +6,7 @@ import { fetchPortalMe } from '@/api/employee-portal'
 import { EmployeeAvatar } from '@/components/hr/EmployeeAvatar'
 import { PortalStatCard } from '@/components/portal/PortalStatCard'
 import { Button } from '@/components/ui/button'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function PortalDashboardPage() {
   const navigate = useNavigate()
@@ -13,7 +14,7 @@ export function PortalDashboardPage() {
   const { data: me, isLoading } = useQuery({ queryKey: ['portal-me'], queryFn: fetchPortalMe })
 
   if (isLoading || !me) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>
+    return <FlipLoaderBlock />
   }
 
   const { employee, today_attendance: today, leave_balance: leaveBalance } = me

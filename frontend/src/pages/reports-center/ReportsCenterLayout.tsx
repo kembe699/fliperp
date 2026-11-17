@@ -8,6 +8,7 @@ import { usePermissions } from '@/hooks/use-permissions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CATALOG, GROUPS, findEntry } from './catalog'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 
 /**
  * The Reports Center: every report in a sidebar grouped by area (searchable,
@@ -37,7 +38,7 @@ export function ReportsCenterLayout() {
       {/* Same look as the main app sidebar (AppSidebar): white, bordered, pill items. */}
       <aside className={cn('flex h-screen shrink-0 flex-col border-r border-border bg-sidebar transition-all duration-200 print:hidden', open ? 'w-[260px]' : 'w-[68px]')}>
         <div className={cn('border-b border-border py-4', open ? 'px-5' : 'px-3')}>
-          <img src="/logo.png" alt="FlipErp" className={cn('h-8 w-auto', !open && 'mx-auto h-6')} />
+          {open ? <BrandLogo className="h-8" /> : <BrandLogo variant="icon" className="mx-auto h-8" />}
         </div>
 
         {open ? (

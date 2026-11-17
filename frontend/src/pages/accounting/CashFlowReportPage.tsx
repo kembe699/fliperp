@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const CATEGORY_LABEL: Record<string, string> = {
   sales: 'POS Sales',
@@ -91,7 +92,7 @@ export function CashFlowReportPage() {
         <Card>
           <CardContent className="p-8">
             {isLoading || !data ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <FlipLoaderBlock />
             ) : (
               <>
                 <table className="w-full text-sm">

@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 interface StepDraft {
   label: string
@@ -127,7 +128,7 @@ export function PaymentApprovalsSettingsPage() {
       </p>
 
       {isError && <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load the approval rules.</p>}
-      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isLoading && <FlipLoaderBlock />}
       {data && data.rules.length === 0 && (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">No approval rules yet. Payment requests can't be submitted until an amount is covered by a rule.</CardContent>

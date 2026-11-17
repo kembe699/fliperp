@@ -18,6 +18,7 @@ import { MeIndicatorFormDialog } from '@/components/me/MeIndicatorFormDialog'
 import { MeActivityFormDialog } from '@/components/me/MeActivityFormDialog'
 import { RecordResultDialog } from '@/components/me/RecordResultDialog'
 import { MeProjectFormDialog } from '@/components/me/MeProjectFormDialog'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const ACTIVITY_STATUS_VARIANT: Record<MeActivityStatus, 'neutral' | 'info' | 'success' | 'danger'> = {
   not_started: 'neutral',
@@ -43,7 +44,7 @@ export function MeProjectDetailPage() {
   const { data: employees } = useQuery({ queryKey: ['employees-all'], queryFn: () => fetchEmployees({ per_page: 200 }) })
 
   if (isLoading || !project) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading project…</div>
+    return <FlipLoaderBlock label="Loading project…" />
   }
 
   return (

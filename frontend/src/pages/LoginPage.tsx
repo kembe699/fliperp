@@ -11,6 +11,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 
 const loginSchema = z.object({
   clientCode: z.string().min(1, 'Client code is required'),
@@ -71,7 +72,7 @@ export function LoginPage() {
 
       <div className="relative w-full max-w-[440px] rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-6 flex flex-col items-center">
-          <img src="/logo.png" alt="FlipErp" className="h-14 w-auto" />
+          <BrandLogo variant="stacked" className="h-24" />
           <div className="mt-4 h-1 w-16 rounded-full bg-gradient-to-r from-primary to-primary-hover" />
         </div>
 

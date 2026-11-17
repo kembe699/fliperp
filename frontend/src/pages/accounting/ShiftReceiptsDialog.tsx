@@ -6,6 +6,7 @@ import { SALE_STATUS_LABEL, SALE_STATUS_VARIANT } from '@/components/sales/statu
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 interface ShiftReceiptsDialogProps {
   sessionId: number | null
@@ -30,7 +31,7 @@ export function ShiftReceiptsDialog({ sessionId, onOpenChange }: ShiftReceiptsDi
         </DialogHeader>
 
         {isLoading ? (
-          <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+          <FlipLoaderBlock />
         ) : sales.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">No sales were rung up during this shift.</p>
         ) : (

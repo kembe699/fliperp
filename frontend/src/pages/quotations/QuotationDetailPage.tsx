@@ -20,6 +20,8 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { brandLogoSrc } from '@/components/brand/BrandLogo'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function QuotationDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -102,7 +104,7 @@ export function QuotationDetailPage() {
   }
 
   if (isLoading || !quotation) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading quotation…</div>
+    return <FlipLoaderBlock label="Loading quotation…" />
   }
 
   const canEdit = can('quotations.update') && isQuotationEditable(quotation.status)
@@ -167,10 +169,10 @@ export function QuotationDetailPage() {
           <div className="mb-8 flex items-start justify-between">
             <div className="flex items-center gap-3">
               <img
-                src={company?.logo_url || '/logo.png'}
+                src={company?.logo_url || brandLogoSrc()}
                 onError={(event) => {
                   event.currentTarget.onerror = null
-                  event.currentTarget.src = '/logo.png'
+                  event.currentTarget.src = brandLogoSrc()
                 }}
                 alt={company?.name ?? 'Company logo'}
                 className="h-10 w-auto object-contain"
