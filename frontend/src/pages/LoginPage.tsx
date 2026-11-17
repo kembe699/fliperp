@@ -1,5 +1,5 @@
 import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -153,7 +153,7 @@ export function LoginPage() {
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
-                placeholder="e.g. NHC-XXXXX"
+                placeholder="Your client code"
                 className={cn(fieldClass, 'uppercase placeholder:normal-case')}
                 {...errorProps('clientCode')}
                 {...register('clientCode', {
@@ -285,7 +285,13 @@ export function LoginPage() {
               Contact us
             </a>
           </span>
-          <span>By signing in you accept our terms.</span>
+          <span>
+            By signing in you accept our{' '}
+            <Link to="/terms" className="font-medium text-primary hover:underline">
+              terms
+            </Link>
+            .
+          </span>
         </div>
       </div>
     </div>
