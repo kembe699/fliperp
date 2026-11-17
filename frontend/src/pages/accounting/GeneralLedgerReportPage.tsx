@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Camera, Download } from 'lucide-react'
+import { Camera } from 'lucide-react'
 
-import { downloadGeneralLedger, fetchGeneralLedgerAll, saveReportSnapshot, type GeneralLedgerAccount } from '@/api/reports'
+import { fetchGeneralLedgerAll, saveReportSnapshot, type GeneralLedgerAccount } from '@/api/reports'
 import type { ReportCurrencyInfo } from '@/types/exchangeRate'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
@@ -15,6 +15,7 @@ import { startOfMonth, toISODate } from '@/lib/format'
 import { sourceRecordLink } from '@/lib/journal-source-links'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ExportMenu } from '@/components/shared/ExportMenu'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +27,6 @@ export function GeneralLedgerReportPage() {
   const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
-  const [downloading, setDownloading] = useState(false)
   const [dimensions, setDimensions] = useState<DimensionFilterValue>({})
 
   // Every account with a balance or activity in the period, each as its own ledger.
@@ -41,15 +41,6 @@ export function GeneralLedgerReportPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
-  const handleDownload = async () => {
-    setDownloading(true)
-    try {
-      await downloadGeneralLedger(from, to, currencyParam, dimensions)
-    } finally {
-      setDownloading(false)
-    }
-  }
-
   return (
     <div>
       <PageHeader
@@ -61,10 +52,7 @@ export function GeneralLedgerReportPage() {
               <Camera className="h-4 w-4" />
               Save Snapshot
             </Button>
-            <Button onClick={handleDownload} disabled={downloading}>
-              <Download className="h-4 w-4" />
-              {downloading ? 'Downloading…' : 'Download'}
-            </Button>
+            <ExportMenu path="/reports/general-ledger/export" params={{ from, to, currency: currencyParam, ...dimensions }} fileName={`general-ledger-${from}-to-${to}`} />
           </div>
         }
       />

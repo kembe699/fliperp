@@ -13,6 +13,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import { usePermissions } from '@/hooks/use-permissions'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
+import { ExportMenu } from '@/components/shared/ExportMenu'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -238,6 +239,7 @@ export function CenterReport({ entry }: { entry: CenterEntry }) {
             <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => window.print()}>
               <Printer className="h-3.5 w-3.5" /> Print
             </Button>
+            <ExportMenu path={`/reports/center/${entry.report}/export`} params={params} fileName={`${entry.id}${groupBy ? `-${groupBy}` : ''}-${from}-${to}`} />
           </div>
         </CardContent>
       </Card>

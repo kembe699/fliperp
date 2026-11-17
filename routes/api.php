@@ -248,6 +248,7 @@ Route::prefix('v1')->group(function () {
         // Budgeting
         Route::apiResource('budget-periods', BudgetPeriodController::class);
         Route::get('budget-periods/{budget_period}/vs-actual', [BudgetPeriodController::class, 'vsActual']);
+        Route::get('budget-periods/{budget_period}/vs-actual/export', [BudgetPeriodController::class, 'vsActualExport']);
         Route::apiResource('budget-lines', BudgetLineController::class);
 
         // Grants & dimensions (Save the Children coding: SOF, DEA, project, cost centre)
@@ -395,6 +396,13 @@ Route::prefix('v1')->group(function () {
             Route::get('reports/payables', [ReportController::class, 'payables']);
             Route::get('reports/snapshots', [ReportController::class, 'snapshots']);
             Route::get('reports/center/{report}', [ReportsCenterController::class, 'show']);
+
+            // Downloads of the same reports: ?format=csv|xlsx|pdf, same filters as the screen.
+            Route::get('reports/trial-balance/export', [ReportController::class, 'trialBalanceExport']);
+            Route::get('reports/profit-and-loss/export', [ReportController::class, 'profitAndLossExport']);
+            Route::get('reports/balance-sheet/export', [ReportController::class, 'balanceSheetExport']);
+            Route::get('reports/general-ledger/export', [ReportController::class, 'generalLedgerExport']);
+            Route::get('reports/center/{report}/export', [ReportsCenterController::class, 'export']);
         });
         Route::post('reports/{type}/snapshot', [ReportController::class, 'snapshot'])
             ->middleware('permission:reports.snapshot');

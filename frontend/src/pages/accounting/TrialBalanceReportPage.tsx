@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Camera, Download } from 'lucide-react'
+import { Camera } from 'lucide-react'
 
-import { downloadReport, fetchTrialBalance, saveReportSnapshot } from '@/api/reports'
+import { fetchTrialBalance, saveReportSnapshot } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { formatCurrency } from '@/lib/currency'
 import { useBaseCurrency } from '@/hooks/use-base-currency'
@@ -13,6 +13,7 @@ import type { DimensionFilterValue } from '@/lib/coding'
 import { startOfMonth, toISODate } from '@/lib/format'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { ExportMenu } from '@/components/shared/ExportMenu'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +25,6 @@ export function TrialBalanceReportPage() {
   const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
   const [to, setTo] = useState(() => toISODate(new Date()))
-  const [downloading, setDownloading] = useState(false)
   const [dimensions, setDimensions] = useState<DimensionFilterValue>({})
 
   const { data, isLoading, isError } = useQuery({ queryKey: ['trial-balance', from, to, showIn, dimensions], queryFn: () => fetchTrialBalance({ from, to, currency: currencyParam, ...dimensions }) })
@@ -35,15 +35,6 @@ export function TrialBalanceReportPage() {
     onSuccess: () => toast.success('Snapshot saved'),
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
-
-  const handleDownload = async () => {
-    setDownloading(true)
-    try {
-      await downloadReport('trial-balance', from, to, currencyParam, dimensions)
-    } finally {
-      setDownloading(false)
-    }
-  }
 
   return (
     <div>
@@ -56,10 +47,7 @@ export function TrialBalanceReportPage() {
               <Camera className="h-4 w-4" />
               Save Snapshot
             </Button>
-            <Button onClick={handleDownload} disabled={downloading}>
-              <Download className="h-4 w-4" />
-              {downloading ? 'Downloading…' : 'Download'}
-            </Button>
+            <ExportMenu path="/reports/trial-balance/export" params={{ from, to, currency: currencyParam, ...dimensions }} fileName={`trial-balance-${from}-to-${to}`} />
           </div>
         }
       />

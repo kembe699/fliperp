@@ -13,7 +13,6 @@ import { formatDate } from '@/lib/format'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
 import { useBaseCurrency } from '@/hooks/use-base-currency'
-import { csvColumnsFromDataTable, exportToCsv } from '@/lib/csv-export'
 import { EMPTY_CODING, type Coding } from '@/types/grants'
 import type { BudgetVsActualLine } from '@/types/budgeting'
 
@@ -29,7 +28,7 @@ import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { CodingFields, DimensionFilters } from '@/components/shared/CodingFields'
 import { codingSummary, useDimensionOptions, type DimensionFilterValue } from '@/lib/coding'
 import { ConversionNotice, ReportCurrencySelect } from '@/components/shared/ReportCurrency'
-import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
+import { ExportMenu } from '@/components/shared/ExportMenu'
 import type { DataTableColumn } from '@/components/shared/DataTable'
 
 export function BudgetPeriodDetailPage() {
@@ -185,7 +184,7 @@ export function BudgetPeriodDetailPage() {
 
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-semibold text-foreground">Budget vs Actual</p>
-        <ExportCsvButton onExport={async () => exportToCsv(`budget-vs-actual-${period.name}.csv`, csvColumnsFromDataTable(vsActualColumns), vsActual ?? [])} />
+        <ExportMenu path={`/budget-periods/${budgetPeriodId}/vs-actual/export`} params={{ ...filters, currency: showIn === baseCurrency ? undefined : showIn }} fileName={`budget-vs-actual-${period.name}`} />
       </div>
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end gap-4 p-4">
