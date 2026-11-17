@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader'
+import { LedgerViewTabs } from '@/components/accounting/LedgerViewTabs'
 import { CenterReport } from '@/pages/reports-center/CenterReportPage'
 import { GENERAL_LEDGER } from '@/pages/reports-center/catalog'
 
@@ -11,6 +12,7 @@ export function GeneralLedgerJournalPage() {
   return (
     <div>
       <PageHeader parent="Accounting Reports" title="General Ledger" />
+      <LedgerViewTabs />
       <CenterReport entry={GENERAL_LEDGER} />
     </div>
   )

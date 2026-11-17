@@ -146,7 +146,6 @@ export const navConfig: NavItem[] = [
       { label: 'Accounts Receivable', path: '/reports/receivables', requiredPermission: 'reports.view' },
       { label: 'Accounts Payable', path: '/reports/payables', requiredPermission: 'reports.view' },
       { label: 'General Ledger', path: '/reports/general-ledger', requiredPermission: 'reports.view' },
-      { label: 'Account Ledger', path: '/reports/account-ledger', requiredPermission: 'reports.view' },
       { label: 'Trial Balance', path: '/reports/trial-balance', requiredPermission: 'reports.view' },
       { label: 'Profit & Loss', path: '/reports/profit-and-loss', requiredPermission: 'reports.view' },
       { label: 'Balance Sheet', path: '/reports/balance-sheet', requiredPermission: 'reports.view' },
