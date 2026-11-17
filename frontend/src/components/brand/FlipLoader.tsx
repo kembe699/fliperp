@@ -20,7 +20,11 @@ export function FlipLoader({ size = 'md', label = 'Loading…', className }: { s
   )
 }
 
-/** A loader centred in the area a page or panel would fill. */
+/**
+ * A loader centred, both ways, in the space a page or panel would fill. By
+ * default it takes most of the screen height so a page-level load sits in the
+ * middle of the screen; tables, charts and dialogs pass a smaller height.
+ */
 export function FlipLoaderBlock({ label, className }: { label?: string; className?: string }) {
-  return <FlipLoader size="md" label={label} className={cn('min-h-[240px] w-full', className)} />
+  return <FlipLoader size="md" label={label} className={cn('min-h-[calc(100vh-10rem)] w-full', className)} />
 }
