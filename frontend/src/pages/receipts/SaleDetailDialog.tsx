@@ -36,7 +36,7 @@ export function SaleDetailDialog({ saleId, onOpenChange }: SaleDetailDialogProps
         </DialogHeader>
 
         {isLoading || !sale ? (
-          <FlipLoaderBlock />
+          <FlipLoaderBlock className="min-h-[200px]" />
         ) : (
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-2 gap-3">

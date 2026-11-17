@@ -132,7 +132,6 @@ export function LoginPage() {
         <div className="mb-6 flex flex-col items-center text-center">
           <BrandLogo variant="stacked" className="h-20" />
           <h1 className="mt-5 text-xl font-semibold text-foreground">Sign in to your workspace</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Use the client code and email your administrator gave you.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>

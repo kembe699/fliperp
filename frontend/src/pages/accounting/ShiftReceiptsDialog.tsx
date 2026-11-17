@@ -31,7 +31,7 @@ export function ShiftReceiptsDialog({ sessionId, onOpenChange }: ShiftReceiptsDi
         </DialogHeader>
 
         {isLoading ? (
-          <FlipLoaderBlock />
+          <FlipLoaderBlock className="min-h-[200px]" />
         ) : sales.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">No sales were rung up during this shift.</p>
         ) : (
