@@ -188,7 +188,6 @@ const IMPLEMENTED_PATHS = new Set([
   '/reports/profit-and-loss',
   '/reports/balance-sheet',
   '/reports/general-ledger',
-  '/reports/account-ledger',
   '/reports/cash-flow',
   '/reports/shift-report',
   '/reports-center',
@@ -341,7 +340,9 @@ function App() {
           <Route path="/reports/profit-and-loss" element={<ProfitAndLossReportPage />} />
           <Route path="/reports/balance-sheet" element={<BalanceSheetReportPage />} />
           <Route path="/reports/general-ledger" element={<GeneralLedgerJournalPage />} />
-          <Route path="/reports/account-ledger" element={<GeneralLedgerReportPage />} />
+          <Route path="/reports/general-ledger/by-account" element={<GeneralLedgerReportPage />} />
+          {/* The old Account Ledger menu item is now the "By account" view of General Ledger. */}
+          <Route path="/reports/account-ledger" element={<Navigate to="/reports/general-ledger/by-account" replace />} />
           <Route path="/reports/cash-flow" element={<CashFlowReportPage />} />
           <Route path="/reports/shift-report" element={<ShiftReportPage />} />
 

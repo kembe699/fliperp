@@ -101,7 +101,7 @@ How to read each step:
 4. **After G1 is built:** mark each account as bank/cash with its currency, and pick it on every payment.
 
 **Input from G711:** bank names, account numbers and currencies; number of petty cash boxes and their custodians ✘ pending.
-**Check:** the bank and cash accounts appear under Cash and Bank in the chart. A test journal from 1010 SSP Bank shows the SSP amount and its USD equivalent in **Account Ledger**.
+**Check:** the bank and cash accounts appear under Cash and Bank in the chart. A test journal from 1010 SSP Bank shows the SSP amount and its USD equivalent in **General Ledger (By account)**.
 
 ### Step 6. Opening balances (zero) and go-live date (B4, B5, B6)
 **Where:** no entry needed.
@@ -218,7 +218,7 @@ Juba Office Supplies Ltd,Mary Akol,+211 912 345 678,sales@example.com,"Hai Malak
 2. **Issue an advance:** journal Dr 1300/1310 (description: staff name and purpose) / Cr the cash or bank account.
 3. **Retire it:** journal Dr the expense accounts, **coded to the SOF/project** / Cr 1300/1310. Return any unspent cash: Dr cash / Cr 1300/1310.
 4. Receipts stay on paper; write the journal reference on them. Journals take no attachments.
-5. Outstanding advances: **Accounting › Account Ledger** for 1300/1310.
+5. Outstanding advances: **Accounting › General Ledger › By account** for 1300/1310.
 
 **Input from G711:** advance policy (limits, days to retire) ✘ pending.
 **Check:** after issue and full retirement, the 1300 balance for that advance is zero.
@@ -273,7 +273,7 @@ Juba Office Supplies Ltd,Mary Akol,+211 912 345 678,sales@example.com,"Hai Malak
 | Profit & Loss (I&E) | Accounting › Profit & Loss | From/To (1 Jul–30 Jun), Branch, SOF/project | ⛔ G3: Print → Save as PDF |
 | Budget vs Actual | Budgeting › (period); Grants › SOFs › Report | SOF, project, cost centre | CSV |
 | General Ledger | Reports Center › General Ledger | From/To, status | CSV, PDF, Print |
-| Bank & cash reconciliation | — | — | ⛔ G4: Account Ledger vs bank statement in Excel |
+| Bank & cash reconciliation | — | — | ⛔ G4: General Ledger (By account) vs bank statement in Excel |
 | Transaction listing | Reports Center › General Ledger ("Every journal entry"); Accounting › Journal Entries | From/To, status | CSV, PDF |
 | Audit trail | Reports Center › Staff Activity / Audit Log | By user, module, action | CSV, PDF |
 
@@ -355,7 +355,7 @@ Afterwards, reverse or delete the test entries, and make sure the test period is
 | Income & Expenditure (P&L) | Accounting › Profit & Loss (type 1 July as the start date) |
 | Budget vs Actual | Budgeting › (budget) ; Grants › SOFs › (grant) › Report |
 | General Ledger / transaction listing | Reports Center › General Ledger |
-| One account's movements (e.g. a bank) | Accounting › Account Ledger |
+| One account's movements (e.g. a bank) | Accounting › General Ledger › By account |
 | Who did what | Reports Center › Staff Activity / Audit Log |
 
 ---
@@ -365,12 +365,12 @@ Afterwards, reverse or delete the test entries, and make sure the test period is
 1. **Post or delete every draft** for the month: **Journal Entries**, filter Draft.
 2. **Exchange rate:** make sure an SSP rate exists for the last day of the month (**Accounting › Exchange Rates**).
 3. **Bank and cash reconciliation** (⛔ G4, manual until built):
-   1. **Accounting › Account Ledger** for each bank and cash account, for the month.
+   1. **Accounting › General Ledger › By account** for each bank and cash account, for the month.
    2. Compare it line by line with the bank statement or the cash count; list the differences (timing items, bank charges, errors).
    3. Post journals for bank charges and corrections.
    4. Keep the signed reconciliation (Excel/PDF) on file.
 4. **Shared costs:** post the re-allocation journal (Step 10). Also post the payroll re-allocation if salaries are shared.
-5. **Staff advances:** **Account Ledger** for 1300/1310. Chase anything still open past the policy deadline.
+5. **Staff advances:** **General Ledger (By account)** for 1300/1310. Chase anything still open past the policy deadline.
 6. **Budget vs Actual:** **Budgeting › (budget) › Budget vs Actual**, and **Grants › SOFs › Report** for each grant. Explain big variances to the ED.
 7. **Export for the file:**
    - **Reports Center › General Ledger** for the month: CSV and PDF.

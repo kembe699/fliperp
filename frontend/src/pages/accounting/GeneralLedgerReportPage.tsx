@@ -16,6 +16,7 @@ import { sourceRecordLink } from '@/lib/journal-source-links'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ExportMenu } from '@/components/shared/ExportMenu'
+import { LedgerViewTabs } from '@/components/accounting/LedgerViewTabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,6 +57,7 @@ export function GeneralLedgerReportPage() {
           </div>
         }
       />
+      <LedgerViewTabs />
 
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end gap-4 p-4">
