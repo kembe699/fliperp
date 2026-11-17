@@ -17,7 +17,7 @@ import App from './App.tsx'
  * SPLASH_MIN_MS from the start of the page load, then fades out. Counted from
  * navigation start, so a slow connection doesn't add the 3 s on top.
  */
-const SPLASH_MIN_MS = 3000
+const SPLASH_MIN_MS = 5000
 
 function hideSplash() {
   const splash = document.getElementById('flip-splash')
