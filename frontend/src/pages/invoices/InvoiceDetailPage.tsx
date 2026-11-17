@@ -27,6 +27,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { brandLogoSrc } from '@/components/brand/BrandLogo'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -111,7 +113,7 @@ export function InvoiceDetailPage() {
   }
 
   if (isLoading || !invoice) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading invoice…</div>
+    return <FlipLoaderBlock label="Loading invoice…" />
   }
 
   const canRecordPayment = can('customer-payments.create') && ['sent', 'partially_paid', 'overdue'].includes(invoice.status)
@@ -164,10 +166,10 @@ export function InvoiceDetailPage() {
           <div className="mb-8 flex items-start justify-between">
             <div className="flex items-center gap-3">
               <img
-                src={company?.logo_url || '/logo.png'}
+                src={company?.logo_url || brandLogoSrc()}
                 onError={(event) => {
                   event.currentTarget.onerror = null
-                  event.currentTarget.src = '/logo.png'
+                  event.currentTarget.src = brandLogoSrc()
                 }}
                 alt={company?.name ?? 'Company logo'}
                 className="h-10 w-auto object-contain"

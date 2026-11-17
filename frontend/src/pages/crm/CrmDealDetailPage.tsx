@@ -13,6 +13,7 @@ import { CrmDrawerMeetingsTab } from '@/components/crm/drawer/CrmDrawerMeetingsT
 import { CrmDrawerEmailsTab } from '@/components/crm/drawer/CrmDrawerEmailsTab'
 import { CrmDrawerActivitiesTab } from '@/components/crm/drawer/CrmDrawerActivitiesTab'
 import { CrmDrawerQuotationTab } from '@/components/crm/drawer/CrmDrawerQuotationTab'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function CrmDealDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,7 +26,7 @@ export function CrmDealDetailPage() {
   })
 
   if (isLoading || !detail) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading deal…</div>
+    return <FlipLoaderBlock label="Loading deal…" />
   }
 
   const { deal, services, meetings, emails, activities } = detail

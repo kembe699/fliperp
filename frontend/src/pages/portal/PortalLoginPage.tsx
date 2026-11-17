@@ -11,6 +11,7 @@ import { usePortalAuthStore } from '@/lib/portal-auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
@@ -51,7 +52,7 @@ export function PortalLoginPage() {
     <div className="relative flex min-h-screen items-center justify-center bg-[#F5F7FA] p-4">
       <div className="w-full max-w-[400px] rounded-2xl bg-white p-8 shadow-xl">
         <div className="mb-6 flex flex-col items-center">
-          <img src="/logo.png" alt="FlipErp" className="h-12 w-auto" />
+          <BrandLogo variant="stacked" className="h-20" />
           <p className="mt-2 text-sm font-medium text-muted-foreground">Employee Portal</p>
           <div className="mt-4 h-1 w-16 rounded-full bg-gradient-to-r from-primary to-primary-hover" />
         </div>

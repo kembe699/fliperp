@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function GrantDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -97,7 +98,7 @@ export function GrantDetailPage() {
   })
 
   if (isError) return <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this SOF.</p>
-  if (isLoading || !grant) return <div className="p-6 text-sm text-muted-foreground">Loading SOF…</div>
+  if (isLoading || !grant) return <FlipLoaderBlock label="Loading SOF…" />
 
   const deas = grant.deas ?? []
   const budgetLines = grant.budget_lines ?? []

@@ -20,7 +20,8 @@
                     </tr>
                     <tr>
                         <td style="padding:16px 32px; border-top:1px solid #e5e7eb; color:#9ca3af; font-size:12px;">
-                            Sent by {{ $companyName }}
+                            Sent by {{ $companyName }} &middot; powered by
+                            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="FlipERP" width="64" style="width:64px; height:auto; border:0; vertical-align:middle;">
                         </td>
                     </tr>
                 </table>

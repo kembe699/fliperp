@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 function Section({ title, total, accounts, currencyCode }: { title: string; total: number; accounts: ReportAccountLine[]; currencyCode?: string }) {
   return (
@@ -94,7 +95,7 @@ export function BalanceSheetReportPage() {
         <Card>
           <CardContent className="p-8">
             {isLoading || !data ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <FlipLoaderBlock />
             ) : (
               <>
                 <Section title="Assets" total={data.assets.total} accounts={data.assets.accounts} currencyCode={currencyCode} />

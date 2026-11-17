@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -90,7 +91,7 @@ export function AppSidebar() {
     <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-border bg-sidebar">
       {/* Product logo */}
       <div className="border-b border-border px-5 py-4">
-        <img src="/logo.png" alt="FlipErp" className="h-8 w-auto" />
+        <BrandLogo className="h-8" />
       </div>
 
       {/* Company block */}

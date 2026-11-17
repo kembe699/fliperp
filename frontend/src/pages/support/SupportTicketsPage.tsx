@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ContactSupportModal } from '@/components/support/ContactSupportModal'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT: Record<TicketStatus, 'info' | 'warning' | 'success' | 'neutral'> = {
   open: 'info',
@@ -73,7 +74,7 @@ export function SupportTicketsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+            <FlipLoaderBlock />
           ) : tickets.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <Headset className="h-8 w-8 text-muted-foreground" />

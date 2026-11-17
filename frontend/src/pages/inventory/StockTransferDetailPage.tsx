@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const TIMELINE: StockTransferStatus[] = ['pending', 'in_transit', 'completed']
 
@@ -65,7 +66,7 @@ export function StockTransferDetailPage() {
   })
 
   if (isLoading || !transfer) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading stock transfer…</div>
+    return <FlipLoaderBlock label="Loading stock transfer…" />
   }
 
   const canMarkInTransit = can('stock-transfers.update') && transfer.status === 'pending'

@@ -4,6 +4,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import type { CrmTrendPoint } from '@/types/crm'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 function formatMonthLabel(period: string): string {
   const [year, month] = period.split('-').map(Number)
@@ -36,7 +37,7 @@ export function CrmTrendChart({ title, icon: Icon, data, dataKey, color, isLoadi
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex h-52 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+          <FlipLoaderBlock className="h-52 min-h-0" />
         ) : !hasData ? (
           <div className="flex h-52 flex-col items-center justify-center gap-1 text-sm text-muted-foreground">
             <p>{emptyText ?? 'No data in this period yet.'}</p>

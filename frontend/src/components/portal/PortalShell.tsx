@@ -5,6 +5,7 @@ import { Clock, LogOut, Palmtree, User } from 'lucide-react'
 import { usePortalAuthStore } from '@/lib/portal-auth-store'
 import { portalLogout } from '@/api/employee-portal'
 import { cn } from '@/lib/utils'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 
 const NAV_ITEMS = [
   { to: '/employee-portal', label: 'Home', icon: User, end: true },
@@ -31,7 +32,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col bg-[#F5F7FA]">
       <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="FlipErp" className="h-7 w-auto" />
+          <BrandLogo variant="icon" className="h-7" />
           <span className="text-sm font-semibold text-foreground">Employee Portal</span>
         </div>
         {employee && <span className="text-xs text-muted-foreground">{employee.first_name}</span>}

@@ -5,6 +5,7 @@ import type { CrmDealByStage } from '@/types/crm'
 import { formatCurrency } from '@/lib/currency'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 interface CrmPipelineChartProps {
   stages: CrmDealByStage[]
@@ -34,7 +35,7 @@ export function CrmPipelineChart({ stages, isLoading }: CrmPipelineChartProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex h-52 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+          <FlipLoaderBlock className="h-52 min-h-0" />
         ) : !hasData ? (
           <div className="flex h-52 items-center justify-center text-sm text-muted-foreground">No deals yet.</div>
         ) : (

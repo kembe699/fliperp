@@ -22,6 +22,7 @@ import { PaymentDialog } from '@/pages/pos/PaymentDialog'
 import { HeldSalesDialog } from '@/pages/pos/HeldSalesDialog'
 import { OpenDrawerDialog } from '@/pages/pos/OpenDrawerDialog'
 import { CloseDrawerDialog } from '@/pages/pos/CloseDrawerDialog'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function PosTerminalPage() {
   const navigate = useNavigate()
@@ -196,7 +197,7 @@ export function PosTerminalPage() {
   const allowPartial = selectedCustomer?.customer_type === 'credit'
 
   if (drawerLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading terminal…</div>
+    return <FlipLoaderBlock label="Loading terminal…" />
   }
 
   if (!drawerSession) {

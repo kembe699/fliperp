@@ -129,7 +129,7 @@ class Company extends Model
      * Returns null when the company hasn't uploaded a logo (or it can't be read) —
      * document-header.blade.php falls back to printing the company name as text in
      * that case. Deliberately does NOT fall back to the app's own FlipErp brand
-     * logo (public/logo.png) — that's this product's own mark, not the tenant's,
+     * logo (public/brand/, see App\Support\Brand) — that's this product's own mark, not the tenant's,
      * and would misrepresent whose document is being sent.
      */
     public function logoDataUri(): ?string

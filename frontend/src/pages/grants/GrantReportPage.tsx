@@ -19,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 /**
  * SOF Grant Report: the donor budget against spend coded to the SOF, per
@@ -139,7 +140,7 @@ export function GrantReportPage() {
       {isError ? (
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this report. Please try again.</p>
       ) : isLoading || !data ? (
-        <p className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Loading…</p>
+        <FlipLoaderBlock className="rounded-xl border border-border bg-card" />
       ) : (
         <>
           {data.missing_rates.length > 0 && (

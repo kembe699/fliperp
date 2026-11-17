@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const pillTrigger = 'h-8 w-auto gap-1.5 rounded-full border-border bg-card px-3.5 text-sm text-muted-foreground'
 
@@ -135,7 +136,7 @@ export function CrmReportsPage() {
         <CardContent className="space-y-4 p-6">
           <p className="text-sm font-semibold text-foreground">Pipeline Funnel</p>
           {isLoading || !summary ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <FlipLoaderBlock />
           ) : summary.deals.by_stage.length === 0 ? (
             <p className="text-sm text-muted-foreground">No deals in this date range.</p>
           ) : (

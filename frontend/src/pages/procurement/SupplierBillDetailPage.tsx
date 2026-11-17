@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function SupplierBillDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -127,7 +128,7 @@ export function SupplierBillDetailPage() {
   })
 
   if (isLoading || !bill) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading supplier bill…</div>
+    return <FlipLoaderBlock label="Loading supplier bill…" />
   }
 
   const canRecordPayment = can('supplier-payments.create') && bill.balance_due > 0
@@ -267,7 +268,7 @@ export function SupplierBillDetailPage() {
             <tbody>
               {paymentsLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">Loading…</td>
+                  <td colSpan={5} className="px-4 py-6"><FlipLoaderBlock className="min-h-[120px]" /></td>
                 </tr>
               ) : !payments?.data.length ? (
                 <tr>

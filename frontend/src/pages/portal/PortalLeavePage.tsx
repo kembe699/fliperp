@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const STATUS_VARIANT: Record<LeaveRequestStatus, 'success' | 'warning' | 'danger'> = {
   approved: 'success',
@@ -130,7 +131,7 @@ export function PortalLeavePage() {
 
       <div>
         <p className="mb-2 text-sm font-semibold text-foreground">History</p>
-        {historyLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {historyLoading && <FlipLoaderBlock />}
         {!historyLoading && (history?.data.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No leave requests yet.</p>}
         <div className="space-y-2">
           {history?.data.map((request) => (

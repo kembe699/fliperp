@@ -36,6 +36,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PAYMENT_REQUEST_STATUS_VARIANT } from './status'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 type DialogKind = 'approve' | 'reject' | 'pay' | 'cancel' | null
 
@@ -115,7 +116,7 @@ export function PaymentRequestDetailPage() {
   const upload = useMutation({ mutationFn: (files: File[]) => uploadPaymentRequestAttachments(requestId, files), onSuccess: done('Document added'), onError: failed })
   const removeFile = useMutation({ mutationFn: (attachmentId: number) => deletePaymentRequestAttachment(requestId, attachmentId), onSuccess: done('Document removed'), onError: failed })
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>
+  if (isLoading) return <FlipLoaderBlock />
   if (isError || !pr) return <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load this payment request.</p>
 
   const can = pr.can ?? { update: false, delete: false, submit: false, decide: false, pay: false, cancel: false, attach: false }

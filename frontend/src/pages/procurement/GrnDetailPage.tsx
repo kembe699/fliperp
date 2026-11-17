@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 const CONDITION_VARIANT: Record<GrnItemCondition, 'success' | 'warning' | 'danger'> = {
   good: 'success',
@@ -61,7 +62,7 @@ export function GrnDetailPage() {
   })
 
   if (isLoading || !grn) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading goods received note…</div>
+    return <FlipLoaderBlock label="Loading goods received note…" />
   }
 
   const canConfirm = can('goods-received-notes.confirm') && grn.status === 'draft'

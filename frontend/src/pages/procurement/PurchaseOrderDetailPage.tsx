@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -95,7 +96,7 @@ export function PurchaseOrderDetailPage() {
   }
 
   if (isLoading || !po) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading purchase order…</div>
+    return <FlipLoaderBlock label="Loading purchase order…" />
   }
 
   const total = po.items.reduce((sum, item) => sum + Number(item.quantity_ordered) * Number(item.unit_cost), 0)

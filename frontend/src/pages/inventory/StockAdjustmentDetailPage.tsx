@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function StockAdjustmentDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -40,7 +41,7 @@ export function StockAdjustmentDetailPage() {
   })
 
   if (isLoading || !adjustment) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading stock adjustment…</div>
+    return <FlipLoaderBlock label="Loading stock adjustment…" />
   }
 
   const canApprove = can('stock-adjustments.approve') && adjustment.status === 'draft'

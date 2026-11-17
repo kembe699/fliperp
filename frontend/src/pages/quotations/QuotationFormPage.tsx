@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { LineItemsEditor, type LineItemRow } from '@/components/sales/LineItemsEditor'
 import { TotalsFooter } from '@/components/sales/TotalsFooter'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function QuotationFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -154,7 +155,7 @@ export function QuotationFormPage() {
   }
 
   if (isEdit && quotationLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading quotation…</div>
+    return <FlipLoaderBlock label="Loading quotation…" />
   }
 
   if (isEdit && existingQuotation && !isQuotationEditable(existingQuotation.status)) {

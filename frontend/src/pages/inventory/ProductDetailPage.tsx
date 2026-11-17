@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ProductImage } from '@/components/inventory/ProductImage'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -48,7 +49,7 @@ export function ProductDetailPage() {
   ]
 
   if (isLoading || !product) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading product…</div>
+    return <FlipLoaderBlock label="Loading product…" />
   }
 
   return (

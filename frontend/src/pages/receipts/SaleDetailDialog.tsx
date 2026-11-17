@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 
 interface SaleDetailDialogProps {
   saleId: number | null
@@ -35,7 +36,7 @@ export function SaleDetailDialog({ saleId, onOpenChange }: SaleDetailDialogProps
         </DialogHeader>
 
         {isLoading || !sale ? (
-          <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+          <FlipLoaderBlock />
         ) : (
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-2 gap-3">

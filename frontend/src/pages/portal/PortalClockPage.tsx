@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, Loader2, MapPin, QrCode, ScanLine, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, MapPin, QrCode, ScanLine, XCircle } from 'lucide-react'
+import { FlipLoader } from '@/components/brand/FlipLoader'
 
 import { fetchPortalMe, portalCheckLocation, portalClockIn, portalClockOut } from '@/api/employee-portal'
 import { getApiErrorInfo } from '@/lib/api-errors'
@@ -179,7 +180,7 @@ export function PortalClockPage() {
     <div className="flex flex-col items-center gap-6 py-10 text-center">
       {phase === 'locating' && (
         <>
-          <Loader2 className="h-14 w-14 animate-spin text-primary" />
+          <FlipLoader size="md" />
           <p className="text-sm text-muted-foreground">Getting your location…</p>
         </>
       )}
@@ -196,7 +197,7 @@ export function PortalClockPage() {
 
       {phase === 'checking' && (
         <>
-          <Loader2 className="h-14 w-14 animate-spin text-primary" />
+          <FlipLoader size="md" />
           <p className="text-sm text-muted-foreground">Checking your location…</p>
         </>
       )}
@@ -231,7 +232,7 @@ export function PortalClockPage() {
 
       {phase === 'submitting' && (
         <>
-          <Loader2 className="h-14 w-14 animate-spin text-primary" />
+          <FlipLoader size="md" />
           <p className="text-sm text-muted-foreground">Submitting…</p>
         </>
       )}
