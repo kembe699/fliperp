@@ -15,7 +15,7 @@
                     </tr>
                     <tr>
                         <td style="padding:32px; color:#1f2937; font-size:15px; line-height:1.7;">
-                            <div style="white-space:pre-wrap;">{{ $bodyText }}</div>
+                            <div>{!! \App\Support\EmailText::toHtml($bodyText) !!}</div>
                         </td>
                     </tr>
                     <tr>

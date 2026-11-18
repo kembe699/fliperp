@@ -22,6 +22,11 @@ use App\Http\Controllers\Api\CrmCustomerController;
 use App\Http\Controllers\Api\CrmCustomerServiceController;
 use App\Http\Controllers\Api\CrmDealController;
 use App\Http\Controllers\Api\CrmEmailController;
+use App\Http\Controllers\Api\CrmBookingPageController;
+use App\Http\Controllers\Api\CrmEmailCampaignController;
+use App\Http\Controllers\Api\CrmLeadMagnetController;
+use App\Http\Controllers\Api\CrmMarketingReportController;
+use App\Http\Controllers\Api\PublicCrmController;
 use App\Http\Controllers\Api\CrmLeadController;
 use App\Http\Controllers\Api\CrmMeetingController;
 use App\Http\Controllers\Api\CrmPipelineStageController;
@@ -135,6 +140,22 @@ Route::prefix('v1')->group(function () {
     // customer's own phone with no login of any kind.
     Route::prefix('public')->group(function () {
         Route::get('sales/{sale}/verify', [PublicSaleController::class, 'verify']);
+
+        // CRM public pages and email tracking — see PublicCrmController.
+        Route::middleware('throttle:120,1')->group(function () {
+            Route::get('booking/{slug}', [PublicCrmController::class, 'bookingPage']);
+            Route::get('booking/{slug}/days', [PublicCrmController::class, 'bookingDays']);
+            Route::get('booking/{slug}/slots', [PublicCrmController::class, 'bookingSlots']);
+            Route::get('lead-magnets/{slug}', [PublicCrmController::class, 'leadMagnet']);
+            Route::get('lead-magnets/download/{token}', [PublicCrmController::class, 'download']);
+            Route::get('email/open/{token}', [PublicCrmController::class, 'trackOpen']);
+            Route::get('email/click/{token}', [PublicCrmController::class, 'trackClick']);
+        });
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::post('booking/{slug}', [PublicCrmController::class, 'book']);
+            Route::post('lead-magnets/{slug}', [PublicCrmController::class, 'submitLeadMagnet']);
+            Route::post('email/unsubscribe/{token}', [PublicCrmController::class, 'unsubscribe']);
+        });
     });
 
     // Also unauthenticated: non-sensitive reference data, and the public
@@ -487,6 +508,36 @@ Route::prefix('v1')->group(function () {
                 ->middleware('permission:crm-emails.create');
 
             Route::post('quotations/{quotation}/send-to-contact', [CrmQuotationController::class, 'sendToContact']);
+
+            // Marketing: booking pages, lead magnets, email campaigns, analytics.
+            Route::get('booking-pages', [CrmBookingPageController::class, 'index'])->middleware('permission:crm-booking-pages.view');
+            Route::post('booking-pages', [CrmBookingPageController::class, 'store'])->middleware('permission:crm-booking-pages.create');
+            Route::put('booking-pages/{crm_booking_page}', [CrmBookingPageController::class, 'update'])->middleware('permission:crm-booking-pages.update');
+            Route::delete('booking-pages/{crm_booking_page}', [CrmBookingPageController::class, 'destroy'])->middleware('permission:crm-booking-pages.delete');
+
+            Route::get('lead-magnets', [CrmLeadMagnetController::class, 'index'])->middleware('permission:crm-lead-magnets.view');
+            Route::post('lead-magnets', [CrmLeadMagnetController::class, 'store'])->middleware('permission:crm-lead-magnets.create');
+            Route::post('lead-magnets/{crm_lead_magnet}', [CrmLeadMagnetController::class, 'update'])->middleware('permission:crm-lead-magnets.update');
+            Route::delete('lead-magnets/{crm_lead_magnet}', [CrmLeadMagnetController::class, 'destroy'])->middleware('permission:crm-lead-magnets.delete');
+            Route::get('lead-magnets/{crm_lead_magnet}/submissions', [CrmLeadMagnetController::class, 'submissions'])->middleware('permission:crm-lead-magnets.view');
+
+            Route::middleware('permission:crm-campaigns.view')->group(function () {
+                Route::get('campaigns', [CrmEmailCampaignController::class, 'index']);
+                Route::get('campaigns/lead-sources', [CrmEmailCampaignController::class, 'leadSources']);
+                Route::post('campaigns/audience-preview', [CrmEmailCampaignController::class, 'audiencePreview']);
+                Route::get('campaigns/{crm_email_campaign}', [CrmEmailCampaignController::class, 'show']);
+                Route::get('campaigns/{crm_email_campaign}/recipients', [CrmEmailCampaignController::class, 'recipients']);
+            });
+            Route::post('campaigns', [CrmEmailCampaignController::class, 'store'])->middleware('permission:crm-campaigns.create');
+            Route::put('campaigns/{crm_email_campaign}', [CrmEmailCampaignController::class, 'update'])->middleware('permission:crm-campaigns.update');
+            Route::delete('campaigns/{crm_email_campaign}', [CrmEmailCampaignController::class, 'destroy'])->middleware('permission:crm-campaigns.delete');
+            Route::middleware('permission:crm-campaigns.send')->group(function () {
+                Route::post('campaigns/{crm_email_campaign}/test', [CrmEmailCampaignController::class, 'sendTest']);
+                Route::post('campaigns/{crm_email_campaign}/schedule', [CrmEmailCampaignController::class, 'schedule']);
+                Route::post('campaigns/{crm_email_campaign}/cancel', [CrmEmailCampaignController::class, 'cancel']);
+            });
+
+            Route::get('reports/marketing', CrmMarketingReportController::class)->middleware('permission:crm-reports.view');
         });
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary'])

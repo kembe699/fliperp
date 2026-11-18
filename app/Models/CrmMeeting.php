@@ -12,12 +12,14 @@ class CrmMeeting extends TenantModel
         'lead_id',
         'deal_id',
         'customer_id',
+        'booking_page_id',
         'title',
         'description',
         'scheduled_at',
         'duration_minutes',
         'location',
         'meeting_link',
+        'booking_notes',
         'organizer_id',
         'status',
         'created_by',
@@ -44,6 +46,11 @@ class CrmMeeting extends TenantModel
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function bookingPage(): BelongsTo
+    {
+        return $this->belongsTo(CrmBookingPage::class, 'booking_page_id');
     }
 
     public function organizer(): BelongsTo

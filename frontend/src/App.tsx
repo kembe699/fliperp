@@ -30,6 +30,13 @@ import { CrmServicesListPage } from '@/pages/crm/CrmServicesListPage'
 import { CrmStaffListPage } from '@/pages/crm/CrmStaffListPage'
 import { CrmStaffDetailPage } from '@/pages/crm/CrmStaffDetailPage'
 import { CrmReportsPage } from '@/pages/crm/CrmReportsPage'
+import { CrmEmailsPage } from '@/pages/crm/CrmEmailsPage'
+import { CrmCalendarPage } from '@/pages/crm/CrmCalendarPage'
+import { CrmCampaignsPage } from '@/pages/crm/CrmCampaignsPage'
+import { CrmCampaignDetailPage } from '@/pages/crm/CrmCampaignDetailPage'
+import { CrmLeadMagnetsPage } from '@/pages/crm/CrmLeadMagnetsPage'
+import { CrmAnalyticsPage } from '@/pages/crm/CrmAnalyticsPage'
+import { PublicBookingPage, PublicLeadMagnetPage, UnsubscribePage } from '@/pages/public/PublicCrmPages'
 import { PosTerminalPage } from '@/pages/pos/PosTerminalPage'
 import { ReceiptsListPage } from '@/pages/receipts/ReceiptsListPage'
 import { InvoicesListPage } from '@/pages/invoices/InvoicesListPage'
@@ -148,6 +155,11 @@ const IMPLEMENTED_PATHS = new Set([
   '/crm/services',
   '/crm/staff',
   '/crm/reports',
+  '/crm/emails',
+  '/crm/calendar',
+  '/crm/campaigns',
+  '/crm/lead-magnets',
+  '/crm/analytics',
   '/customers',
   '/pos',
   '/receipts',
@@ -219,6 +231,9 @@ function App() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/account-blocked" element={<AccountBlockedPage />} />
         <Route path="/verify/:id" element={<ReceiptVerifyPage />} />
+        <Route path="/book/:slug" element={<PublicBookingPage />} />
+        <Route path="/lm/:slug" element={<PublicLeadMagnetPage />} />
+        <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
 
         <Route path="/employee-portal/login" element={<PortalLoginPage />} />
         <Route
@@ -255,6 +270,12 @@ function App() {
           <Route path="/crm/staff" element={<CrmStaffListPage />} />
           <Route path="/crm/staff/:id" element={<CrmStaffDetailPage />} />
           <Route path="/crm/reports" element={<CrmReportsPage />} />
+          <Route path="/crm/emails" element={<CrmEmailsPage />} />
+          <Route path="/crm/calendar" element={<CrmCalendarPage />} />
+          <Route path="/crm/campaigns" element={<CrmCampaignsPage />} />
+          <Route path="/crm/campaigns/:id" element={<CrmCampaignDetailPage />} />
+          <Route path="/crm/lead-magnets" element={<CrmLeadMagnetsPage />} />
+          <Route path="/crm/analytics" element={<CrmAnalyticsPage />} />
 
           <Route path="/customers" element={<CustomersListPage />} />
           <Route path="/customers/:id/statement" element={<CustomerStatementPage />} />

@@ -21,6 +21,10 @@ class CrmMeetingResource extends JsonResource
             'duration_minutes' => $this->duration_minutes,
             'location' => $this->location,
             'meeting_link' => $this->meeting_link,
+            'booking_page_id' => $this->booking_page_id,
+            'booking_notes' => $this->booking_notes,
+            'lead' => $this->whenLoaded('lead', fn () => $this->lead ? ['id' => $this->lead->id, 'name' => $this->lead->name] : null),
+            'customer' => $this->whenLoaded('customer', fn () => $this->customer ? ['id' => $this->customer->id, 'name' => $this->customer->name] : null),
             'organizer' => $this->whenLoaded('organizer', fn () => $this->organizer ? [
                 'id' => $this->organizer->id,
                 'name' => $this->organizer->name,

@@ -1,9 +1,15 @@
+import { useState } from 'react'
+import { Mail } from 'lucide-react'
+
 import { formatRelativeTime } from '@/lib/format'
+import { usePermissions } from '@/hooks/use-permissions'
 import type { CrmEmail, CrmEmailStatus } from '@/types/crm'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { Button } from '@/components/ui/button'
+import { SendEmailDialog } from '@/components/crm/SendEmailDialog'
 
 const STATUS_VARIANT: Record<CrmEmailStatus, 'warning' | 'success' | 'danger'> = {
   queued: 'warning',
@@ -13,15 +19,33 @@ const STATUS_VARIANT: Record<CrmEmailStatus, 'warning' | 'success' | 'danger'> =
 
 interface CrmDrawerEmailsTabProps {
   emails: CrmEmail[]
+  /** Where "Send email" files the message, and who it is addressed to by default. */
+  leadId?: number | null
+  dealId?: number | null
+  customerId?: number | null
+  defaultEmail?: string | null
+  defaultName?: string | null
+  queryKeyToInvalidate?: unknown[]
 }
 
-export function CrmDrawerEmailsTab({ emails }: CrmDrawerEmailsTabProps) {
-  if (emails.length === 0) {
-    return <EmptyState title="No emails yet" subtext="Meeting confirmations and quotations sent from this record will show up here." />
-  }
+export function CrmDrawerEmailsTab({ emails, leadId, dealId, customerId, defaultEmail, defaultName, queryKeyToInvalidate }: CrmDrawerEmailsTabProps) {
+  const { can } = usePermissions()
+  const [composeOpen, setComposeOpen] = useState(false)
+  const canCompose = can('crm-emails.create') && Boolean(leadId || dealId || customerId)
 
   return (
     <div className="space-y-2">
+      {canCompose && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={() => setComposeOpen(true)}>
+            <Mail className="h-4 w-4" />
+            Send email
+          </Button>
+        </div>
+      )}
+      {emails.length === 0 && (
+        <EmptyState title="No emails yet" subtext="Emails, meeting confirmations and quotations sent to this contact show up here." />
+      )}
       {emails.map((email) => (
         <Card key={email.id}>
           <CardContent className="p-4">
@@ -50,6 +74,18 @@ export function CrmDrawerEmailsTab({ emails }: CrmDrawerEmailsTabProps) {
           </CardContent>
         </Card>
       ))}
+      {canCompose && (
+        <SendEmailDialog
+          open={composeOpen}
+          onOpenChange={setComposeOpen}
+          leadId={leadId}
+          dealId={dealId}
+          customerId={customerId}
+          defaultEmail={defaultEmail}
+          defaultName={defaultName}
+          queryKeyToInvalidate={queryKeyToInvalidate}
+        />
+      )}
     </div>
   )
 }

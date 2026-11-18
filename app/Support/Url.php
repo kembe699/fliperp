@@ -18,4 +18,16 @@ class Url
 
         return preg_match('#^https?://#i', $url) ? $url : "https://{$url}";
     }
+
+    /** Absolute URL of a page in the web app (FRONTEND_URL), e.g. frontend('book/acme'). */
+    public static function frontend(string $path = ''): string
+    {
+        return self::withScheme((string) config('app.frontend_url')).'/'.ltrim($path, '/');
+    }
+
+    /** Absolute URL of an API endpoint (APP_URL/api/v1/...), e.g. for links inside emails. */
+    public static function api(string $path): string
+    {
+        return self::withScheme((string) config('app.url')).'/api/v1/'.ltrim($path, '/');
+    }
 }
