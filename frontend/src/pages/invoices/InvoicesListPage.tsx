@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 
 import { fetchInvoices } from '@/api/invoices'
-import { fetchBranches } from '@/api/branches'
 import { fetchCustomers } from '@/api/customers'
 import { formatCurrency } from '@/lib/currency'
 import { formatDate } from '@/lib/format'
 import { usePermissions } from '@/hooks/use-permissions'
+import { useUiStore } from '@/lib/ui-store'
 import { INVOICE_STATUS_LABEL, INVOICE_STATUS_VARIANT } from '@/components/sales/status-variants'
 import type { Invoice, InvoiceStatus } from '@/types/invoice'
 
@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const pillTrigger = 'h-8 w-40 text-sm'
+const pillTrigger = 'h-8 w-[8.5rem] text-sm'
 const STATUSES: InvoiceStatus[] = ['draft', 'sent', 'partially_paid', 'paid', 'overdue', 'cancelled']
 
 export function InvoicesListPage() {
@@ -27,13 +27,13 @@ export function InvoicesListPage() {
   const { can } = usePermissions()
 
   const [status, setStatus] = useState('all')
-  const [branchId, setBranchId] = useState('all')
+  // Branch comes from the selector in the top bar.
+  const branchId = useUiStore((state) => state.selectedBranchId)
   const [customerId, setCustomerId] = useState('all')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [search, setSearch] = useState('')
 
-  const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
   const { data: customersPage } = useQuery({ queryKey: ['customers-all'], queryFn: () => fetchCustomers({ per_page: 100 }) })
 
   const { data, isLoading, isError } = useQuery({
@@ -46,7 +46,7 @@ export function InvoicesListPage() {
   const filtered = useMemo(() => {
     return (data?.data ?? [])
       .filter((row) => status === 'all' || row.status === status)
-      .filter((row) => branchId === 'all' || row.branch_id === Number(branchId))
+      .filter((row) => branchId === null || row.branch_id === branchId)
       .filter((row) => customerId === 'all' || row.customer_id === Number(customerId))
       .filter((row) => !from || row.invoice_date >= from)
       .filter((row) => !to || row.invoice_date <= to)
@@ -112,20 +112,6 @@ export function InvoicesListPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={branchId} onValueChange={setBranchId}>
-                <SelectTrigger className={pillTrigger}>
-                  <SelectValue placeholder="Branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All branches</SelectItem>
-                  {branches?.map((branch) => (
-                    <SelectItem key={branch.id} value={String(branch.id)}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Select value={customerId} onValueChange={setCustomerId}>
                 <SelectTrigger className={pillTrigger}>
                   <SelectValue placeholder="Customer" />
@@ -140,8 +126,9 @@ export function InvoicesListPage() {
                 </SelectContent>
               </Select>
 
-              <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="h-8 w-40 text-sm" />
-              <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} className="h-8 w-40 text-sm" />
+              <Input type="date" aria-label="From date" value={from} onChange={(event) => setFrom(event.target.value)} className="h-8 w-[8.5rem] text-sm" />
+              <span className="text-xs text-muted-foreground">to</span>
+              <Input type="date" aria-label="To date" value={to} onChange={(event) => setTo(event.target.value)} className="h-8 w-[8.5rem] text-sm" />
             </>
           }
           columns={columns}

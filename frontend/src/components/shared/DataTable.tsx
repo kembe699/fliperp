@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import {
   ArrowDown,
   ArrowUp,
@@ -11,7 +11,6 @@ import {
   Columns3,
   Download,
   FileSpreadsheet,
-  MoreVertical,
   Search,
   X,
 } from 'lucide-react'
@@ -121,6 +120,8 @@ export function DataTable<T>({
   renderExpanded,
 }: DataTableProps<T>) {
   const [expandedKey, setExpandedKey] = useState<string | number | null>(null)
+  // Row actions open where the row was right-clicked (or left-clicked, when no action opens the row).
+  const [actionMenu, setActionMenu] = useState<{ row: T; x: number; y: number } | null>(null)
   const company = useAuthStore((state) => state.company)
   const serverPaged = page !== undefined && pageCount !== undefined
 
@@ -305,7 +306,43 @@ export function DataTable<T>({
     win.document.close()
   }
 
-  const columnCount = columns.length + (rowActions ? 1 : 0)
+  const columnCount = columns.length
+
+  // Clicking a row opens it; right-clicking shows its actions. Clicks on a
+  // control inside a cell (a link, button, checkbox…) or that end a text
+  // selection are left alone.
+  const openActionMenu = (row: T, x: number, y: number) => {
+    if (rowActions && rowActions(row).length > 0) setActionMenu({ row, x, y })
+  }
+  const activateRow = (row: T, key: string | number, expanded: boolean, x: number, y: number) => {
+    if (renderExpanded) return setExpandedKey(expanded ? null : key)
+    if (onRowClick) return onRowClick(row)
+    const open = rowActions ? primaryAction(rowActions(row)) : undefined
+    if (open) open.onClick(row)
+    else openActionMenu(row, x, y)
+  }
+  const rowIsClickable = (row: T) => !!(renderExpanded || onRowClick || (rowActions && rowActions(row).length > 0))
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, row: T, key: string | number, expanded: boolean) => {
+    if (isInteractiveTarget(event.target, event.currentTarget)) return
+    if (window.getSelection()?.toString()) return
+    activateRow(row, key, expanded, event.clientX, event.clientY)
+  }
+  const handleRowContextMenu = (event: MouseEvent<HTMLTableRowElement>, row: T) => {
+    if (!rowActions || rowActions(row).length === 0 || isInteractiveTarget(event.target, event.currentTarget)) return
+    event.preventDefault()
+    openActionMenu(row, event.clientX, event.clientY)
+  }
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, row: T, key: string | number, expanded: boolean) => {
+    if (event.target !== event.currentTarget) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      activateRow(row, key, expanded, rect.left + 24, rect.bottom)
+    } else if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault()
+      openActionMenu(row, rect.left + 24, rect.bottom)
+    }
+  }
   const rowCount = serverPaged ? (totalRows ?? sortedData.length) : filteredData.length
 
   return (
@@ -321,9 +358,9 @@ export function DataTable<T>({
           <div className="flex flex-wrap items-center justify-end gap-2">
             {dateKey && (
               <>
-                <Input type="date" aria-label="From date" className="h-8 w-[9.5rem] text-sm" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                <Input type="date" aria-label="From date" className="h-8 w-[8.5rem] text-sm" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                 <span className="text-xs text-muted-foreground">to</span>
-                <Input type="date" aria-label="To date" className="h-8 w-[9.5rem] text-sm" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                <Input type="date" aria-label="To date" className="h-8 w-[8.5rem] text-sm" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 {(dateFrom || dateTo) && (
                   <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setDateFrom(''); setDateTo('') }}>
                     Clear
@@ -333,7 +370,7 @@ export function DataTable<T>({
             )}
             {filterColumns.map((f) => (
               <Select key={f.key} value={columnFilters[f.key] ?? 'all'} onValueChange={(v) => setColumnFilters((prev) => ({ ...prev, [f.key]: v }))}>
-                <SelectTrigger className="h-8 w-40 text-sm">
+                <SelectTrigger className="h-8 w-36 text-sm" aria-label={`Filter by ${f.header}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -348,23 +385,30 @@ export function DataTable<T>({
             ))}
             {toolbarExtra}
             {exportable && (
-              <>
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleCsv}>
-                  <FileSpreadsheet className="h-3.5 w-3.5" />
-                  CSV
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handlePdf}>
-                  <Download className="h-3.5 w-3.5" />
-                  PDF
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    <Download className="h-3.5 w-3.5" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleCsv}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    CSV (Excel)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handlePdf}>
+                    <Download className="mr-2 h-4 w-4" />
+                    PDF / Print
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             {allColumns.length > 4 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs" aria-label="Show or hide columns">
-                    <Columns3 className="h-3.5 w-3.5" />
-                    Columns
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0" aria-label="Show or hide columns" title="Show or hide columns">
+                    <Columns3 className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -432,7 +476,6 @@ export function DataTable<T>({
                 </span>
               </TableHead>
             ))}
-            {rowActions && <TableHead className="w-10" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -452,17 +495,20 @@ export function DataTable<T>({
             visibleRows.map((row, index) => {
               const key = rowKey(row, index)
               const expanded = renderExpanded !== undefined && expandedKey === key
+              const clickable = rowIsClickable(row)
               return (
               <Fragment key={key}>
               <TableRow
-                className={cn(index % 2 === 1 && 'bg-muted/20', (onRowClick || renderExpanded) && 'cursor-pointer', expanded && 'bg-accent/60')}
-                onClick={
-                  renderExpanded
-                    ? () => setExpandedKey(expanded ? null : key)
-                    : onRowClick
-                      ? () => onRowClick(row)
-                      : undefined
-                }
+                className={cn(
+                  index % 2 === 1 && 'bg-muted/20',
+                  clickable && 'cursor-pointer focus-visible:bg-accent/60 focus-visible:outline-none',
+                  expanded && 'bg-accent/60',
+                  actionMenu?.row === row && 'bg-accent/60',
+                )}
+                tabIndex={clickable ? 0 : undefined}
+                onClick={clickable ? (event) => handleRowClick(event, row, key, expanded) : undefined}
+                onContextMenu={rowActions ? (event) => handleRowContextMenu(event, row) : undefined}
+                onKeyDown={clickable ? (event) => handleRowKeyDown(event, row, key, expanded) : undefined}
                 aria-expanded={renderExpanded ? expanded : undefined}
               >
                 {columns.map((column, colIndex) => (
@@ -479,28 +525,6 @@ export function DataTable<T>({
                     )}
                   </TableCell>
                 ))}
-                {rowActions && (
-                  <TableCell className="w-10" onClick={(event) => event.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button type="button" className="rounded-md p-1.5 hover:bg-accent" aria-label="Row actions">
-                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {rowActions(row).map((action) => (
-                          <DropdownMenuItem
-                            key={action.label}
-                            onClick={() => action.onClick(row)}
-                            className={cn(action.destructive && 'text-destructive focus:text-destructive')}
-                          >
-                            {action.label}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                )}
               </TableRow>
               {expanded && (
                 <TableRow className="hover:bg-transparent">
@@ -516,9 +540,34 @@ export function DataTable<T>({
         </TableBody>
       </Table>
 
+      {rowActions && (
+        <DropdownMenu modal={false} open={actionMenu !== null} onOpenChange={(open) => !open && setActionMenu(null)}>
+          <DropdownMenuTrigger asChild>
+            <span
+              aria-hidden
+              className="pointer-events-none fixed h-0 w-0"
+              style={{ left: actionMenu?.x ?? 0, top: actionMenu?.y ?? 0 }}
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" sideOffset={2} className="min-w-44">
+            {actionMenu &&
+              rowActions(actionMenu.row).map((action) => (
+                <DropdownMenuItem
+                  key={action.label}
+                  onClick={() => action.onClick(actionMenu.row)}
+                  className={cn(action.destructive && 'text-destructive focus:text-destructive')}
+                >
+                  {action.label}
+                </DropdownMenuItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
       {(serverPaged ? pageCount > 0 : sortedData.length > 0) && (
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border px-4 py-3 print:hidden">
           <div className="flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+            {rowActions && <span className="mr-2 hidden text-xs lg:inline">Click a row to open · right-click for more actions</span>}
             {serverPaged ? (
               <span>{totalRows !== undefined ? `${totalRows} total` : ''}</span>
             ) : (
@@ -571,6 +620,19 @@ function Pager({ page, pageCount, onChange }: { page: number; pageCount: number;
       {button('Last page', last, page >= last, <ChevronsRight className="h-4 w-4" />)}
     </div>
   )
+}
+
+/** The action a plain click runs: View/Open, then Edit, then another View…/Edit… action. Never a destructive one. */
+function primaryAction<T>(actions: DataTableRowAction<T>[]): DataTableRowAction<T> | undefined {
+  const safe = actions.filter((action) => !action.destructive)
+  const find = (pattern: RegExp) => safe.find((action) => pattern.test(action.label.trim()))
+  return find(/^(view|open)( details)?$/i) ?? find(/^edit$/i) ?? find(/^edit\b/i) ?? find(/^(view|open)\b/i)
+}
+
+/** True when the click landed on a control inside the row, which handles it itself. */
+function isInteractiveTarget(target: EventTarget, row: Element): boolean {
+  const el = target instanceof Element ? target.closest('a, button, input, select, textarea, label, [role="checkbox"], [role="switch"], [role="combobox"], [data-row-click-ignore]') : null
+  return el !== null && el !== row && row.contains(el)
 }
 
 const AUTO_FILTER_KEY = /(^|_)(status|type|kind|category|method|currency|department|gender|source|role|priority|mode)$/i
