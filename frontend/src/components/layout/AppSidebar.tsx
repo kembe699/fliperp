@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Building2, ChevronDown, ChevronRight, Headset, LogOut } from 'lucide-react'
+import { Building2, ChevronDown, Headset, LogOut } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/auth-store'
@@ -54,25 +54,18 @@ export function AppSidebar() {
     return visibleNavConfig.find((item) => item.children?.some((child) => location.pathname.startsWith(child.path)))?.label
   }, [location.pathname, visibleNavConfig])
 
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(activeParentLabel ? [activeParentLabel] : []))
+  // One section open at a time: opening a section closes the one that was open.
+  const [expanded, setExpanded] = useState<string | null>(activeParentLabel ?? null)
   const [supportModalOpen, setSupportModalOpen] = useState(false)
 
   useEffect(() => {
     if (activeParentLabel) {
-      setExpanded((prev) => new Set(prev).add(activeParentLabel))
+      setExpanded(activeParentLabel)
     }
   }, [activeParentLabel])
 
   const toggleSection = (label: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(label)) {
-        next.delete(label)
-      } else {
-        next.add(label)
-      }
-      return next
-    })
+    setExpanded((open) => (open === label ? null : label))
   }
 
   const handleLogout = async () => {
@@ -115,7 +108,7 @@ export function AppSidebar() {
           {visibleNavConfig.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.path
-            const isExpanded = expanded.has(item.label)
+            const isExpanded = expanded === item.label
             const hasChildren = !!item.children?.length
 
             return (
@@ -124,6 +117,8 @@ export function AppSidebar() {
                   <button
                     type="button"
                     onClick={() => toggleSection(item.label)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`nav-section-${item.label}`}
                     className={cn(
                       'flex w-full items-center gap-2.5 rounded-full px-3 py-2 text-sm font-medium transition-colors',
                       isActive ? 'bg-accent text-primary' : 'text-foreground hover:bg-accent/60',
@@ -131,7 +126,9 @@ export function AppSidebar() {
                   >
                     <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
                     <span className="flex-1 text-left">{item.label}</span>
-                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    <ChevronDown
+                      className={cn('h-4 w-4 transition-transform duration-300 ease-in-out motion-reduce:transition-none', !isExpanded && '-rotate-90')}
+                    />
                   </button>
                 ) : (
                   <Link
@@ -146,7 +143,17 @@ export function AppSidebar() {
                   </Link>
                 )}
 
-                {hasChildren && isExpanded && (
+                {/* Always rendered so it can animate: the grid row grows from 0fr to 1fr. */}
+                {hasChildren && (
+                  <div
+                    id={`nav-section-${item.label}`}
+                    aria-hidden={!isExpanded}
+                    className={cn(
+                      'grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none',
+                      isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                    )}
+                  >
+                  <div className="min-h-0 overflow-hidden">
                   <ul className="ml-[1.125rem] mt-0.5 space-y-0.5 border-l border-border pl-4">
                     {item.children?.map((child) => {
                       const childActive = location.pathname === child.path
@@ -154,6 +161,7 @@ export function AppSidebar() {
                         <li key={child.path}>
                           <Link
                             to={child.path}
+                            tabIndex={isExpanded ? undefined : -1}
                             className={cn(
                               'block rounded-full px-3 py-1.5 text-sm transition-colors',
                               childActive ? 'bg-accent font-medium text-primary' : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
@@ -165,6 +173,8 @@ export function AppSidebar() {
                       )
                     })}
                   </ul>
+                  </div>
+                  </div>
                 )}
               </li>
             )
