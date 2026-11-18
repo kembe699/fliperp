@@ -191,3 +191,15 @@ it('keeps campaigns private to their company and needs permission to send', func
     $this->getJson('/api/v1/crm/campaigns')->assertForbidden();
     $this->postJson("/api/v1/crm/campaigns/{$campaign['id']}/schedule")->assertForbidden();
 });
+
+it('turns any typed link name into a valid web address instead of rejecting it', function () {
+    Storage::fake('local');
+    $magnet = $this->post('/api/v1/crm/lead-magnets', [
+        'title' => 'Guide',
+        'slug' => 'Price Guide 2026!',
+        'file' => UploadedFile::fake()->create('guide.pdf', 10, 'application/pdf'),
+    ], ['Accept' => 'application/json'])->assertCreated()->json('data');
+    expect($magnet['slug'])->toBe('price-guide-2026');
+
+    expect(makeBookingPage(['slug' => 'Intro Call (30 min)'])['slug'])->toBe('intro-call-30-min');
+});

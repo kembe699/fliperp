@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { saveBookingPage, type CrmBookingPage, type CrmBookingPageInput } from '@/api/crm-marketing'
 import { fetchUsers } from '@/api/settings'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { toSlug } from '@/lib/format'
 import { useAuthStore } from '@/lib/auth-store'
 import { cn } from '@/lib/utils'
 
@@ -202,8 +203,11 @@ export function BookingPageFormDialog({ open, onOpenChange, page }: Props) {
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="bp-slug">Link name</Label>
+            <Label htmlFor="bp-slug">Link name (web address)</Label>
             <Input id="bp-slug" value={form.slug ?? ''} onChange={(e) => set('slug', e.target.value)} placeholder="Made from the title if left empty" />
+            <p className="truncate text-xs text-muted-foreground">
+              {window.location.origin}/book/{toSlug(form.slug || form.title) || '…'}
+            </p>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" className="h-4 w-4 accent-primary" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} />
