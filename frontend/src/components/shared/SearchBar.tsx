@@ -43,7 +43,7 @@ export function SearchBar({ options, onSearch, onClear, placeholder = 'Search…
   }, [searchBy, query])
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full items-center gap-2 sm:w-auto">
       {options.length > 1 && (
         <Select value={searchBy} onValueChange={setSearchBy}>
           <SelectTrigger className="h-8 w-32 text-sm" aria-label="Search by">
@@ -59,7 +59,7 @@ export function SearchBar({ options, onSearch, onClear, placeholder = 'Search…
         </Select>
       )}
 
-      <div className="relative w-52">
+      <div className="relative min-w-0 flex-1 sm:w-52 sm:flex-none">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"

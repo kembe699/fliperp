@@ -223,8 +223,8 @@ export function PurchaseOrderFormPage() {
           </div>
           {rows.map((row, index) => (
             <div key={row.key} className="space-y-2 rounded-lg border border-border p-2">
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                <div className="w-full sm:w-auto sm:flex-1">
                   <SearchableSelect
                     options={(products ?? []).map((product) => ({ value: String(product.id), label: product.name, sublabel: product.sku }))}
                     value={row.product_id ? String(row.product_id) : null}

@@ -134,7 +134,7 @@ export function ChatWidget() {
 
       {isOpen && (
         <div
-          className="fixed bottom-24 right-5 z-40 flex h-[520px] w-96 max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl duration-200 animate-in fade-in slide-in-from-bottom-4 zoom-in-95"
+          className="fixed bottom-24 right-3 z-40 flex h-[min(520px,calc(100dvh-7.5rem))] w-96 max-w-[calc(100vw-1.5rem)] sm:right-5 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl duration-200 animate-in fade-in slide-in-from-bottom-4 zoom-in-95"
         >
           {activeConversation ? (
             <ChatConversationView

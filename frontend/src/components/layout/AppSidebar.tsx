@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Building2, ChevronDown, Headset, LogOut } from 'lucide-react'
+import { Building2, ChevronDown, Headset, LogOut, X } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/auth-store'
+import { useUiStore } from '@/lib/ui-store'
 import { logout as logoutRequest } from '@/api/auth'
 import { usePermissions } from '@/hooks/use-permissions'
 import { navConfig } from '@/nav/nav-config'
@@ -18,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { BrandLogo } from '@/components/brand/BrandLogo'
+import { BranchPicker } from '@/components/layout/BranchPicker'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -33,6 +35,17 @@ export function AppSidebar() {
   const company = useAuthStore((state) => state.company)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const { can } = usePermissions()
+  const mobileOpen = useUiStore((state) => state.mobileNavOpen)
+  const setMobileOpen = useUiStore((state) => state.setMobileNavOpen)
+
+  // Phones and tablets: the menu closes once a page is chosen, and on Escape.
+  useEffect(() => setMobileOpen(false), [location.pathname, setMobileOpen])
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setMobileOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen, setMobileOpen])
 
   // Filter first, then everything below (active-section detection,
   // rendering) works off this list only — so a hidden item can never be
@@ -81,10 +94,36 @@ export function AppSidebar() {
   const roleLabel = user?.roles?.[0]?.replace(/_/g, ' ') ?? ''
 
   return (
-    <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-border bg-sidebar">
+    <>
+      {/* Phones and tablets: dims the page behind the open menu; a tap closes it. */}
+      <div
+        aria-hidden
+        onClick={() => setMobileOpen(false)}
+        className={cn(
+          'fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 lg:hidden motion-reduce:transition-none',
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+      />
+    {/* Desktop: always shown beside the page. Below lg it slides in over the page. */}
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-50 flex h-dvh w-[280px] max-w-[85vw] shrink-0 flex-col border-r border-border bg-sidebar shadow-xl',
+        'transition-[transform,visibility] duration-300 ease-in-out motion-reduce:transition-none',
+        mobileOpen ? 'visible translate-x-0' : 'invisible -translate-x-full',
+        'lg:visible lg:static lg:z-auto lg:w-[260px] lg:max-w-none lg:translate-x-0 lg:shadow-none lg:transition-none',
+      )}
+    >
       {/* Product logo */}
-      <div className="border-b border-border px-5 py-4">
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <BrandLogo className="h-8" />
+        <button
+          type="button"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
+          className="-mr-2 flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Company block */}
@@ -98,12 +137,17 @@ export function AppSidebar() {
             {roleLabel && <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-primary">{roleLabel}</p>}
           </div>
         </div>
+        {/* Small phones have no room for it in the top bar. */}
+        <BranchPicker className="mt-3 w-full sm:hidden" />
         <div className="mt-4 h-px w-full bg-primary/20" />
       </div>
 
       {/* Nav */}
       {/* Scrolls with the wheel or touch like before, without a visible scrollbar. */}
-      <nav className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav
+        // Phones: tapping any link closes the menu, even the page already open.
+        onClick={(event) => (event.target as Element).closest('a') && setMobileOpen(false)}
+        className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Main Menu</p>
         <ul className="space-y-0.5">
           {visibleNavConfig.map((item) => {
@@ -220,5 +264,6 @@ export function AppSidebar() {
         </DropdownMenu>
       </div>
     </aside>
+    </>
   )
 }

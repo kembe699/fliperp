@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useMatch } from 'react-router-dom'
 import { ArrowLeft, Building2, PanelLeft, PanelLeftClose, Search } from 'lucide-react'
 
@@ -33,10 +33,27 @@ export function ReportsCenterLayout() {
   }, [search, permissions])
   const current = findEntry(reportId)
 
+  // Phones and tablets: the report list slides in over the page; picking a report closes it.
+  useEffect(() => {
+    if (window.innerWidth < 1024) setOpen(false)
+  }, [reportId])
+
   return (
-    <div className="flex h-screen bg-background print:block print:h-auto">
+    <div className="flex h-dvh bg-background print:block print:h-auto">
+      <div
+        aria-hidden
+        onClick={() => setOpen(false)}
+        className={cn('fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 lg:hidden print:hidden', open ? 'opacity-100' : 'pointer-events-none opacity-0')}
+      />
       {/* Same look as the main app sidebar (AppSidebar): white, bordered, pill items. */}
-      <aside className={cn('flex h-screen shrink-0 flex-col border-r border-border bg-sidebar transition-all duration-200 print:hidden', open ? 'w-[260px]' : 'w-[68px]')}>
+      <aside
+        className={cn(
+          'flex h-dvh shrink-0 flex-col border-r border-border bg-sidebar transition-all duration-200 print:hidden',
+          // Below lg: an overlay drawer, hidden when closed (no icon rail eating a phone's width).
+          'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-[280px] max-lg:max-w-[85vw] max-lg:shadow-xl max-lg:duration-300',
+          open ? 'lg:w-[260px]' : 'max-lg:invisible max-lg:-translate-x-full lg:w-[68px]',
+        )}
+      >
         <div className={cn('border-b border-border py-4', open ? 'px-5' : 'px-3')}>
           {open ? <BrandLogo className="h-8" /> : <BrandLogo variant="icon" className="mx-auto h-8" />}
         </div>
@@ -114,21 +131,21 @@ export function ReportsCenterLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:overflow-visible">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card px-6 print:hidden">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 sm:h-16 sm:gap-3 sm:px-6 print:hidden">
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" onClick={() => setOpen(!open)} aria-label="Toggle sidebar">
             {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
           </Button>
           {current && (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground sm:flex">
               <current.icon className="h-4 w-4" />
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold text-foreground">{current?.label ?? 'Reports'}</h1>
+            <h1 className="truncate text-base font-bold text-foreground sm:text-lg">{current?.label ?? 'Reports'}</h1>
             <p className="truncate text-xs text-muted-foreground">{current?.desc ?? 'Every report in one place'}</p>
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-background p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:bg-white print:p-0">
+        <main className="flex-1 overflow-auto bg-background p-4 sm:p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:bg-white print:p-0">
           <Outlet />
         </main>
       </div>

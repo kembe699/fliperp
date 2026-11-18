@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { History, Lock, PauseCircle } from 'lucide-react'
+import { History, Lock, PauseCircle, ShoppingCart } from 'lucide-react'
 
 import { fetchCurrentCashDrawerSession, fetchPaymentTypes, fetchTaxRates, fetchWarehouses } from '@/api/pos'
 import { fetchActiveProducts } from '@/api/products'
 import { fetchCustomers } from '@/api/customers'
 import { completeSale, createSale, fetchHeldSales, updateSale } from '@/api/sales'
 import { getApiErrorInfo } from '@/lib/api-errors'
+import { formatCurrency } from '@/lib/currency'
 import { useAuthStore } from '@/lib/auth-store'
 import { printPdf } from '@/lib/pdf-print'
 import type { Sale } from '@/types/sale'
@@ -50,6 +51,8 @@ export function PosTerminalPage() {
   }, [warehouses])
 
   const [cart, setCart] = useState<CartLine[]>([])
+  const cartRef = useRef<HTMLDivElement>(null)
+  const cartItemCount = cart.reduce((sum, line) => sum + line.quantity, 0)
   const [customerId, setCustomerId] = useState<number | null>(null)
   const [activeSaleId, setActiveSaleId] = useState<number | null>(null)
   const [resumingReference, setResumingReference] = useState<string | null>(null)
@@ -205,7 +208,7 @@ export function PosTerminalPage() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col lg:h-full">
       <PageHeader
         title="POS Terminal"
         action={
@@ -231,11 +234,12 @@ export function PosTerminalPage() {
         }
       />
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="min-h-0 rounded-xl border border-border bg-card p-4">
+      {/* Phones: products (two-thirds of the screen, scrolling inside) then the cart below. */}
+      <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[1fr_380px] lg:gap-6">
+        <div className="h-[65dvh] min-h-0 rounded-xl border border-border bg-card p-3 sm:p-4 lg:h-auto">
           <ProductGrid warehouseId={warehouseId} onAddProduct={handleAddProduct} />
         </div>
-        <div className="min-h-0">
+        <div ref={cartRef} className="min-h-0 scroll-mt-3">
           <CartPanel
             lines={cart}
             onQuantityChange={handleQuantityChange}
@@ -250,6 +254,23 @@ export function PosTerminalPage() {
           />
         </div>
       </div>
+
+      {/* Phones: the cart sits below the products, so keep the total in view and jump to it. */}
+      {cart.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] lg:hidden">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">
+              {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}
+            </p>
+            <p className="text-lg font-bold tabular-nums text-foreground">{formatCurrency(cartTotal(cart))}</p>
+          </div>
+          <Button onClick={() => cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="gap-1.5">
+            <ShoppingCart className="h-4 w-4" />
+            View cart
+          </Button>
+        </div>
+      )}
+      {cart.length > 0 && <div className="h-20 lg:hidden" aria-hidden />}
 
       <PaymentDialog
         open={paymentDialogOpen}

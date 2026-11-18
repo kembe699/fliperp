@@ -79,7 +79,7 @@ export function BalanceSheetReportPage() {
       />
 
       <Card className="mb-4">
-        <CardContent className="flex items-end gap-4 p-4">
+        <CardContent className="flex flex-wrap items-end gap-4 p-4">
           <AccountingPeriodSelect mode="asOf" asOf={asOf} onChange={setAsOf} />
           <div className="space-y-1.5">
             <Label>As Of</Label>
