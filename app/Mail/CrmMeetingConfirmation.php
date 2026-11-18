@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\CrmMeeting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -28,7 +29,12 @@ class CrmMeetingConfirmation extends Mailable
 
     public function envelope(): Envelope
     {
+        // From the client's name; replies (e.g. to reschedule) go to the host.
+        $host = $this->meeting->organizer;
+
         return new Envelope(
+            from: new Address((string) config('mail.from.address'), $this->companyName),
+            replyTo: $host?->email ? [new Address($host->email, $host->name)] : [],
             subject: "Meeting confirmed: {$this->meeting->title}",
         );
     }

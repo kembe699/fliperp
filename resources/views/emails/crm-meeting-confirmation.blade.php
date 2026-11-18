@@ -1,91 +1,102 @@
+@php
+    // Shown in the booking page's timezone, else the company's, else the app's.
+    $tz = $meeting->bookingPage?->timezone
+        ?: \App\Models\Company::find($meeting->company_id)?->timezone
+        ?: config('app.timezone');
+    $start = $meeting->scheduled_at->copy()->setTimezone($tz);
+    $end = $start->copy()->addMinutes($meeting->duration_minutes);
+    $label = 'padding:12px 0; width:130px; vertical-align:top; font-size:13px; color:#6b7280; border-top:1px solid #e5e7eb;';
+    $value = 'padding:12px 0; vertical-align:top; font-size:14px; color:#111827; border-top:1px solid #e5e7eb;';
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body style="margin:0; padding:0; background-color:#f0f4f9; font-family: Helvetica, Arial, sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f9; padding:32px 0;">
+<body style="margin:0; padding:0; background-color:#f3f4f6; font-family: Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6; padding:32px 12px;">
         <tr>
             <td align="center">
-                <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#ffffff; border-top:4px solid #1B5FAE; border-radius:4px;">
                     <tr>
-                        <td style="background:linear-gradient(135deg,#1B5FAE 0%,#154a8a 100%); padding:32px;">
-                            <div style="display:inline-block; background-color:rgba(255,255,255,0.15); border-radius:999px; padding:6px 14px; font-size:12px; font-weight:600; color:#ffffff; letter-spacing:0.04em; text-transform:uppercase;">
-                                Meeting Confirmed
-                            </div>
-                            <p style="margin:16px 0 0; color:#ffffff; font-size:22px; font-weight:700; line-height:1.3;">
-                                {{ $meeting->title }}
+                        <td style="padding:24px 32px; border-bottom:1px solid #e5e7eb;">
+                            <span style="font-size:16px; font-weight:700; color:#111827;">{{ $companyName }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:28px 32px 0;">
+                            <p style="margin:0; font-size:12px; font-weight:600; color:#1B5FAE; letter-spacing:0.08em; text-transform:uppercase;">Meeting confirmation</p>
+                            <h1 style="margin:8px 0 0; font-size:22px; line-height:1.3; font-weight:700; color:#111827;">{{ $meeting->title }}</h1>
+                            <p style="margin:20px 0 0; font-size:15px; line-height:1.6; color:#374151;">Dear {{ $recipientName }},</p>
+                            <p style="margin:8px 0 0; font-size:15px; line-height:1.6; color:#374151;">
+                                This is to confirm your meeting with {{ $companyName }}. The details are below.
                             </p>
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:28px 32px 8px;">
-                            <p style="margin:0; color:#1f2937; font-size:15px; line-height:1.6;">
-                                Hi {{ $recipientName }},
-                            </p>
-                            <p style="margin:8px 0 0; color:#4b5563; font-size:14px; line-height:1.6;">
-                                {{ $companyName }} has scheduled a meeting with you. Here are the details:
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding:20px 32px;">
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e5e7eb; border-radius:10px;">
+                        <td style="padding:20px 32px 4px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
-                                    <td style="padding:20px 24px;">
-                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                            <tr>
-                                                <td style="padding-bottom:14px; width:28px; vertical-align:top; color:#1B5FAE; font-size:16px;">&#128197;</td>
-                                                <td style="padding-bottom:14px;">
-                                                    <p style="margin:0; font-size:13px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Date &amp; Time</p>
-                                                    <p style="margin:2px 0 0; font-size:15px; color:#111827; font-weight:600;">{{ $meeting->scheduled_at->format('l, F j, Y') }}</p>
-                                                    <p style="margin:2px 0 0; font-size:14px; color:#374151;">{{ $meeting->scheduled_at->format('g:i A') }} &middot; {{ $meeting->duration_minutes }} minutes</p>
-                                                </td>
-                                            </tr>
-                                            @if($meeting->location)
-                                            <tr>
-                                                <td style="padding-bottom:14px; width:28px; vertical-align:top; color:#1B5FAE; font-size:16px;">&#128205;</td>
-                                                <td style="padding-bottom:14px;">
-                                                    <p style="margin:0; font-size:13px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Location</p>
-                                                    <p style="margin:2px 0 0; font-size:14px; color:#374151;">{{ $meeting->location }}</p>
-                                                </td>
-                                            </tr>
-                                            @endif
-                                            @if($meeting->meeting_link)
-                                            <tr>
-                                                <td style="padding-bottom:14px; width:28px; vertical-align:top; color:#1B5FAE; font-size:16px;">&#128279;</td>
-                                                <td style="padding-bottom:14px;">
-                                                    <p style="margin:0; font-size:13px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Meeting Link</p>
-                                                    <a href="{{ $meeting->meeting_link }}" style="display:inline-block; margin-top:8px; background-color:#1B5FAE; color:#ffffff; text-decoration:none; font-size:13px; font-weight:600; padding:9px 18px; border-radius:6px;">Join Meeting</a>
-                                                </td>
-                                            </tr>
-                                            @endif
-                                            @if($meeting->description)
-                                            <tr>
-                                                <td style="width:28px; vertical-align:top; color:#1B5FAE; font-size:16px;">&#128221;</td>
-                                                <td>
-                                                    <p style="margin:0; font-size:13px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Notes</p>
-                                                    <p style="margin:2px 0 0; font-size:14px; color:#374151; line-height:1.5; white-space:pre-wrap;">{{ $meeting->description }}</p>
-                                                </td>
-                                            </tr>
-                                            @endif
-                                        </table>
-                                    </td>
+                                    <td style="{{ $label }}">Date</td>
+                                    <td style="{{ $value }}; font-weight:600;">{{ $start->format('l, j F Y') }}</td>
                                 </tr>
+                                <tr>
+                                    <td style="{{ $label }}">Time</td>
+                                    <td style="{{ $value }}">{{ $start->format('g:i A') }} – {{ $end->format('g:i A') }} ({{ $start->format('T') }})</td>
+                                </tr>
+                                <tr>
+                                    <td style="{{ $label }}">Duration</td>
+                                    <td style="{{ $value }}">{{ $meeting->duration_minutes }} minutes</td>
+                                </tr>
+                                @if($meeting->location)
+                                <tr>
+                                    <td style="{{ $label }}">Location</td>
+                                    <td style="{{ $value }}">{{ $meeting->location }}</td>
+                                </tr>
+                                @endif
+                                @if($meeting->meeting_link)
+                                <tr>
+                                    <td style="{{ $label }}">Meeting link</td>
+                                    <td style="{{ $value }}; word-break:break-all;"><a href="{{ $meeting->meeting_link }}" style="color:#1B5FAE;">{{ $meeting->meeting_link }}</a></td>
+                                </tr>
+                                @endif
+                                @if($meeting->organizer)
+                                <tr>
+                                    <td style="{{ $label }}">Host</td>
+                                    <td style="{{ $value }}">{{ $meeting->organizer->name }}</td>
+                                </tr>
+                                @endif
+                                @if($meeting->description)
+                                <tr>
+                                    <td style="{{ $label }}">Notes</td>
+                                    <td style="{{ $value }}; line-height:1.5; white-space:pre-wrap;">{{ $meeting->description }}</td>
+                                </tr>
+                                @endif
+                                <tr><td colspan="2" style="border-top:1px solid #e5e7eb; font-size:0; line-height:0;">&nbsp;</td></tr>
                             </table>
                         </td>
                     </tr>
+                    @if($meeting->meeting_link)
                     <tr>
-                        <td style="padding:4px 32px 28px;">
-                            <p style="margin:0; font-size:13px; color:#6b7280; line-height:1.6;">
-                                A calendar invite (.ics) is attached — add it to Google, Outlook, or Apple Calendar with one click.
+                        <td style="padding:12px 32px 0;">
+                            <a href="{{ $meeting->meeting_link }}" style="display:inline-block; background-color:#1B5FAE; color:#ffffff; text-decoration:none; font-size:14px; font-weight:600; padding:12px 24px; border-radius:4px;">Join meeting</a>
+                        </td>
+                    </tr>
+                    @endif
+                    <tr>
+                        <td style="padding:24px 32px 28px;">
+                            <p style="margin:0; font-size:13px; line-height:1.6; color:#6b7280;">
+                                A calendar invitation is attached to this email. If you need to reschedule, simply reply to this message.
+                            </p>
+                            <p style="margin:16px 0 0; font-size:14px; line-height:1.6; color:#374151;">
+                                Kind regards,<br>{{ $meeting->organizer?->name ? $meeting->organizer->name.', ' : '' }}{{ $companyName }}
                             </p>
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:16px 32px; border-top:1px solid #e5e7eb; color:#9ca3af; font-size:12px;">
-                            Sent by {{ $companyName }} &middot; powered by
-                            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="FlipERP" width="64" style="width:64px; height:auto; border:0; vertical-align:middle;">
+                        <td style="padding:16px 32px; border-top:1px solid #e5e7eb; background-color:#f9fafb; font-size:12px; color:#9ca3af;">
+                            {{ $companyName }} &middot; Sent with FlipERP
                         </td>
                     </tr>
                 </table>
