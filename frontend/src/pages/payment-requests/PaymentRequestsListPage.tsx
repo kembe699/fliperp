@@ -90,7 +90,6 @@ export function PaymentRequestsListPage() {
         <p className="rounded-xl border border-border bg-card p-6 text-sm text-destructive">Could not load payment requests. Please try again.</p>
       ) : (
         <DataTable
-          title="Payment Requests"
           columns={columns}
           data={data?.data ?? []}
           rowKey={(row) => row.id}

@@ -24,7 +24,7 @@ import { AttendanceQrCodeSection } from '@/components/hr/AttendanceQrCodeSection
 import { AttendanceGeofencesSection } from '@/components/hr/AttendanceGeofencesSection'
 
 const STATUSES: AttendanceStatus[] = ['present', 'absent', 'late', 'on_leave']
-const pillTrigger = 'h-8 w-40 text-sm'
+const pillTrigger = 'h-8 w-[8.5rem] text-sm'
 
 export function AttendancePage() {
   const { can } = usePermissions()
@@ -112,9 +112,9 @@ export function AttendancePage() {
               toolbarExtra={
                 <>
                   <div className="flex items-center gap-2">
-                    <Input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1) }} className="h-8 w-[9.5rem] text-sm" placeholder="From" />
+                    <Input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setPage(1) }} className="h-8 w-[8.5rem] text-sm" aria-label="From date" />
                     <span className="text-sm text-muted-foreground">to</span>
-                    <Input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1) }} className="h-8 w-[9.5rem] text-sm" placeholder="To" />
+                    <Input type="date" value={dateTo} onChange={(event) => { setDateTo(event.target.value); setPage(1) }} className="h-8 w-[8.5rem] text-sm" aria-label="To date" />
                   </div>
 
                   <Select value={departmentId} onValueChange={(value) => { setDepartmentId(value); setPage(1) }}>
@@ -160,7 +160,7 @@ export function AttendancePage() {
               searchSlot={
                 <SearchBar
                   options={[{ value: 'employee', label: 'Employee name/code' }]}
-                  placeholder="Search by employee name or code…"
+                  placeholder="Search employee…"
                   onSearch={(_by, query) => { setSearch(query); setPage(1) }}
                   onClear={() => { setSearch(''); setPage(1) }}
                 />

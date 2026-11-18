@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { fetchSales, refundSale, voidSale } from '@/api/sales'
-import { fetchBranches } from '@/api/branches'
 import { fetchUsers } from '@/api/settings'
 import { fetchPaymentTypes } from '@/api/pos'
 import { fetchCustomers } from '@/api/customers'
@@ -12,6 +11,7 @@ import { formatDate } from '@/lib/format'
 import { printPdf } from '@/lib/pdf-print'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
+import { useUiStore } from '@/lib/ui-store'
 import { SALE_STATUS_VARIANT } from '@/components/sales/status-variants'
 import type { Sale } from '@/types/sale'
 
@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { SaleDetailDialog } from '@/pages/receipts/SaleDetailDialog'
 
-const pillTrigger = 'h-8 w-40 text-sm'
+const pillTrigger = 'h-8 w-[8.5rem] text-sm'
 
 export function ReceiptsListPage() {
   const queryClient = useQueryClient()
@@ -34,14 +34,15 @@ export function ReceiptsListPage() {
   const [page, setPage] = useState(1)
   const [viewingSaleId, setViewingSaleId] = useState<number | null>(null)
   const [status, setStatus] = useState<Sale['status'] | 'all'>('completed')
-  const [branchId, setBranchId] = useState('all')
+  // Branch comes from the selector in the top bar, so the list has no branch filter of its own.
+  const branchId = useUiStore((state) => state.selectedBranchId)
+  useEffect(() => setPage(1), [branchId])
   const [servedBy, setServedBy] = useState('all')
   const [paymentTypeId, setPaymentTypeId] = useState('all')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [search, setSearch] = useState('')
 
-  const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
   const { data: cashiersPage } = useQuery({ queryKey: ['users-all'], queryFn: () => fetchUsers({ per_page: 100 }) })
   const { data: paymentTypes } = useQuery({ queryKey: ['payment-types'], queryFn: fetchPaymentTypes })
   const { data: customersPage } = useQuery({ queryKey: ['customers-all'], queryFn: () => fetchCustomers({ per_page: 100 }) })
@@ -53,7 +54,7 @@ export function ReceiptsListPage() {
         page,
         per_page: 15,
         status: status === 'all' ? undefined : status,
-        branch_id: branchId === 'all' ? undefined : Number(branchId),
+        branch_id: branchId ?? undefined,
         served_by: servedBy === 'all' ? undefined : Number(servedBy),
         payment_type_id: paymentTypeId === 'all' ? undefined : Number(paymentTypeId),
         from: from || undefined,
@@ -129,7 +130,7 @@ export function ReceiptsListPage() {
               const all = await fetchSales({
                 per_page: 10000,
                 status: status === 'all' ? undefined : status,
-                branch_id: branchId === 'all' ? undefined : Number(branchId),
+                branch_id: branchId ?? undefined,
                 served_by: servedBy === 'all' ? undefined : Number(servedBy),
                 payment_type_id: paymentTypeId === 'all' ? undefined : Number(paymentTypeId),
                 from: from || undefined,
@@ -160,20 +161,6 @@ export function ReceiptsListPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setPage(1) }}>
-                <SelectTrigger className={pillTrigger}>
-                  <SelectValue placeholder="Branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All branches</SelectItem>
-                  {branches?.map((branch) => (
-                    <SelectItem key={branch.id} value={String(branch.id)}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Select value={servedBy} onValueChange={(value) => { setServedBy(value); setPage(1) }}>
                 <SelectTrigger className={pillTrigger}>
                   <SelectValue placeholder="Cashier" />
@@ -193,7 +180,7 @@ export function ReceiptsListPage() {
                   <SelectValue placeholder="Payment Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All payment types</SelectItem>
+                  <SelectItem value="all">All payments</SelectItem>
                   {paymentTypes?.map((type) => (
                     <SelectItem key={type.id} value={String(type.id)}>
                       {type.name}
@@ -202,14 +189,15 @@ export function ReceiptsListPage() {
                 </SelectContent>
               </Select>
 
-              <Input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="h-8 w-40 text-sm" />
-              <Input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="h-8 w-40 text-sm" />
+              <Input type="date" aria-label="From date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="h-8 w-[8.5rem] text-sm" />
+              <span className="text-xs text-muted-foreground">to</span>
+              <Input type="date" aria-label="To date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="h-8 w-[8.5rem] text-sm" />
             </>
           }
           searchSlot={
             <SearchBar
               options={[{ value: 'reference_number', label: 'Reference' }]}
-              placeholder="Search by reference number…"
+              placeholder="Search reference…"
               onSearch={(_by, query) => { setSearch(query); setPage(1) }}
               onClear={() => { setSearch(''); setPage(1) }}
             />
