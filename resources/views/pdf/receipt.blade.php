@@ -189,8 +189,8 @@
 </head>
 <body>
     <div class="center">
-        @if ($logoPath = $company?->logoDataUri())
-            <img src="{{ $logoPath }}" alt="{{ $company->name }}" class="logo">
+        @if ($logoPath = $company?->documentLogoDataUri() ?? \App\Support\Brand::logoDataUri())
+            <img src="{{ $logoPath }}" alt="{{ $company?->logo_url ? $company->name : 'FlipERP' }}" class="logo">
         @endif
         <p class="company-name">{{ strtoupper($company->name ?? 'Receipt') }}</p>
         <div class="company-meta">

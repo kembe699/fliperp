@@ -9,7 +9,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Support\Brand;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -128,9 +131,9 @@ class Company extends Model
      *
      * Returns null when the company hasn't uploaded a logo (or it can't be read) —
      * document-header.blade.php falls back to printing the company name as text in
-     * that case. Deliberately does NOT fall back to the app's own FlipErp brand
-     * logo (public/brand/, see App\Support\Brand) — that's this product's own mark, not the tenant's,
-     * and would misrepresent whose document is being sent.
+     * that case. This returns only the company's OWN logo; documents use
+     * documentLogoDataUri(), which falls back to the FlipERP logo and then also
+     * prints the company name, so it is always clear whose document it is.
      */
     public function logoDataUri(): ?string
     {
@@ -141,22 +144,78 @@ class Company extends Model
         try {
             $publicBaseUrl = Storage::disk('public')->url('');
 
-            if (! str_starts_with($this->logo_url, $publicBaseUrl)) {
-                return null;
+            if (str_starts_with($this->logo_url, $publicBaseUrl)) {
+                $path = Str::after($this->logo_url, $publicBaseUrl);
+
+                if (! Storage::disk('public')->exists($path)) {
+                    return null;
+                }
+
+                $contents = Storage::disk('public')->get($path);
+                $mime = Storage::disk('public')->mimeType($path) ?: 'image/png';
+
+                return 'data:'.$mime.';base64,'.base64_encode($contents);
             }
 
-            $path = Str::after($this->logo_url, $publicBaseUrl);
-
-            if (! Storage::disk('public')->exists($path)) {
-                return null;
-            }
-
-            $contents = Storage::disk('public')->get($path);
-            $mime = Storage::disk('public')->mimeType($path) ?: 'image/png';
-
-            return 'data:'.$mime.';base64,'.base64_encode($contents);
+            // Logos uploaded before a storage move (e.g. to the old R2 bucket) still
+            // live at that address: fetch them, from known logo hosts only.
+            return $this->remoteLogoDataUri($this->logo_url);
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * The logo printed on the company's documents: its own logo, or FlipERP's
+     * when the company hasn't uploaded one (or it can't be read).
+     */
+    public function documentLogoDataUri(): ?string
+    {
+        return $this->logoDataUri() ?? Brand::logoDataUri();
+    }
+
+    /**
+     * Fetches a logo kept outside the public disk and returns it as a data:
+     * URI, cached for a day so each PDF doesn't download it again. Only https
+     * addresses on an allowed host (config filesystems.logo_hosts), only
+     * images, at most 2 MB, with a short timeout — so a bad logo_url can
+     * neither point the server at an arbitrary address nor slow a PDF down.
+     */
+    protected function remoteLogoDataUri(string $url): ?string
+    {
+        $parts = parse_url($url);
+        $host = strtolower($parts['host'] ?? '');
+        if (($parts['scheme'] ?? '') !== 'https' || $host === '' || ! $this->isAllowedLogoHost($host)) {
+            return null;
+        }
+
+        $cached = Cache::remember('company-logo:'.sha1($url), now()->addDay(), function () use ($url) {
+            $response = Http::timeout(5)->withOptions(['allow_redirects' => false])->get($url);
+            $mime = strtolower(trim(explode(';', (string) $response->header('Content-Type'))[0]));
+            $body = $response->body();
+
+            if (! $response->successful() || ! in_array($mime, ['image/png', 'image/jpeg', 'image/webp', 'image/gif'], true) || strlen($body) === 0 || strlen($body) > 2 * 1024 * 1024) {
+                return '';
+            }
+
+            return 'data:'.$mime.';base64,'.base64_encode($body);
+        });
+
+        return $cached ?: null;
+    }
+
+    protected function isAllowedLogoHost(string $host): bool
+    {
+        foreach ((array) config('filesystems.logo_hosts', []) as $allowed) {
+            $allowed = strtolower(trim((string) $allowed));
+            if ($allowed === '') {
+                continue;
+            }
+            if (str_starts_with($allowed, '*.') ? str_ends_with($host, substr($allowed, 1)) : $host === $allowed) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

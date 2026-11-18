@@ -1,14 +1,17 @@
 {{-- Expects: $companyName, $branchName, $branchAddress, $branchPhone, $documentType, $referenceNumber, $documentDate, $metaRows (array<string,string>), optional $referenceLabel (default "Reference"), optional $company (for logo) --}}
 @php($referenceLabel = $referenceLabel ?? 'Reference')
-@php($logoPath = ($company ?? null)?->logoDataUri())
+@php($ownLogo = ($company ?? null)?->logoDataUri())
+{{-- The company's own logo; without one, FlipERP's logo plus the company name, so the sender is always clear. --}}
+@php($logoPath = $ownLogo ?? \App\Support\Brand::logoDataUri())
 <div class="header">
     <div class="header-inner">
         <table style="width: 100%; border-collapse: collapse;">
             <tr>
                 <td style="width: 55%; vertical-align: top;">
                     @if ($logoPath)
-                        <img src="{{ $logoPath }}" alt="{{ $companyName }}" class="company-logo">
-                    @else
+                        <img src="{{ $logoPath }}" alt="{{ $ownLogo ? $companyName : 'FlipERP' }}" class="company-logo">
+                    @endif
+                    @if (! $ownLogo)
                         <p class="company-name">{{ $companyName }}</p>
                     @endif
                     <div class="company-meta">
