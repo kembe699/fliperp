@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
+import { AccountingPeriodSelect } from '@/components/shared/AccountingPeriodSelect'
 
 function Section({ title, total, accounts, currencyCode }: { title: string; total: number; accounts: ReportAccountLine[]; currencyCode?: string }) {
   return (
@@ -79,6 +80,7 @@ export function BalanceSheetReportPage() {
 
       <Card className="mb-4">
         <CardContent className="flex items-end gap-4 p-4">
+          <AccountingPeriodSelect mode="asOf" asOf={asOf} onChange={setAsOf} />
           <div className="space-y-1.5">
             <Label>As Of</Label>
             <Input type="date" value={asOf} onChange={(event) => setAsOf(event.target.value)} />

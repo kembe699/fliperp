@@ -7,9 +7,10 @@ use App\Models\User;
 
 class AccountingPeriodPolicy
 {
+    /** Report viewers may list periods too, to filter reports by one (read-only, own company). */
     public function viewAny(User $user): bool
     {
-        return $user->can('accounting-periods.view');
+        return $user->can('accounting-periods.view') || $user->can('reports.view');
     }
 
     public function view(User $user, AccountingPeriod $period): bool

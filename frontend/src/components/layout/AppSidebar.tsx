@@ -102,7 +102,8 @@ export function AppSidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+      {/* Scrolls with the wheel or touch like before, without a visible scrollbar. */}
+      <nav className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Main Menu</p>
         <ul className="space-y-0.5">
           {visibleNavConfig.map((item) => {
