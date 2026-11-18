@@ -98,7 +98,7 @@ class CrmLeadMagnetController extends Controller
 
         return $request->validate([
             'title' => [$required, 'string', 'max:150'],
-            'slug' => ['nullable', 'string', 'max:60', 'alpha_dash'],
+            'slug' => ['nullable', 'string', 'max:60'], // turned into a URL-safe link by uniqueSlug()
             'headline' => ['nullable', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:5000'],
             'external_url' => ['nullable', 'url', 'max:2048'],

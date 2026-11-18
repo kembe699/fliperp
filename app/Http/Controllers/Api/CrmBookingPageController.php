@@ -61,7 +61,7 @@ class CrmBookingPageController extends Controller
 
         $data = $request->validate([
             'title' => [$required, 'string', 'max:120'],
-            'slug' => ['nullable', 'string', 'max:60', 'alpha_dash'],
+            'slug' => ['nullable', 'string', 'max:60'], // turned into a URL-safe link by uniqueSlug()
             'description' => ['nullable', 'string', 'max:2000'],
             'duration_minutes' => [$required, 'integer', 'min:10', 'max:480'],
             'buffer_minutes' => ['sometimes', 'integer', 'min:0', 'max:240'],

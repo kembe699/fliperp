@@ -13,7 +13,7 @@ import {
   type CrmLeadMagnetInput,
 } from '@/api/crm-marketing'
 import { getApiErrorInfo } from '@/lib/api-errors'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, toSlug } from '@/lib/format'
 import { usePermissions } from '@/hooks/use-permissions'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -192,8 +192,11 @@ function LeadMagnetFormDialog({ open, onOpenChange, magnet }: { open: boolean; o
               <Input id="lm-button" value={form.button_label ?? ''} onChange={(e) => set('button_label', e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="lm-slug">Link name</Label>
+              <Label htmlFor="lm-slug">Link name (web address)</Label>
               <Input id="lm-slug" value={form.slug ?? ''} onChange={(e) => set('slug', e.target.value)} placeholder="From the title if empty" />
+              <p className="truncate text-xs text-muted-foreground">
+                {window.location.origin}/lm/{toSlug(form.slug || form.title) || '…'}
+              </p>
             </div>
           </div>
           <div className="grid gap-1.5">
