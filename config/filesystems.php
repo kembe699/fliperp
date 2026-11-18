@@ -98,6 +98,13 @@ return [
     |
     */
 
+    /*
+    | Hosts a company logo may be fetched from when it isn't on the public
+    | disk (logos uploaded before a storage move, e.g. the old R2 bucket).
+    | Comma-separated in LOGO_HOSTS; "*.example.com" matches subdomains.
+    */
+    'logo_hosts' => array_filter(array_map('trim', explode(',', (string) env('LOGO_HOSTS', '*.r2.dev')))),
+
     'links' => [
         public_path('storage') => storage_path('app/public'),
     ],
