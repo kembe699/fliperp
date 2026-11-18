@@ -98,6 +98,8 @@ class CrmEmailService
         }
 
         $email = CrmEmail::create([
+            // Explicit: a meeting booked from a public booking page has no signed-in user.
+            'company_id' => $meeting->company_id,
             'lead_id' => $meeting->lead_id,
             'deal_id' => $meeting->deal_id,
             'customer_id' => $meeting->customer_id,

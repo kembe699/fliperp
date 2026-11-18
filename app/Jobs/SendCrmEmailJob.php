@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\CrmEmail;
 use App\Models\CrmMeeting;
 use App\Models\Quotation;
+use App\Models\User;
 use App\Services\Crm\MeetingService;
 use App\Services\Sales\QuotationService;
 use Illuminate\Bus\Queueable;
@@ -63,12 +64,16 @@ class SendCrmEmailJob
                     $pdfFilename = "quotation-{$quotation->reference_number}.pdf";
                 }
 
+                $sender = $email->sent_by ? User::query()->find($email->sent_by) : null;
+
                 Mail::to($email->to_email, $email->to_name)->send(new CrmDirectEmail(
                     subjectLine: $email->subject,
                     bodyText: $email->body,
                     companyName: $companyName,
                     pdfContent: $pdfContent,
                     pdfFilename: $pdfFilename,
+                    replyToEmail: $sender?->email,
+                    replyToName: $sender?->name,
                 ));
             }
 

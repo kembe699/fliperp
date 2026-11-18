@@ -78,7 +78,13 @@ export function CrmLeadDetailPage() {
         </TabsContent>
 
         <TabsContent value="emails">
-          <CrmDrawerEmailsTab emails={emails} />
+          <CrmDrawerEmailsTab
+            emails={emails}
+            leadId={leadId}
+            defaultEmail={lead.email}
+            defaultName={lead.name}
+            queryKeyToInvalidate={queryKey}
+          />
         </TabsContent>
 
         <TabsContent value="activities">

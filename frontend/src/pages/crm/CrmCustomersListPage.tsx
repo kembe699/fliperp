@@ -14,6 +14,7 @@ import { ExportCsvButton } from '@/components/shared/ExportCsvButton'
 import { DataTable, type DataTableColumn, type DataTableRowAction } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SendEmailDialog } from '@/components/crm/SendEmailDialog'
 
 const CUSTOMER_TYPE_LABEL: Record<CustomerType, string> = {
   walk_in: 'Walk-in',
@@ -38,6 +39,7 @@ export function CrmCustomersListPage() {
   const [customerType, setCustomerType] = useState<string>('all')
   const [branchId, setBranchId] = useState<string>('all')
   const [search, setSearch] = useState('')
+  const [emailTo, setEmailTo] = useState<Customer | null>(null)
 
   const { data: branches } = useQuery({ queryKey: ['branches'], queryFn: fetchBranches })
 
@@ -70,6 +72,7 @@ export function CrmCustomersListPage() {
 
   const rowActions: (row: Customer) => DataTableRowAction<Customer>[] = (row) => [
     { label: 'View CRM Details', onClick: (c: Customer) => navigate(`/customers/${c.id}/statement`) },
+    ...(can('crm-emails.create') ? [{ label: 'Send email', onClick: (c: Customer) => setEmailTo(c) }] : []),
   ]
 
   return (
@@ -158,6 +161,14 @@ export function CrmCustomersListPage() {
           onPageChange={setPage}
         />
       )}
+
+      <SendEmailDialog
+        open={emailTo !== null}
+        onOpenChange={(open) => !open && setEmailTo(null)}
+        customerId={emailTo?.id}
+        defaultEmail={emailTo?.email}
+        defaultName={emailTo?.name}
+      />
     </div>
   )
 }

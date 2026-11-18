@@ -82,7 +82,14 @@ export function CrmDealDetailPage() {
         </TabsContent>
 
         <TabsContent value="emails">
-          <CrmDrawerEmailsTab emails={emails} />
+          <CrmDrawerEmailsTab
+            emails={emails}
+            dealId={dealId}
+            leadId={deal.lead_id}
+            customerId={deal.customer_id}
+            defaultName={contactName}
+            queryKeyToInvalidate={queryKey}
+          />
         </TabsContent>
 
         <TabsContent value="activities">

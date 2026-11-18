@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('invoices:check-overdue')->daily();
+// Email campaigns go out in batches (no queue worker on the droplet).
+Schedule::command('crm:send-campaigns')->everyMinute()->withoutOverlapping(10);

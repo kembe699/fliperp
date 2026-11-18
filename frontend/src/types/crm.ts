@@ -226,6 +226,10 @@ export interface CrmMeeting {
   duration_minutes: number
   location: string | null
   meeting_link: string | null
+  booking_page_id?: number | null
+  booking_notes?: string | null
+  lead?: CrmRef | null
+  customer?: CrmRef | null
   organizer: CrmRef | null
   status: CrmMeetingStatus
   attendees: CrmMeetingAttendee[]

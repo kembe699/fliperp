@@ -57,8 +57,8 @@ class Modules
         ],
         'crm' => [
             'label' => 'CRM',
-            'description' => 'Leads, deals pipeline, customer services, activities, meetings and CRM reports.',
-            'groups' => ['crm-services', 'crm-pipeline-stages', 'crm-leads', 'crm-deals', 'crm-customer-services', 'crm-account-assignments', 'crm-activities', 'crm-meetings', 'crm-emails', 'crm-reports', 'crm-customers'],
+            'description' => 'Leads, deals pipeline, customer services, activities, meetings, booking pages, lead magnets, email campaigns and CRM reports.',
+            'groups' => ['crm-services', 'crm-pipeline-stages', 'crm-leads', 'crm-deals', 'crm-customer-services', 'crm-account-assignments', 'crm-activities', 'crm-meetings', 'crm-emails', 'crm-reports', 'crm-customers', 'crm-booking-pages', 'crm-lead-magnets', 'crm-campaigns'],
         ],
         'budgeting' => [
             'label' => 'Budgeting',

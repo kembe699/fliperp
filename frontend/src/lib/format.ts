@@ -57,3 +57,15 @@ export function daysAgo(days: number, date = new Date()): Date {
   copy.setDate(copy.getDate() - days)
   return copy
 }
+
+export function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date)
+}
+
+/** YYYY-MM-DD of the date in the viewer's own timezone (toISODate uses UTC). */
+export function localISODate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
