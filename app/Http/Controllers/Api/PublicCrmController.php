@@ -112,6 +112,8 @@ class PublicCrmController extends Controller
             'headline' => $magnet->headline,
             'description' => $magnet->description,
             'button_label' => $magnet->button_label ?: 'Get it now',
+            // Shown on the cover art, e.g. "PDF"; "LINK" when the download is a web link.
+            'file_type' => $magnet->file_name ? strtoupper(pathinfo($magnet->file_name, PATHINFO_EXTENSION)) ?: 'FILE' : 'LINK',
             'ask_phone' => $magnet->ask_phone,
             'ask_company' => $magnet->ask_company,
             'company' => ['name' => $company?->name, 'logo_url' => $company?->logo_url],
