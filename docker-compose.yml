@@ -50,9 +50,12 @@ services:
       CACHE_STORE: database
       SESSION_DRIVER: database
       FILESYSTEM_DISK: local
-      # Email off for this test deployment (written to the log).
-      MAIL_MAILER: log
-      RESEND_KEY: ""
+      # Email via Resend. The key lives in the droplet's .env (never in git);
+      # without it MAIL_MAILER falls back to "log" (emails written to the log).
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      RESEND_KEY: ${RESEND_KEY:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@nilehc.tech}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Flip ERP}
     depends_on:
       db:
         condition: service_healthy
