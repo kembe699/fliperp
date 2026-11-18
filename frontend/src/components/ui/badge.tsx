@@ -11,11 +11,12 @@ const badgeVariants = cva(
         default: 'bg-primary text-primary-foreground',
         secondary: 'bg-secondary text-secondary-foreground',
         outline: 'border border-border text-foreground',
-        success: 'bg-success-bg text-success',
-        warning: 'bg-warning-bg text-warning',
-        danger: 'bg-danger-bg text-danger',
-        info: 'bg-info-bg text-info',
-        neutral: 'bg-muted text-muted-foreground',
+        // Status colours: text only, no background (same as StatusBadge).
+        success: 'px-0 text-[hsl(142,72%,29%)] font-semibold',
+        warning: 'px-0 text-warning font-semibold',
+        danger: 'px-0 text-danger font-semibold',
+        info: 'px-0 text-info font-semibold',
+        neutral: 'px-0 text-muted-foreground font-semibold',
       },
     },
     defaultVariants: {
