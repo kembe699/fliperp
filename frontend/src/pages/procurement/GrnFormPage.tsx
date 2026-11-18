@@ -172,8 +172,8 @@ export function GrnFormPage() {
         <CardContent className="space-y-3 p-6">
           <p className="text-sm font-semibold text-foreground">Items Received</p>
           {rows.map((row) => (
-            <div key={row.key} className="flex items-center gap-2">
-              <div className="flex-1">
+            <div key={row.key} className="flex flex-wrap items-center gap-2 border-b border-border pb-3 last:border-0 sm:flex-nowrap sm:border-0 sm:pb-0">
+              <div className="w-full sm:w-auto sm:flex-1">
                 <SearchableSelect
                   options={(products ?? []).map((product) => ({ value: String(product.id), label: product.name, sublabel: product.sku }))}
                   value={row.product_id ? String(row.product_id) : null}

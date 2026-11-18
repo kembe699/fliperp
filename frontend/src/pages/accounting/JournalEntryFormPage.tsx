@@ -142,8 +142,8 @@ export function JournalEntryFormPage() {
           </div>
           {rows.map((row) => (
             <div key={row.key} className="space-y-2 rounded-lg border border-border p-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+              <div className="w-full sm:w-auto sm:flex-1">
                 <SearchableSelect
                   options={(accounts ?? []).map((account) => ({ value: String(account.id), label: `${account.code} — ${account.name}` }))}
                   value={row.account_id ? String(row.account_id) : null}
@@ -169,7 +169,7 @@ export function JournalEntryFormPage() {
                 className="w-28"
                 placeholder="Credit"
               />
-              <Input value={row.description} onChange={(event) => updateRow(row.key, { description: event.target.value })} className="w-40" placeholder="Line memo" />
+              <Input value={row.description} onChange={(event) => updateRow(row.key, { description: event.target.value })} className="min-w-0 flex-1 sm:w-40 sm:flex-none" placeholder="Line memo" />
               <button type="button" onClick={() => removeRow(row.key)} className="text-muted-foreground hover:text-destructive">
                 <Trash2 className="h-4 w-4" />
               </button>

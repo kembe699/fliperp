@@ -72,7 +72,7 @@ export function CashFlowReportPage() {
       />
 
       <Card className="mb-4">
-        <CardContent className="flex items-end gap-4 p-4">
+        <CardContent className="flex flex-wrap items-end gap-4 p-4">
           <AccountingPeriodSelect from={from} to={to} onChange={(start, end) => { setFrom(start); setTo(end) }} />
           <div className="space-y-1.5">
             <Label>From</Label>

@@ -141,8 +141,9 @@ export function LineItemsEditor({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-border">
-        <div className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] gap-2 border-b border-border bg-[#F9FAFB] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      {/* Phones: the seven columns keep their width and the box scrolls sideways. */}
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="grid min-w-[680px] grid-cols-[1fr_80px_110px_130px_100px_110px_36px] gap-2 border-b border-border bg-[#F9FAFB] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           <span>Product / Service</span>
           <span>Qty</span>
           <span>Unit Price</span>
@@ -157,7 +158,7 @@ export function LineItemsEditor({
         ) : (
           rows.map((row) => (
             <div key={row.key} className="border-b border-border last:border-b-0">
-            <div className="grid grid-cols-[1fr_80px_110px_130px_100px_110px_36px] items-center gap-2 px-3 py-2">
+            <div className="grid min-w-[680px] grid-cols-[1fr_80px_110px_130px_100px_110px_36px] items-center gap-2 px-3 py-2">
               <div className="space-y-1">
                 <SearchableSelect
                   options={pickerOptions}

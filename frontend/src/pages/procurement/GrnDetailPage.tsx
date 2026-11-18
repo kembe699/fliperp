@@ -130,7 +130,8 @@ export function GrnDetailPage() {
             <StatusBadge label={grn.status} variant={GRN_STATUS_VARIANT[grn.status]} className="text-sm" />
           </div>
 
-          <table className="mb-6 w-full text-sm">
+          <div className="mb-6 overflow-x-auto">
+          <table className="w-full min-w-[480px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="py-2">Product</th>
@@ -154,6 +155,7 @@ export function GrnDetailPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           <div className="ml-auto w-full max-w-xs border-t border-border pt-1.5">
             <div className="flex justify-between text-base font-bold text-foreground">

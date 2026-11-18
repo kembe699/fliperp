@@ -355,7 +355,7 @@ export function DataTable<T>({
               {rowCount} {rowCount === 1 ? 'record' : 'records'}
             </span>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
             {dateKey && (
               <>
                 <Input type="date" aria-label="From date" className="h-8 w-[8.5rem] text-sm" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
@@ -433,7 +433,7 @@ export function DataTable<T>({
             )}
             {searchSlot}
             {searchable && !searchSlot && (
-              <div className="relative w-52">
+              <div className="relative w-full sm:w-52">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input value={search} onChange={(e) => updateSearch(e.target.value)} placeholder="Search..." aria-label="Search" className="h-8 pl-8 pr-8 text-sm" />
                 {search && (
@@ -512,7 +512,9 @@ export function DataTable<T>({
                 aria-expanded={renderExpanded ? expanded : undefined}
               >
                 {columns.map((column, colIndex) => (
-                  <TableCell key={column.key} className={column.className}>
+                  // Phones: one line per cell and the table scrolls sideways, instead of
+                  // references and names breaking over three lines.
+                  <TableCell key={column.key} className={cn('max-md:whitespace-nowrap', column.className)}>
                     {renderExpanded && colIndex === 0 ? (
                       <span className="inline-flex items-center gap-1.5">
                         {expanded ? <ChevronDown className="h-3.5 w-3.5 text-primary" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}

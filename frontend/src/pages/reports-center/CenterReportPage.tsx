@@ -240,7 +240,7 @@ export function CenterReport({ entry }: { entry: CenterEntry }) {
               </Select>
             </Field>
           )}
-          <div className="ml-auto flex gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
             <Button size="sm" className="h-9 gap-1.5" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} /> Refresh
             </Button>

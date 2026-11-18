@@ -11,11 +11,11 @@ export function AppLayout() {
   const requiredPermission = permissionForPath(location.pathname)
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-dvh bg-background">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {requiredPermission ? (
             <RequirePermission permission={requiredPermission}>
               <Outlet />
