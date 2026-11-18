@@ -53,6 +53,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'is_platform_staff' => 'boolean',
             'last_login_at' => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
     }
 

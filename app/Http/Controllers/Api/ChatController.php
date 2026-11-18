@@ -24,6 +24,14 @@ class ChatController extends Controller
         return $this->success(new ChatConversationResource($conversation));
     }
 
+    /** Check in as online and get the company's people with who is online now. */
+    public function people(): JsonResponse
+    {
+        $this->chatService->touchPresence(Auth::user());
+
+        return $this->success($this->chatService->peopleFor(Auth::user()));
+    }
+
     public function index(): JsonResponse
     {
         $conversations = $this->chatService->conversationsFor(Auth::user());

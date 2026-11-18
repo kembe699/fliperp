@@ -24,6 +24,14 @@ export interface ChatConversation {
   updated_at: string
 }
 
+/** Someone in the company, from GET chat/people (online = checked in within ~90 s). */
+export interface ChatPerson {
+  id: number
+  name: string
+  online: boolean
+  last_seen_at: string | null
+}
+
 export interface PresenceMember {
   id: number
   name: string

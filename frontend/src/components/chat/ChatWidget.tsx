@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, X } from 'lucide-react'
 
-import { fetchConversations, startConversationWith } from '@/api/chat'
+import { fetchChatPeople, fetchConversations, startConversationWith } from '@/api/chat'
 import { useAuthStore } from '@/lib/auth-store'
 import { initEcho } from '@/lib/echo'
 import type { ChatConversation, PresenceMember } from '@/types/chat'
@@ -17,13 +17,33 @@ export function ChatWidget() {
 
   const [isOpen, setIsOpen] = useState(false)
   const [activeConversation, setActiveConversation] = useState<ChatConversation | null>(null)
-  const [onlineMembers, setOnlineMembers] = useState<PresenceMember[]>([])
+  const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([])
+  // Checks this user in as online every 30 s (also in a background tab, so
+  // people with FlipERP open elsewhere still show as online) and lists who
+  // else is online. Works with or without the WebSocket server.
+  const { data: people = [] } = useQuery({
+    queryKey: ['chat-people'],
+    queryFn: fetchChatPeople,
+    enabled: !!userId,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
+  })
+
+  const onlineMembers = useMemo<PresenceMember[]>(() => {
+    const byId = new Map<number, PresenceMember>()
+    presenceMembers.forEach((member) => byId.set(member.id, member))
+    people.filter((person) => person.online).forEach((person) => byId.set(person.id, { id: person.id, name: person.name, avatar: null }))
+    return [...byId.values()]
+  }, [presenceMembers, people])
 
   const { data: conversations = [] } = useQuery({
     queryKey: ['chat-conversations'],
     queryFn: fetchConversations,
     enabled: !!userId,
-    refetchInterval: 30_000,
+    // Polled even when the WebSocket server is configured: it is the only way
+    // updates arrive on the low-resource droplet (no Reverb), and a safety net if Reverb is down.
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
   })
 
   const totalUnread = conversations.reduce((sum, conversation) => sum + conversation.unread_count, 0)
@@ -37,9 +57,9 @@ export function ChatWidget() {
     if (!echo) return
 
     const channel = echo.join(`company.${companyId}`)
-    channel.here((members: PresenceMember[]) => setOnlineMembers(members))
-    channel.joining((member: PresenceMember) => setOnlineMembers((prev) => [...prev.filter((m) => m.id !== member.id), member]))
-    channel.leaving((member: PresenceMember) => setOnlineMembers((prev) => prev.filter((m) => m.id !== member.id)))
+    channel.here((members: PresenceMember[]) => setPresenceMembers(members))
+    channel.joining((member: PresenceMember) => setPresenceMembers((prev) => [...prev.filter((m) => m.id !== member.id), member]))
+    channel.leaving((member: PresenceMember) => setPresenceMembers((prev) => prev.filter((m) => m.id !== member.id)))
 
     return () => {
       echo.leave(`company.${companyId}`)
@@ -117,7 +137,11 @@ export function ChatWidget() {
           className="fixed bottom-24 right-5 z-40 flex h-[520px] w-96 max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl duration-200 animate-in fade-in slide-in-from-bottom-4 zoom-in-95"
         >
           {activeConversation ? (
-            <ChatConversationView conversation={activeConversation} isOtherUserOnline={isOtherUserOnline} onBack={() => setActiveConversation(null)} />
+            <ChatConversationView
+              conversation={activeConversation}
+              isOtherUserOnline={isOtherUserOnline}
+              onBack={() => setActiveConversation(null)}
+            />
           ) : (
             <>
               <div className="border-b border-border px-4 py-3">
