@@ -39,7 +39,23 @@ export interface NavItem {
 }
 
 export const navConfig: NavItem[] = [
+  // Grouped by function: selling, buying and stock, finance, people and
+  // resources, then reports. Settings always stays last.
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, requiredPermission: 'dashboard.view' },
+  {
+    label: 'CRM',
+    path: '/crm',
+    icon: Contact,
+    children: [
+      { label: 'Dashboard', path: '/crm', requiredPermission: 'crm-reports.view' },
+      { label: 'Leads', path: '/crm/leads', requiredPermission: 'crm-leads.view' },
+      { label: 'Pipeline', path: '/crm/pipeline', requiredPermission: 'crm-deals.view' },
+      { label: 'Customers', path: '/crm/customers', requiredPermission: 'crm-customer-services.view' },
+      { label: 'Services', path: '/crm/services', requiredPermission: 'crm-services.view' },
+      { label: 'Staff', path: '/crm/staff', requiredPermission: 'crm-reports.view' },
+      { label: 'Reports', path: '/crm/reports', requiredPermission: 'crm-reports.view' },
+    ],
+  },
   {
     label: 'Sales',
     path: '/sales',
@@ -50,6 +66,18 @@ export const navConfig: NavItem[] = [
       { label: 'Invoices', path: '/invoices', requiredPermission: 'invoices.view' },
       { label: 'Quotations', path: '/quotations', requiredPermission: 'quotations.view' },
       { label: 'Customers', path: '/customers', requiredPermission: 'customers.view' },
+    ],
+  },
+  {
+    label: 'Procurement',
+    path: '/procurement',
+    icon: Truck,
+    children: [
+      { label: 'Suppliers', path: '/suppliers', requiredPermission: 'suppliers.view' },
+      { label: 'Requests for Quotation', path: '/rfqs', requiredPermission: 'purchase-orders.view' },
+      { label: 'Purchase Orders', path: '/purchase-orders', requiredPermission: 'purchase-orders.view' },
+      { label: 'Goods Received Notes', path: '/goods-received-notes', requiredPermission: 'goods-received-notes.view' },
+      { label: 'Supplier Bills', path: '/supplier-bills', requiredPermission: 'supplier-bills.view' },
     ],
   },
   {
@@ -66,70 +94,12 @@ export const navConfig: NavItem[] = [
     ],
   },
   {
-    label: 'Procurement',
-    path: '/procurement',
-    icon: Truck,
-    children: [
-      { label: 'Suppliers', path: '/suppliers', requiredPermission: 'suppliers.view' },
-      { label: 'Requests for Quotation', path: '/rfqs', requiredPermission: 'purchase-orders.view' },
-      { label: 'Purchase Orders', path: '/purchase-orders', requiredPermission: 'purchase-orders.view' },
-      { label: 'Goods Received Notes', path: '/goods-received-notes', requiredPermission: 'goods-received-notes.view' },
-      { label: 'Supplier Bills', path: '/supplier-bills', requiredPermission: 'supplier-bills.view' },
-    ],
-  },
-  {
-    label: 'HR & Payroll',
-    path: '/hr',
-    icon: Users,
-    children: [
-      { label: 'Departments', path: '/departments', requiredPermission: 'departments.view' },
-      { label: 'Employees', path: '/employees', requiredPermission: 'employees.view' },
-      { label: 'Attendance', path: '/attendance', requiredPermission: 'attendance.view' },
-      { label: 'Leave Requests', path: '/leave-requests', requiredPermission: 'leave-requests.view' },
-      { label: 'Payroll Runs', path: '/payroll-runs', requiredPermission: 'payroll-runs.view' },
-      { label: 'Salary Structures', path: '/salary-structures', requiredPermission: 'salary-structures.view' },
-      { label: 'Statutory Deduction Rules', path: '/statutory-deduction-rules', requiredPermission: 'statutory-deduction-rules.view' },
-    ],
-  },
-  {
-    label: 'Assets',
-    path: '/assets',
-    icon: Boxes,
-    children: [{ label: 'Asset Categories', path: '/asset-categories', requiredPermission: 'asset-categories.view' }],
-  },
-  {
     label: 'Logistics',
     path: '/logistics',
     icon: Route,
     children: [
       { label: 'Vehicles', path: '/vehicles', requiredPermission: 'vehicles.view' },
       { label: 'Dispatches', path: '/dispatches', requiredPermission: 'dispatches.view' },
-    ],
-  },
-  {
-    label: 'CRM',
-    path: '/crm',
-    icon: Contact,
-    children: [
-      { label: 'Dashboard', path: '/crm', requiredPermission: 'crm-reports.view' },
-      { label: 'Leads', path: '/crm/leads', requiredPermission: 'crm-leads.view' },
-      { label: 'Pipeline', path: '/crm/pipeline', requiredPermission: 'crm-deals.view' },
-      { label: 'Customers', path: '/crm/customers', requiredPermission: 'crm-customer-services.view' },
-      { label: 'Services', path: '/crm/services', requiredPermission: 'crm-services.view' },
-      { label: 'Staff', path: '/crm/staff', requiredPermission: 'crm-reports.view' },
-      { label: 'Reports', path: '/crm/reports', requiredPermission: 'crm-reports.view' },
-    ],
-  },
-  { label: 'Budgeting', path: '/budget-periods', icon: PiggyBank, requiredPermission: 'budget-periods.view' },
-  { label: 'M&E', path: '/me-projects', icon: BarChart3, requiredPermission: 'me-projects.view' },
-  {
-    label: 'Grants',
-    path: '/grants',
-    icon: HandCoins,
-    children: [
-      { label: 'SOFs', path: '/grants', requiredPermission: 'grants.view' },
-      { label: 'Donors', path: '/donors', requiredPermission: 'donors.view' },
-      { label: 'Cost Centres', path: '/cost-centres', requiredPermission: 'cost-centres.view' },
     ],
   },
   {
@@ -153,6 +123,38 @@ export const navConfig: NavItem[] = [
       { label: 'Shift Report', path: '/reports/shift-report', requiredPermission: 'cash-drawer-sessions.view' },
       { label: 'Accounting Periods', path: '/accounting-periods', requiredPermission: 'accounting-periods.view' },
     ],
+  },
+  { label: 'Budgeting', path: '/budget-periods', icon: PiggyBank, requiredPermission: 'budget-periods.view' },
+  {
+    label: 'Grants',
+    path: '/grants',
+    icon: HandCoins,
+    children: [
+      { label: 'SOFs', path: '/grants', requiredPermission: 'grants.view' },
+      { label: 'Donors', path: '/donors', requiredPermission: 'donors.view' },
+      { label: 'Cost Centres', path: '/cost-centres', requiredPermission: 'cost-centres.view' },
+    ],
+  },
+  { label: 'M&E', path: '/me-projects', icon: BarChart3, requiredPermission: 'me-projects.view' },
+  {
+    label: 'HR & Payroll',
+    path: '/hr',
+    icon: Users,
+    children: [
+      { label: 'Departments', path: '/departments', requiredPermission: 'departments.view' },
+      { label: 'Employees', path: '/employees', requiredPermission: 'employees.view' },
+      { label: 'Attendance', path: '/attendance', requiredPermission: 'attendance.view' },
+      { label: 'Leave Requests', path: '/leave-requests', requiredPermission: 'leave-requests.view' },
+      { label: 'Payroll Runs', path: '/payroll-runs', requiredPermission: 'payroll-runs.view' },
+      { label: 'Salary Structures', path: '/salary-structures', requiredPermission: 'salary-structures.view' },
+      { label: 'Statutory Deduction Rules', path: '/statutory-deduction-rules', requiredPermission: 'statutory-deduction-rules.view' },
+    ],
+  },
+  {
+    label: 'Assets',
+    path: '/assets',
+    icon: Boxes,
+    children: [{ label: 'Asset Categories', path: '/asset-categories', requiredPermission: 'asset-categories.view' }],
   },
   // Every report in one full-screen place (sidebar of reports, filters, CSV/PDF/print).
   { label: 'Reports Center', path: '/reports-center', icon: FileBarChart, requiredPermission: 'reports.view' },
