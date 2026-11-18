@@ -156,6 +156,7 @@ Route::prefix('v1')->group(function () {
         Route::post('notifications/{id}/read', [NotificationController::class, 'markRead']);
 
         Route::post('chat/conversations/with/{userId}', [ChatController::class, 'startConversation']);
+        Route::get('chat/people', [ChatController::class, 'people']);
         Route::get('chat/conversations', [ChatController::class, 'index']);
         Route::get('chat/conversations/{conversation}/messages', [ChatController::class, 'messages']);
         Route::post('chat/conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);

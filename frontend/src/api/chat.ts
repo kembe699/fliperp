@@ -1,9 +1,15 @@
 import { api } from '@/lib/api'
 import type { ApiResponse } from '@/types/api'
-import type { ChatConversation, ChatMessage } from '@/types/chat'
+import type { ChatConversation, ChatMessage, ChatPerson } from '@/types/chat'
 
 export async function startConversationWith(userId: number): Promise<ChatConversation> {
   const { data } = await api.post<ApiResponse<ChatConversation>>(`/chat/conversations/with/${userId}`)
+  return data.data
+}
+
+/** Checks the current user in as online and lists the company's people. */
+export async function fetchChatPeople(): Promise<ChatPerson[]> {
+  const { data } = await api.get<ApiResponse<ChatPerson[]>>('/chat/people')
   return data.data
 }
 

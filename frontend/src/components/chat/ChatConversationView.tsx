@@ -75,7 +75,21 @@ export function ChatConversationView({ conversation, isOtherUserOnline, onBack }
   const { data: messages = [] } = useQuery({
     queryKey: messagesQueryKey,
     queryFn: () => fetchMessages(conversation.id),
+    // Fetched every few seconds: without the WebSocket server this is how new messages arrive.
+    refetchInterval: 4_000,
   })
+
+  // A new message from the other person arriving while this thread is open
+  // counts as read (the live listener below does the same when Reverb is running).
+  const lastIncomingId = [...messages].reverse().find((message) => message.sender_id !== currentUserId)?.id
+  const seenIncomingRef = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (lastIncomingId === undefined) return
+    if (seenIncomingRef.current !== undefined && lastIncomingId !== seenIncomingRef.current) {
+      markConversationRead(conversation.id).then(() => queryClient.invalidateQueries({ queryKey: ['chat-conversations'] }))
+    }
+    seenIncomingRef.current = lastIncomingId
+  }, [lastIncomingId, conversation.id, queryClient])
 
   useEffect(() => {
     markConversationRead(conversation.id).then(() => {

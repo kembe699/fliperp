@@ -15,6 +15,48 @@ use Illuminate\Validation\ValidationException;
 
 class ChatService
 {
+    /** Seen within this many seconds = online (the app checks in every 30 s). */
+    public const ONLINE_WINDOW_SECONDS = 90;
+
+    /**
+     * Records that $user has the app open. Written straight to the table so a
+     * check-in neither touches updated_at nor lands in the audit log, and at
+     * most every 20 s per user.
+     */
+    public function touchPresence(User $user): void
+    {
+        DB::table('users')
+            ->where('id', $user->id)
+            ->where(fn ($query) => $query->whereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subSeconds(20)))
+            ->update(['last_seen_at' => now()]);
+    }
+
+    /**
+     * Everyone else in $user's company who can chat (active users), online first.
+     *
+     * @return Collection<int, array{id: int, name: string, online: bool, last_seen_at: ?string}>
+     */
+    public function peopleFor(User $user): Collection
+    {
+        $cutoff = now()->subSeconds(self::ONLINE_WINDOW_SECONDS);
+
+        return User::query()
+            ->where('company_id', $user->company_id)
+            ->where('id', '!=', $user->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->limit(500)
+            ->get(['id', 'name', 'last_seen_at'])
+            ->map(fn (User $person) => [
+                'id' => $person->id,
+                'name' => $person->name,
+                'online' => $person->last_seen_at !== null && $person->last_seen_at->gte($cutoff),
+                'last_seen_at' => $person->last_seen_at?->toIso8601String(),
+            ])
+            ->sortByDesc('online')
+            ->values();
+    }
+
     /**
      * Two sequential calls with the same pair return the same conversation
      * (see the idempotency test) — this doesn't lock against two truly
@@ -128,7 +170,10 @@ class ChatService
             return $message->load(['sender', 'attachments']);
         });
 
-        broadcast(new ChatMessageSent($message))->toOthers();
+        // Live delivery is best-effort: the message is already saved, and the
+        // app also fetches new messages on a timer, so a WebSocket server that
+        // is down (or not installed) must not turn a sent message into an error.
+        $this->broadcastSafely(fn () => broadcast(new ChatMessageSent($message))->toOthers());
 
         $recipients = $conversation->participants()->where('user_id', '!=', $sender->id)->get();
 
@@ -140,11 +185,20 @@ class ChatService
             $currentlyViewing = $recipient->last_read_at && $recipient->last_read_at->diffInSeconds(now()) < 60;
 
             if (! $currentlyViewing) {
-                broadcast(new ChatUnreadBumped($recipient->user_id, $conversation, $message));
+                $this->broadcastSafely(fn () => broadcast(new ChatUnreadBumped($recipient->user_id, $conversation, $message)));
             }
         }
 
         return $message;
+    }
+
+    protected function broadcastSafely(callable $send): void
+    {
+        try {
+            $send();
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function markRead(ChatConversation $conversation, User $user): void
