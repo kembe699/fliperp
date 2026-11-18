@@ -49,25 +49,47 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
     <Page company={magnet.company}>
       <div className="grid w-full gap-10 py-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-16 md:py-20">
         <div>
-          <p className="text-sm font-medium text-sky-200">{kind}</p>
-          <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl">
+          <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-sky-100 ring-1 ring-inset ring-white/20">{kind}</span>
+          <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl">
             {capitalise(magnet.headline || magnet.title)}
           </h1>
           {magnet.headline && <p className="mt-3 text-lg text-white/80">{capitalise(magnet.title)}</p>}
 
           {lines.length > 1 ? (
-            <ul className="mt-8 list-disc space-y-2 pl-5 text-lg text-white/90 marker:text-sky-300">
-              {lines.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
+            <div className="mt-10">
+              <p className="text-xs font-semibold uppercase tracking-widest text-sky-200/80">What's inside</p>
+              <ol className="mt-4 space-y-4">
+                {lines.map((line, i) => (
+                  <li key={line} className="flex items-start gap-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/30 text-sm font-semibold tabular-nums text-white">
+                      {i + 1}
+                    </span>
+                    <span className="pt-1 text-lg text-white/90">{capitalise(line)}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           ) : (
             lines[0] && <p className="mt-6 max-w-prose text-lg leading-relaxed text-white/85">{capitalise(lines[0])}</p>
+          )}
+
+          {magnet.signups_count >= 5 && (
+            <p className="mt-10 border-t border-white/15 pt-5 text-sm text-white/70">
+              Already downloaded by <span className="font-semibold text-white">{magnet.signups_count.toLocaleString()}</span> people.
+            </p>
           )}
         </div>
 
         <div className="md:pt-2">
-          <div className="rounded-xl bg-white p-6 text-stone-900 shadow-xl shadow-black/20 md:p-8">
+          <div className="overflow-hidden rounded-xl bg-white text-stone-900 shadow-2xl shadow-black/25">
+            <div className="flex items-center justify-between gap-3 border-b border-stone-200 bg-stone-50 px-6 py-4 md:px-8">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-stone-500">You'll get</p>
+                <p className="truncate font-semibold text-stone-900">{capitalise(magnet.title)}</p>
+              </div>
+              <span className="shrink-0 rounded bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{magnet.file_type === 'LINK' ? 'LINK' : magnet.file_type}</span>
+            </div>
+            <div className="p-6 md:p-8">
             {submit.isSuccess ? (
               <div>
                 <h2 className="text-xl font-semibold text-stone-900">Thanks{firstName ? `, ${firstName}` : ''}.</h2>
@@ -90,6 +112,7 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
                 }}
               >
                 <h2 className="text-lg font-semibold text-stone-900">Where should we send it?</h2>
+                <p className="mt-1 text-sm text-stone-500">It's free. You'll get the download straight away.</p>
                 <div className="mt-5 space-y-4">
                   <Field label="Name" id="lm-name">
                     <input id="lm-name" required autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} className={inputClass} />
@@ -119,6 +142,7 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
                 <p className="mt-3 text-sm text-stone-500">We'll email you a copy too. No spam, and you can unsubscribe any time.</p>
               </form>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -128,8 +152,10 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
 
 function Page({ company, children }: { company?: PublicLeadMagnet['company']; children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-[linear-gradient(160deg,hsl(212_73%_36%)_0%,hsl(216_70%_24%)_100%)] text-white">
-      <header className="mx-auto flex h-16 w-full max-w-5xl items-center gap-3 px-5">
+    <div className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-[linear-gradient(160deg,hsl(212_73%_36%)_0%,hsl(216_70%_24%)_100%)] text-white">
+      {/* One quiet diagonal panel for depth */}
+      <div aria-hidden className="pointer-events-none absolute -right-1/4 top-0 -z-10 h-full w-3/4 -skew-x-12 bg-white/[0.04]" />
+      <header className="mx-auto flex h-16 w-full max-w-5xl items-center gap-3 border-b border-white/10 px-5">
         {company?.logo_url && <img src={company.logo_url} alt="" className="h-8 w-8 rounded bg-white object-contain p-0.5" />}
         <span className="font-semibold">{company?.name}</span>
       </header>

@@ -116,6 +116,8 @@ class PublicCrmController extends Controller
             'file_type' => $magnet->file_name ? strtoupper(pathinfo($magnet->file_name, PATHINFO_EXTENSION)) ?: 'FILE' : 'LINK',
             'ask_phone' => $magnet->ask_phone,
             'ask_company' => $magnet->ask_company,
+            // Real sign-ups, for "Already downloaded by N people" (shown from 5 up).
+            'signups_count' => $magnet->submissions()->count(),
             'company' => ['name' => $company?->name, 'logo_url' => $company?->logo_url],
         ]);
     }
