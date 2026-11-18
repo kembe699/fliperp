@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
+import { AccountingPeriodSelect } from '@/components/shared/AccountingPeriodSelect'
 
 function Section({ title, total, accounts, currencyCode }: { title: string; total: number; accounts: ReportAccountLine[]; currencyCode?: string }) {
   return (
@@ -83,6 +84,7 @@ export function ProfitAndLossReportPage() {
 
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end gap-4 p-4">
+          <AccountingPeriodSelect from={from} to={to} onChange={(start, end) => { setFrom(start); setTo(end) }} />
           <div className="space-y-1.5">
             <Label>From</Label>
             <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />

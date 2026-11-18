@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { findEntry, type CenterEntry } from './catalog'
+import { AccountingPeriodSelect } from '@/components/shared/AccountingPeriodSelect'
 
 const ALL = '__all'
 
@@ -117,6 +118,13 @@ export function CenterReport({ entry }: { entry: CenterEntry }) {
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           {!entry.noDates && (
             <>
+              <AccountingPeriodSelect
+                from={from}
+                to={to}
+                onChange={(start, end) => { setFrom(start); setTo(end) }}
+                className="h-9"
+                field={(label, control) => <Field label={label}>{control}</Field>}
+              />
               <Field label="From">
                 <Input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className="h-9 w-[150px]" />
               </Field>
