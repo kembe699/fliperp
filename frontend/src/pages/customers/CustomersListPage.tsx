@@ -100,8 +100,8 @@ export function CustomersListPage() {
   ]
 
   const rowActions: (row: Customer) => DataTableRowAction<Customer>[] = (row) => [
-    ...(can('customers.update') ? [{ label: 'Edit', onClick: (c: Customer) => { setEditingCustomer(c); setFormOpen(true) } }] : []),
     { label: 'View Statement', onClick: (c: Customer) => navigate(`/customers/${c.id}/statement`) },
+    ...(can('customers.update') ? [{ label: 'Edit', onClick: (c: Customer) => { setEditingCustomer(c); setFormOpen(true) } }] : []),
     ...(can('customers.update') && row.is_active
       ? [{ label: 'Deactivate', destructive: true, onClick: (c: Customer) => deactivateMutation.mutate(c) }]
       : []),
@@ -205,6 +205,7 @@ export function CustomersListPage() {
           rowKey={(row) => row.id}
           isLoading={isLoading}
           rowActions={rowActions}
+          onRowClick={(row) => navigate(`/customers/${row.id}/statement`)}
           emptyTitle="No customers found"
           emptySubtext="Try adjusting your filters, or create a new customer to get started."
           page={data?.meta.current_page}
