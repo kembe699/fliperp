@@ -26,8 +26,8 @@ export function PublicLeadMagnetPage() {
     return (
       <Page>
         <div className="mx-auto max-w-md py-24 text-center">
-          <h1 className="text-xl font-semibold text-stone-900">This page is no longer available</h1>
-          <p className="mt-2 text-stone-600">The offer may have ended. Please get in touch with the business directly.</p>
+          <h1 className="text-xl font-semibold text-white">This page is no longer available</h1>
+          <p className="mt-2 text-white/75">The offer may have ended. Please get in touch with the business directly.</p>
         </div>
       </Page>
     )
@@ -47,34 +47,34 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
 
   return (
     <Page company={magnet.company}>
-      <div className="grid gap-12 py-10 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-16 md:py-20">
+      <div className="grid w-full gap-10 py-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-16 md:py-20">
         <div>
-          <p className="text-sm font-medium text-stone-500">{kind}</p>
-          <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight text-stone-900 md:text-[2.6rem]">
+          <p className="text-sm font-medium text-sky-200">{kind}</p>
+          <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl">
             {capitalise(magnet.headline || magnet.title)}
           </h1>
-          {magnet.headline && <p className="mt-3 text-lg text-stone-600">{capitalise(magnet.title)}</p>}
+          {magnet.headline && <p className="mt-3 text-lg text-white/80">{capitalise(magnet.title)}</p>}
 
           {lines.length > 1 ? (
-            <ul className="mt-8 space-y-2.5 border-l-2 border-stone-200 pl-5 text-stone-700">
+            <ul className="mt-8 list-disc space-y-2 pl-5 text-lg text-white/90 marker:text-sky-300">
               {lines.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
           ) : (
-            lines[0] && <p className="mt-6 max-w-prose text-lg leading-relaxed text-stone-700">{capitalise(lines[0])}</p>
+            lines[0] && <p className="mt-6 max-w-prose text-lg leading-relaxed text-white/85">{capitalise(lines[0])}</p>
           )}
         </div>
 
         <div className="md:pt-2">
-          <div className="rounded-lg border border-stone-200 bg-white p-6 md:p-8">
+          <div className="rounded-xl bg-white p-6 text-stone-900 shadow-xl shadow-black/20 md:p-8">
             {submit.isSuccess ? (
               <div>
                 <h2 className="text-xl font-semibold text-stone-900">Thanks{firstName ? `, ${firstName}` : ''}.</h2>
                 <p className="mt-2 whitespace-pre-wrap text-stone-600">{submit.data.thank_you_message}</p>
                 <a
                   href={submit.data.download_url}
-                  className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-stone-900 px-5 font-medium text-white transition-colors hover:bg-stone-700"
+                  className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-5 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   {magnet.file_type === 'LINK' ? 'Open it' : 'Download'}
                 </a>
@@ -112,7 +112,7 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
                 <button
                   type="submit"
                   disabled={submit.isPending}
-                  className="mt-6 h-11 w-full rounded-md bg-stone-900 px-5 font-medium text-white transition-colors hover:bg-stone-700 disabled:opacity-60"
+                  className="mt-6 h-11 w-full rounded-md bg-primary px-5 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
                 >
                   {submit.isPending ? 'Sending…' : capitalise(magnet.button_label)}
                 </button>
@@ -128,15 +128,13 @@ function LeadMagnet({ magnet, slug }: { magnet: PublicLeadMagnet; slug: string }
 
 function Page({ company, children }: { company?: PublicLeadMagnet['company']; children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-stone-50 text-stone-900">
-      <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-5">
-          {company?.logo_url && <img src={company.logo_url} alt="" className="h-8 w-8 object-contain" />}
-          <span className="font-semibold">{company?.name}</span>
-        </div>
+    <div className="flex min-h-dvh flex-col bg-[linear-gradient(160deg,hsl(212_73%_36%)_0%,hsl(216_70%_24%)_100%)] text-white">
+      <header className="mx-auto flex h-16 w-full max-w-5xl items-center gap-3 px-5">
+        {company?.logo_url && <img src={company.logo_url} alt="" className="h-8 w-8 rounded bg-white object-contain p-0.5" />}
+        <span className="font-semibold">{company?.name}</span>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5">{children}</main>
-      <footer className="py-8 text-center text-sm text-stone-400">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 items-center px-5">{children}</main>
+      <footer className="py-8 text-center text-sm text-white/55">
         {company?.name && <>© {new Date().getFullYear()} {company.name} · </>}Powered by FlipERP
       </footer>
     </div>
@@ -144,7 +142,7 @@ function Page({ company, children }: { company?: PublicLeadMagnet['company']; ch
 }
 
 const inputClass =
-  'mt-1.5 h-11 w-full rounded-md border border-stone-300 bg-white px-3 text-base text-stone-900 outline-none transition-colors focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+  'mt-1.5 h-11 w-full rounded-md border border-stone-300 bg-white px-3 text-base text-stone-900 outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary'
 
 function Field({ label, hint, id, children }: { label: string; hint?: string; id: string; children: ReactNode }) {
   return (
