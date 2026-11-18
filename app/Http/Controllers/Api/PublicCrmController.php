@@ -133,7 +133,7 @@ class PublicCrmController extends Controller
         $submission = $magnets->submit($magnet, $data);
 
         return $this->success([
-            'thank_you_message' => $magnet->thank_you_message ?: "Thanks! We've also emailed you a link.",
+            'thank_you_message' => $magnet->thank_you_message ?: "We've also emailed you the link.",
             'download_url' => $magnets->downloadUrl($submission),
         ], 'Thanks for signing up.', 201);
     }
