@@ -1,15 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { CalendarCheck, CheckCircle2, Clock, Download, Globe, MapPin, Video } from 'lucide-react'
+import { CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Video } from 'lucide-react'
 
 import {
   bookPublicMeeting,
   fetchPublicBookingDays,
   fetchPublicBookingPage,
   fetchPublicBookingSlots,
-  fetchPublicLeadMagnet,
-  submitPublicLeadMagnet,
   unsubscribePublic,
 } from '@/api/crm-marketing'
 import { getApiErrorInfo } from '@/lib/api-errors'
@@ -216,76 +214,6 @@ export function PublicBookingPage() {
             </form>
           )}
         </div>
-      </div>
-    </PublicShell>
-  )
-}
-
-// --- /lm/:slug ---
-
-export function PublicLeadMagnetPage() {
-  const { slug = '' } = useParams<{ slug: string }>()
-  const [form, setForm] = useState({ name: '', email: '', phone: '', company_name: '' })
-  const { data: magnet, isLoading, isError } = useQuery({ queryKey: ['public-lead-magnet', slug], queryFn: () => fetchPublicLeadMagnet(slug), retry: false, staleTime: Infinity })
-  const submit = useMutation({ mutationFn: () => submitPublicLeadMagnet(slug, form) })
-
-  if (isLoading) return <FlipLoaderBlock label="Loading…" />
-  if (isError || !magnet) return <NotAvailable message="This page is no longer available." />
-
-  const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }))
-
-  return (
-    <PublicShell company={magnet.company}>
-      <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        {submit.isSuccess ? (
-          <div className="text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-[hsl(142,72%,29%)]" />
-            <h1 className="mt-3 text-xl font-semibold">{magnet.title} is ready</h1>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{submit.data.thank_you_message}</p>
-            <a href={submit.data.download_url} className="mt-5 inline-flex h-10 items-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-              <Download className="h-4 w-4" /> Download now
-            </a>
-          </div>
-        ) : (
-          <>
-            <h1 className="text-2xl font-semibold leading-tight">{magnet.headline || magnet.title}</h1>
-            {magnet.headline && <p className="mt-1 text-sm font-medium text-primary">{magnet.title}</p>}
-            {magnet.description && <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{magnet.description}</p>}
-            <form
-              className="mt-6 grid gap-3"
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (!submit.isPending) submit.mutate()
-              }}
-            >
-              <div className="grid gap-1.5">
-                <Label htmlFor="lm-name">Your name</Label>
-                <Input id="lm-name" required autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="lm-email">Email</Label>
-                <Input id="lm-email" type="email" required autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
-              </div>
-              {magnet.ask_phone && (
-                <div className="grid gap-1.5">
-                  <Label htmlFor="lm-phone">Phone</Label>
-                  <Input id="lm-phone" type="tel" required autoComplete="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
-                </div>
-              )}
-              {magnet.ask_company && (
-                <div className="grid gap-1.5">
-                  <Label htmlFor="lm-company">Company</Label>
-                  <Input id="lm-company" autoComplete="organization" value={form.company_name} onChange={(e) => set('company_name', e.target.value)} />
-                </div>
-              )}
-              {submit.isError && <p className="rounded-md bg-danger-bg px-3 py-2 text-sm text-danger">{getApiErrorInfo(submit.error).message}</p>}
-              <Button type="submit" disabled={submit.isPending} className="mt-1 h-11 text-base">
-                {submit.isPending ? 'Sending…' : magnet.button_label}
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">We'll email you the link too. You can unsubscribe from our emails at any time.</p>
-            </form>
-          </>
-        )}
       </div>
     </PublicShell>
   )

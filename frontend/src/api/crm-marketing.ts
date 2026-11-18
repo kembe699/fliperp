@@ -327,6 +327,7 @@ export interface PublicLeadMagnet {
   headline: string | null
   description: string | null
   button_label: string
+  file_type: string
   ask_phone: boolean
   ask_company: boolean
   company: { name: string | null; logo_url: string | null }
