@@ -60,7 +60,7 @@ export function PlatformTicketsPage() {
     queryKey: ['platform-tickets', status, priority],
     queryFn: () =>
       fetchPlatformTickets({
-        per_page: 50,
+        per_page: 10,
         status: status === 'all' ? undefined : (status as PlatformTicketStatus),
         priority: priority === 'all' ? undefined : (priority as PlatformTicketPriority),
       }),

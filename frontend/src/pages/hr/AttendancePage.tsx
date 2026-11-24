@@ -41,7 +41,7 @@ export function AttendancePage() {
     queryFn: () =>
       fetchAttendance({
         page,
-        per_page: 15,
+        per_page: 10,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         status: status === 'all' ? undefined : (status as AttendanceStatus),

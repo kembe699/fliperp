@@ -28,9 +28,15 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $user = $this->userService->create($request->validated());
+        $data = $request->validated();
+        $user = $this->userService->create($data);
+        $emailed = $this->userService->sendWelcomeEmail($user, $data['password'], $request->user());
 
-        return $this->success(new UserResource($user), 'User created successfully.', 201);
+        return $this->success(
+            array_merge((new UserResource($user))->resolve($request), ['welcome_email_sent' => $emailed]),
+            $emailed ? "User created. Sign-in details were emailed to {$user->email}." : 'User created, but the sign-in email could not be sent. Share the details with them directly.',
+            201,
+        );
     }
 
     public function show(User $user): JsonResponse

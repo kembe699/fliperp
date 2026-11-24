@@ -53,7 +53,7 @@ export function CrmLeadsListPage() {
     queryFn: () =>
       fetchCrmLeads({
         page,
-        per_page: 15,
+        per_page: 10,
         status: status === 'all' ? undefined : (status as CrmLeadStatus),
         source: source === 'all' ? undefined : source,
         assigned_to: assignedTo === 'all' ? undefined : Number(assignedTo),

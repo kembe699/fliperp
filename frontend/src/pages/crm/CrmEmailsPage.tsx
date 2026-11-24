@@ -24,7 +24,7 @@ export function CrmEmailsPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['crm-emails', page],
-    queryFn: () => fetchCrmEmails({ page, per_page: 20 }),
+    queryFn: () => fetchCrmEmails({ page, per_page: 10 }),
   })
 
   const columns: DataTableColumn<CrmEmail>[] = [

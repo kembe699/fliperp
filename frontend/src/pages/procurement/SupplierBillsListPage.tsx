@@ -46,7 +46,7 @@ export function SupplierBillsListPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['supplier-bills', page, status, supplierId, from, to, search],
-    queryFn: () => fetchSupplierBills({ page, per_page: 15, ...filters }),
+    queryFn: () => fetchSupplierBills({ page, per_page: 10, ...filters }),
   })
 
   const supplierName = (id: number) => suppliers?.data.find((supplier) => supplier.id === id)?.name ?? `Supplier #${id}`

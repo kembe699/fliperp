@@ -30,7 +30,7 @@ export function NotificationsPage() {
     queryFn: () =>
       fetchNotifications({
         page,
-        per_page: 15,
+        per_page: 10,
         status: status === 'all' ? undefined : status,
         category: category === 'all' ? undefined : category,
       }),
