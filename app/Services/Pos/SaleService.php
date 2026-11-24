@@ -29,17 +29,11 @@ use Illuminate\Validation\ValidationException;
  */
 class SaleService
 {
-    public const CASH_ACCOUNT_CODE = '1000';
 
-    public const ACCOUNTS_RECEIVABLE_ACCOUNT_CODE = '1100';
 
-    public const INVENTORY_ACCOUNT_CODE = '1200';
 
-    public const TAX_PAYABLE_ACCOUNT_CODE = '2300';
 
-    public const SALES_REVENUE_ACCOUNT_CODE = '4000';
 
-    public const COGS_ACCOUNT_CODE = '5300';
 
     public function __construct(
         protected StockMovementService $stockMovementService,
@@ -218,8 +212,8 @@ class SaleService
             if ($sale->status === 'completed') {
                 $sale->update(['amount_paid' => round((float) $sale->amount_paid + $amount, 2)]);
 
-                $receivableAccount = $this->resolveAccount($sale->company_id, self::ACCOUNTS_RECEIVABLE_ACCOUNT_CODE);
-                $cashAccount = $this->resolveAccount($sale->company_id, self::CASH_ACCOUNT_CODE);
+                $receivableAccount = $this->resolveAccount($sale->company_id, 'accounts_receivable');
+                $cashAccount = $this->resolveAccount($sale->company_id, 'cash');
 
                 $this->journalEntryService->postModuleEntry([
                     'reference_number' => 'SPAY-'.$sale->reference_number.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4)),
@@ -456,7 +450,7 @@ class SaleService
 
         if ($cashCollected > 0) {
             $lines[] = [
-                'account_id' => $this->resolveAccount($sale->company_id, self::CASH_ACCOUNT_CODE)->id,
+                'account_id' => $this->resolveAccount($sale->company_id, 'cash')->id,
                 'debit' => $cashCollected,
                 'credit' => 0,
                 'description' => 'Payments received at sale',
@@ -465,7 +459,7 @@ class SaleService
 
         if ($outstanding > 0) {
             $lines[] = [
-                'account_id' => $this->resolveAccount($sale->company_id, self::ACCOUNTS_RECEIVABLE_ACCOUNT_CODE)->id,
+                'account_id' => $this->resolveAccount($sale->company_id, 'accounts_receivable')->id,
                 'debit' => $outstanding,
                 'credit' => 0,
                 'description' => 'Balance due from customer',
@@ -502,7 +496,7 @@ class SaleService
 
         if ($taxAmount > 0) {
             $lines[] = [
-                'account_id' => $this->resolveAccount($sale->company_id, self::TAX_PAYABLE_ACCOUNT_CODE)->id,
+                'account_id' => $this->resolveAccount($sale->company_id, 'tax_payable')->id,
                 'debit' => 0,
                 'credit' => $taxAmount,
                 'description' => 'Tax collected',
@@ -584,16 +578,9 @@ class SaleService
         return 'SALE-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }

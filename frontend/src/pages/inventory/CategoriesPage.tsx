@@ -7,7 +7,8 @@ import { createCategory, deleteCategory, fetchCategories, updateCategory } from 
 import { fetchChartOfAccounts } from '@/api/reports'
 import { getApiErrorInfo } from '@/lib/api-errors'
 import { usePermissions } from '@/hooks/use-permissions'
-import type { ChartOfAccount, ChartOfAccountType } from '@/types/accounting'
+import { useSystemAccounts } from '@/hooks/use-system-accounts'
+import type { ChartOfAccount, ChartOfAccountType, SystemAccountFunction } from '@/types/accounting'
 import type { Category } from '@/types/inventory'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -22,11 +23,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const pillTrigger = 'h-8 w-40 text-sm'
 
 // The accounts a category's products post to. Left on "Default", a product
-// posts to the standard chart code shown.
-const ACCOUNT_FIELDS: { key: 'revenue_account_id' | 'cogs_account_id' | 'inventory_account_id'; label: string; type: ChartOfAccountType; fallback: string }[] = [
-  { key: 'revenue_account_id', label: 'Revenue Account', type: 'revenue', fallback: '4000' },
-  { key: 'cogs_account_id', label: 'Cost of Sales Account', type: 'expense', fallback: '5300' },
-  { key: 'inventory_account_id', label: 'Inventory Account', type: 'asset', fallback: '1200' },
+// posts to the company's system account for it (Accounting > System accounts).
+const ACCOUNT_FIELDS: { key: 'revenue_account_id' | 'cogs_account_id' | 'inventory_account_id'; label: string; type: ChartOfAccountType; fallback: SystemAccountFunction }[] = [
+  { key: 'revenue_account_id', label: 'Revenue Account', type: 'revenue', fallback: 'sales_revenue' },
+  { key: 'cogs_account_id', label: 'Cost of Sales Account', type: 'expense', fallback: 'cost_of_sales' },
+  { key: 'inventory_account_id', label: 'Inventory Account', type: 'asset', fallback: 'inventory' },
 ]
 const DEFAULT_ACCOUNT = 'default'
 
@@ -94,9 +95,10 @@ export function CategoriesPage() {
     onError: (error) => toast.error(getApiErrorInfo(error).message),
   })
 
-  const defaultLabel = (code: string) => {
-    const account = accounts.find((a) => a.code === code)
-    return account ? accountLabel(account) : code
+  const { byFunction: systemAccounts } = useSystemAccounts()
+  const defaultLabel = (fn: SystemAccountFunction) => {
+    const account = systemAccounts[fn]
+    return account ? `${account.code} · ${account.name}` : 'not set'
   }
 
   const columns: DataTableColumn<Category>[] = [
@@ -207,7 +209,7 @@ export function CategoriesPage() {
                         Default ({defaultLabel(field.fallback)})
                       </SelectItem>
                       {accounts
-                        .filter((account) => account.type === field.type && (account.is_active || String(account.id) === accountChoice[field.key]))
+                        .filter((account) => account.type === field.type && account.is_postable !== false && (account.is_active || String(account.id) === accountChoice[field.key]))
                         .map((account) => (
                           <SelectItem key={account.id} value={String(account.id)}>
                             {accountLabel(account)}

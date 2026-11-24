@@ -16,7 +16,6 @@ use Illuminate\Validation\ValidationException;
  */
 class ExchangeRateService
 {
-    public const FX_GAIN_LOSS_ACCOUNT_CODE = '5500';
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
@@ -132,10 +131,8 @@ class ExchangeRateService
             return null;
         }
 
-        $account = ChartOfAccount::withoutGlobalScopes()->firstOrCreate(
-            ['company_id' => $companyId, 'code' => self::FX_GAIN_LOSS_ACCOUNT_CODE],
-            ['name' => 'Realised FX Gain/Loss', 'type' => 'expense', 'is_active' => true],
-        );
+        // A gain and a loss may go to different accounts (both 5500 on the default chart).
+        $account = app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $gain > 0 ? 'fx_gain' : 'fx_loss');
 
         return [
             'account_id' => $account->id,

@@ -110,6 +110,8 @@ class ChartOfAccountService
                 'company_id' => $companyId, 'code' => $code, 'name' => $name, 'type' => $type, 'is_active' => true,
             ]);
         }
+
+        app(SystemAccountService::class)->ensureDefaults($companyId);
     }
 
     public function create(array $data): ChartOfAccount
@@ -127,6 +129,12 @@ class ChartOfAccountService
 
     public function update(ChartOfAccount $account, array $data): ChartOfAccount
     {
+        if (array_key_exists('is_postable', $data) && ! $data['is_postable'] && ($function = $this->mappedFunction($account))) {
+            throw ValidationException::withMessages([
+                'is_postable' => ["This account is the system account for \"{$function}\"; choose another account for it under System accounts before making this a heading."],
+            ]);
+        }
+
         return DB::transaction(function () use ($account, $data) {
             $opening = $this->pullOpening($data);
             $account->update($data);
@@ -170,7 +178,7 @@ class ChartOfAccountService
             && ($amount == 0.0 || ($current && $current->status === 'posted'))) {
             return;
         }
-        if ($account->code === ChartOfAccount::OPENING_BALANCE_EQUITY_CODE && $amount != 0.0) {
+        if ($amount != 0.0 && app(\App\Services\Finance\SystemAccountService::class)->find($account->company_id, 'opening_balance_equity')?->id === $account->id) {
             throw ValidationException::withMessages([
                 'opening_balance' => ['Opening Balance Equity is the balancing account for opening balances and cannot have one of its own.'],
             ]);
@@ -210,14 +218,25 @@ class ChartOfAccountService
 
     protected function openingBalanceEquity(int $companyId): ChartOfAccount
     {
-        return ChartOfAccount::withoutGlobalScopes()->firstOrCreate(
-            ['company_id' => $companyId, 'code' => ChartOfAccount::OPENING_BALANCE_EQUITY_CODE],
-            ['name' => 'Opening Balance Equity', 'type' => 'equity', 'is_active' => true],
-        );
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, 'opening_balance_equity');
     }
 
     public function delete(ChartOfAccount $account): void
     {
+        if ($function = $this->mappedFunction($account)) {
+            throw ValidationException::withMessages([
+                'account' => ["This account is the system account for \"{$function}\"; choose another account for it under System accounts first."],
+            ]);
+        }
+
         $account->delete();
+    }
+
+    /** The label of a system account function set to this account, if any. */
+    protected function mappedFunction(ChartOfAccount $account): ?string
+    {
+        $function = \App\Models\CompanySystemAccount::query()->where('account_id', $account->id)->value('function');
+
+        return $function ? SystemAccountService::FUNCTIONS[$function]['label'] : null;
     }
 }

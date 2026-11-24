@@ -10,6 +10,9 @@ class ChartOfAccount extends TenantModel
 {
     use Auditable;
 
+    /** Matches the column default, so a just-created account counts as postable. */
+    protected $attributes = ['is_postable' => true];
+
     protected $fillable = [
         'company_id',
         'code',
@@ -17,6 +20,7 @@ class ChartOfAccount extends TenantModel
         'type',
         'parent_id',
         'is_active',
+        'is_postable',
         'opening_balance',
         'opening_balance_date',
         'opening_balance_entry_id',
@@ -25,12 +29,11 @@ class ChartOfAccount extends TenantModel
     /** Assets and expenses grow with debits; liabilities, equity and revenue with credits. */
     public const DEBIT_NORMAL_TYPES = ['asset', 'expense'];
 
-    public const OPENING_BALANCE_EQUITY_CODE = '3900';
-
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_postable' => 'boolean',
             'opening_balance' => 'decimal:2',
             'opening_balance_date' => 'date',
         ];

@@ -15,9 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerPaymentService
 {
-    public const ACCOUNTS_RECEIVABLE_ACCOUNT_CODE = '1100';
 
-    public const CASH_ACCOUNT_CODE = '1000';
 
     public function __construct(
         protected InvoiceService $invoiceService,
@@ -47,8 +45,8 @@ class CustomerPaymentService
             $invoice->update(['amount_paid' => (float) $invoice->amount_paid + $amount]);
             $this->invoiceService->refreshStatus($invoice);
 
-            $receivableAccount = $this->resolveAccount($invoice->company_id, self::ACCOUNTS_RECEIVABLE_ACCOUNT_CODE);
-            $cashAccount = $this->resolveAccount($invoice->company_id, self::CASH_ACCOUNT_CODE);
+            $receivableAccount = $this->resolveAccount($invoice->company_id, 'accounts_receivable');
+            $cashAccount = $this->resolveAccount($invoice->company_id, 'cash');
 
             // Paid in the invoice's currency, at the rate for the payment date
             // (or one typed on the payment). Receivable is relieved at the
@@ -107,16 +105,9 @@ class CustomerPaymentService
         ]);
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }

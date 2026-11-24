@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { GeneralLedgerLine } from '@/api/reports'
+import { useSystemAccounts } from '@/hooks/use-system-accounts'
 
 const REPORT_PERIODS = ['This Month', 'Last Month', 'This Year', 'Custom'] as const
 type ReportPeriod = (typeof REPORT_PERIODS)[number]
@@ -98,7 +99,8 @@ export function DashboardPage() {
   )
 
   const { data: accounts } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts })
-  const cashAccount = accounts?.find((account) => account.code === '1000')
+  const { byFunction: systemAccounts } = useSystemAccounts()
+  const cashAccount = accounts?.find((account) => account.id === systemAccounts.cash?.id)
 
   const { data: ledger, isLoading: ledgerLoading } = useQuery({
     queryKey: ['dashboard-activity', cashAccount?.id, activityRange.from, activityRange.to],
@@ -282,10 +284,10 @@ export function DashboardPage() {
         emptyTitle="No activity found"
         emptySubtext="Cash movements will show up here once sales, purchases or payments are recorded."
       />
-      {!accounts?.some((account) => account.code === '1000') && !summaryLoading && (
+      {accounts && !cashAccount && !summaryLoading && (
         <p className="mt-2 text-xs text-muted-foreground">
           <Package className="mr-1 inline h-3 w-3" />
-          No Cash account (1000) found in the chart of accounts for this company.
+          No cash account is set for this company (Accounting &gt; System accounts).
         </p>
       )}
     </div>

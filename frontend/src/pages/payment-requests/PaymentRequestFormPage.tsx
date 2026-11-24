@@ -77,7 +77,7 @@ export function PaymentRequestFormPage() {
     setRfqId(existing.rfq_id ? String(existing.rfq_id) : null)
   }, [existing])
 
-  const expenseAccounts = (accounts ?? []).filter((account) => account.is_active && (account.type === 'expense' || account.type === 'asset'))
+  const expenseAccounts = (accounts ?? []).filter((account) => account.is_active && account.is_postable !== false && (account.type === 'expense' || account.type === 'asset'))
   const openBills = (bills?.data ?? []).filter((bill) => bill.status !== 'paid' || String(bill.id) === billId)
   const selectedBill = openBills.find((bill) => String(bill.id) === billId)
 

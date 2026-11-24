@@ -46,6 +46,7 @@ class JournalEntryService
     public function create(array $data): JournalEntry
     {
         $this->assertBalanced($data['lines']);
+        $this->assertPostable($data['lines']);
 
         $companyId = $data['company_id'] ?? Auth::user()?->company_id;
         [$currency, $rate] = $companyId
@@ -86,6 +87,7 @@ class JournalEntryService
 
         if (isset($data['lines'])) {
             $this->assertBalanced($data['lines']);
+            $this->assertPostable($data['lines']);
         }
 
         // A change of currency, rate or date re-derives the rate and therefore
@@ -284,6 +286,19 @@ class JournalEntryService
         }
 
         return $normalized;
+    }
+
+    /** Heading accounts group others and take no journal lines, whoever posts. */
+    protected function assertPostable(array $lines): void
+    {
+        $ids = collect($lines)->pluck('account_id')->filter()->unique()->all();
+        $headings = \App\Models\ChartOfAccount::withoutGlobalScopes()->whereIn('id', $ids)->where('is_postable', false)->get(['code', 'name']);
+
+        if ($headings->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'lines' => $headings->map(fn ($account) => "{$account->code} {$account->name} is a heading and can't take postings; use one of its sub-accounts.")->all(),
+            ]);
+        }
     }
 
     protected function assertBalanced(array $lines): void

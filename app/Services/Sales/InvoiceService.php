@@ -25,11 +25,8 @@ use Illuminate\Validation\ValidationException;
  */
 class InvoiceService
 {
-    public const ACCOUNTS_RECEIVABLE_ACCOUNT_CODE = '1100';
 
-    public const SALES_REVENUE_ACCOUNT_CODE = '4000';
 
-    public const TAX_PAYABLE_ACCOUNT_CODE = '2300';
 
     public function __construct(
         protected PromotionService $promotionService,
@@ -190,12 +187,12 @@ class InvoiceService
             $totalAmount = round((float) $invoice->total_amount, 2);
 
             $lines = [
-                ['account_id' => $this->resolveAccount($invoice->company_id, self::ACCOUNTS_RECEIVABLE_ACCOUNT_CODE)->id, 'debit' => $totalAmount, 'credit' => 0, 'description' => 'Amount billed to customer'],
+                ['account_id' => $this->resolveAccount($invoice->company_id, 'accounts_receivable')->id, 'debit' => $totalAmount, 'credit' => 0, 'description' => 'Amount billed to customer'],
                 ...$this->revenueLines($invoice, $revenueAmount),
             ];
 
             if ($taxAmount > 0) {
-                $lines[] = ['account_id' => $this->resolveAccount($invoice->company_id, self::TAX_PAYABLE_ACCOUNT_CODE)->id, 'debit' => 0, 'credit' => $taxAmount, 'description' => 'Tax collected'];
+                $lines[] = ['account_id' => $this->resolveAccount($invoice->company_id, 'tax_payable')->id, 'debit' => 0, 'credit' => $taxAmount, 'description' => 'Tax collected'];
             }
 
             $journalEntry = $this->journalEntryService->postModuleEntry([
@@ -311,7 +308,7 @@ class InvoiceService
         foreach ($invoice->items()->get() as $item) {
             $accounts = $item->product_id
                 ? $resolver->forProduct($invoice->company_id, $item->product_id)
-                : ['revenue' => $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id, 'department_id' => null];
+                : ['revenue' => $this->resolveAccount($invoice->company_id, 'sales_revenue')->id, 'department_id' => null];
             $line = ['account_id' => $accounts['revenue'], 'department_id' => $accounts['department_id']] + $item->only(DimensionService::KEYS);
             $key = implode('-', $line);
             $groups[$key] = $line;
@@ -319,7 +316,7 @@ class InvoiceService
         }
 
         if ($groups === []) {
-            return [['account_id' => $this->resolveAccount($invoice->company_id, self::SALES_REVENUE_ACCOUNT_CODE)->id, 'debit' => 0, 'credit' => $revenueAmount, 'description' => 'Sales revenue']];
+            return [['account_id' => $this->resolveAccount($invoice->company_id, 'sales_revenue')->id, 'debit' => 0, 'credit' => $revenueAmount, 'description' => 'Sales revenue']];
         }
 
         $lines = [];
@@ -406,16 +403,9 @@ class InvoiceService
         return 'INV-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }

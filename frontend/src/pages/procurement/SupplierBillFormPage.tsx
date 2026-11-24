@@ -21,6 +21,7 @@ import { CodingFields } from '@/components/shared/CodingFields'
 import { EMPTY_CODING, type Coding } from '@/types/grants'
 import { SearchableSelect } from '@/components/shared/SearchableSelect'
 import { CurrencyRateFields } from '@/components/shared/CurrencyRateFields'
+import { useSystemAccounts } from '@/hooks/use-system-accounts'
 
 const billSchema = z.object({
   supplier_id: z.string().min(1, 'Supplier is required'),
@@ -39,10 +40,11 @@ export function SupplierBillFormPage() {
 
   const { data: suppliers } = useQuery({ queryKey: ['suppliers-all'], queryFn: () => fetchSuppliers({ per_page: 100 }) })
   const { data: accounts } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts })
-  // What the bill is for: posted Dr this account / Cr Accounts Payable. Defaults to 5200.
-  const expenseAccounts = (accounts ?? []).filter((account) => account.is_active && (account.type === 'expense' || account.type === 'asset'))
+  // What the bill is for: posted Dr this account / Cr Accounts Payable. Defaults to the company's default expense account.
+  const { byFunction: systemAccounts } = useSystemAccounts()
+  const expenseAccounts = (accounts ?? []).filter((account) => account.is_active && account.is_postable !== false && (account.type === 'expense' || account.type === 'asset'))
   const [expenseAccountId, setExpenseAccountId] = useState<string | null>(null)
-  const selectedExpenseAccountId = expenseAccountId ?? (expenseAccounts.find((account) => account.code === '5200')?.id.toString() ?? null)
+  const selectedExpenseAccountId = expenseAccountId ?? (expenseAccounts.find((account) => account.id === systemAccounts.default_expense?.id)?.id.toString() ?? null)
 
   const {
     handleSubmit,

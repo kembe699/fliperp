@@ -19,10 +19,11 @@ use Illuminate\Validation\ValidationException;
  */
 class ProductAccountResolver
 {
-    public const DEFAULT_CODES = [
-        'revenue' => '4000',
-        'cogs' => '5300',
-        'inventory' => '1200',
+    /** kind => system account function (SystemAccountService) used when a category names no account. */
+    public const DEFAULT_FUNCTIONS = [
+        'revenue' => 'sales_revenue',
+        'cogs' => 'cost_of_sales',
+        'inventory' => 'inventory',
     ];
 
     /** @var array<int, array{revenue: int, cogs: int, inventory: int, department_id: ?int}> */
@@ -78,13 +79,6 @@ class ProductAccountResolver
 
     protected function defaultAccountId(int $companyId, string $kind): int
     {
-        $code = self::DEFAULT_CODES[$kind];
-
-        return $this->defaults[$code] ??= ChartOfAccount::query()
-            ->where('company_id', $companyId)
-            ->where('code', $code)
-            ->value('id') ?? throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
+        return $this->defaults[$companyId.':'.$kind] ??= app(\App\Services\Finance\SystemAccountService::class)->account($companyId, self::DEFAULT_FUNCTIONS[$kind])->id;
     }
 }

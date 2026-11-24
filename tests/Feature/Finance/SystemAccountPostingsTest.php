@@ -28,7 +28,7 @@ const POSTING_SNAPSHOT = __DIR__.'/snapshots/system_account_postings.json';
 
 afterEach(fn () => Carbon::setTestNow());
 
-function runEveryPosting($test): void
+function runEveryPosting($test, bool $mapped = false): void
 {
     Notification::fake();
     Carbon::setTestNow('2026-03-15 10:00:00');
@@ -36,6 +36,10 @@ function runEveryPosting($test): void
     $test->company = $company;
     $test->branch = $branch;
     $accounts = seedChartOfAccounts($company);
+    if ($mapped) {
+        // As the migration maps every existing company to its current codes.
+        app(\App\Services\Finance\SystemAccountService::class)->ensureDefaults($company->id);
+    }
     $admin = createUserWithRole('company_admin', $company, $branch);
     Sanctum::actingAs($admin, ['*']);
     ExchangeRate::create(['company_id' => $company->id, 'currency_code' => 'SSP', 'rate' => 7800, 'effective_date' => '2026-03-01']);
@@ -157,8 +161,8 @@ function postedLines(int $companyId): array
         ])->all();
 }
 
-it('posts every automatic journal line exactly as before system accounts became a setting', function () {
-    runEveryPosting($this);
+it('posts every automatic journal line exactly as before system accounts became a setting', function (bool $mapped) {
+    runEveryPosting($this, $mapped);
     $lines = postedLines($this->company->id);
 
     if (getenv('WRITE_POSTING_SNAPSHOT')) {
@@ -168,4 +172,4 @@ it('posts every automatic journal line exactly as before system accounts became 
 
     expect(count($lines))->toBeGreaterThan(10)
         ->and($lines)->toBe(json_decode(file_get_contents(POSTING_SNAPSHOT), true));
-});
+})->with(['company mapped to its current codes (as migrated)' => true, 'company with no mapping rows (fallback)' => false]);

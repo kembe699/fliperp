@@ -18,14 +18,9 @@ use Illuminate\Validation\ValidationException;
 
 class PayrollRunService
 {
-    public const SALARY_EXPENSE_ACCOUNT_CODE = '5000';
 
-    public const STATUTORY_PAYABLE_ACCOUNT_CODE = '2100';
 
-    public const NET_SALARIES_PAYABLE_ACCOUNT_CODE = '2200';
 
-    /** Salaries are paid out of cash unless another cash/bank account is chosen. */
-    public const CASH_ACCOUNT_CODE = '1000';
 
     public function __construct(
         protected JournalEntryService $journalEntryService,
@@ -159,10 +154,10 @@ class PayrollRunService
             }
 
             $companyId = $run->company_id;
-            $payable = $this->resolveAccount($companyId, self::NET_SALARIES_PAYABLE_ACCOUNT_CODE);
+            $payable = $this->resolveAccount($companyId, 'net_salaries_payable');
             $from = ! empty($data['account_id'])
                 ? ChartOfAccount::query()->where('company_id', $companyId)->where('type', 'asset')->findOrFail($data['account_id'])
-                : $this->resolveAccount($companyId, self::CASH_ACCOUNT_CODE);
+                : $this->resolveAccount($companyId, 'cash');
             $paidAt = ! empty($data['paid_at']) ? \Illuminate\Support\Carbon::parse($data['paid_at']) : now();
             $amount = round((float) $payslip->net_pay, 2);
 
@@ -220,9 +215,9 @@ class PayrollRunService
     {
         $companyId = $payrollRun->company_id;
 
-        $salaryExpense = $this->resolveAccount($companyId, self::SALARY_EXPENSE_ACCOUNT_CODE);
-        $statutoryPayable = $this->resolveAccount($companyId, self::STATUTORY_PAYABLE_ACCOUNT_CODE);
-        $netSalariesPayable = $this->resolveAccount($companyId, self::NET_SALARIES_PAYABLE_ACCOUNT_CODE);
+        $salaryExpense = $this->resolveAccount($companyId, 'salary_expense');
+        $statutoryPayable = $this->resolveAccount($companyId, 'statutory_deductions_payable');
+        $netSalariesPayable = $this->resolveAccount($companyId, 'net_salaries_payable');
 
         $lines = [
             ['account_id' => $salaryExpense->id, 'debit' => $totalGross, 'credit' => 0, 'description' => 'Gross salaries expense'],
@@ -245,17 +240,10 @@ class PayrollRunService
         ]);
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 
     protected function calculateDeduction(StatutoryDeductionRule $rule, float $grossPay): float

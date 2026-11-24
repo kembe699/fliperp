@@ -24,9 +24,7 @@ use Illuminate\Validation\ValidationException;
  */
 class SupplierBillService
 {
-    public const ACCOUNTS_PAYABLE_ACCOUNT_CODE = '2000';
 
-    public const DEFAULT_EXPENSE_ACCOUNT_CODE = '5200';
 
     public function __construct(
         protected ExchangeRateService $exchangeRateService,
@@ -160,7 +158,7 @@ class SupplierBillService
         }
 
         $expenseAccountId = $bill->expense_account_id ?? $this->defaultExpenseAccountId($bill->company_id);
-        $payableAccount = $this->resolveAccount($bill->company_id, self::ACCOUNTS_PAYABLE_ACCOUNT_CODE);
+        $payableAccount = $this->resolveAccount($bill->company_id, 'accounts_payable');
 
         $entry = $this->journalEntryService->postModuleEntry([
             'company_id' => $bill->company_id,
@@ -195,20 +193,13 @@ class SupplierBillService
 
     protected function defaultExpenseAccountId(int $companyId): int
     {
-        return $this->resolveAccount($companyId, self::DEFAULT_EXPENSE_ACCOUNT_CODE)->id;
+        return $this->resolveAccount($companyId, 'default_expense')->id;
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::withoutGlobalScopes()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 
     public function refreshStatus(SupplierBill $bill): SupplierBill

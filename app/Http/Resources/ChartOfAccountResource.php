@@ -17,6 +17,8 @@ class ChartOfAccountResource extends JsonResource
             'type' => $this->type,
             'parent_id' => $this->parent_id,
             'is_active' => $this->is_active,
+            // false for a heading: it groups other accounts and takes no postings.
+            'is_postable' => $this->is_postable ?? true,
             'opening_balance' => (float) ($this->opening_balance ?? 0),
             'opening_balance_date' => $this->opening_balance_date?->toDateString(),
             'opening_balance_entry_id' => $this->opening_balance_entry_id,
