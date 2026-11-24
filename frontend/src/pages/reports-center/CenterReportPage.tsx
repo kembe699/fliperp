@@ -381,7 +381,6 @@ function ReportTable({ entry, data, loading, fileName, title }: { entry: CenterE
       exportFileName={fileName}
       dateFilterKey={false}
       toolbarExtra={<span />}
-      pageSize={50}
       renderExpanded={
         data?.rows.some((row) => Array.isArray(row.changes))
           ? (row) => <AuditDetails row={row} />

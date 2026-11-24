@@ -41,7 +41,7 @@ export function PlatformClientsPage() {
     queryFn: () =>
       fetchPlatformClients({
         page,
-        per_page: 15,
+        per_page: 10,
         status: status === 'all' ? undefined : (status as CompanyStatus),
         search: search || undefined,
       }),

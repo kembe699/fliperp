@@ -48,7 +48,7 @@ export function CrmCustomersListPage() {
     queryFn: () =>
       fetchCrmCustomers({
         page,
-        per_page: 15,
+        per_page: 10,
         customer_type: customerType === 'all' ? undefined : customerType,
         branch_id: branchId === 'all' ? undefined : Number(branchId),
         search: search || undefined,

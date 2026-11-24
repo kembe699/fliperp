@@ -59,7 +59,7 @@ export async function deleteProductImage(id: number): Promise<Product> {
 }
 
 export async function fetchProductStockMovements(id: number, page = 1): Promise<PaginatedResponse<StockMovement>> {
-  const { data } = await api.get<PaginatedResponse<StockMovement>>(`/products/${id}/stock-movements`, { params: { page, per_page: 15 } })
+  const { data } = await api.get<PaginatedResponse<StockMovement>>(`/products/${id}/stock-movements`, { params: { page, per_page: 10 } })
   return data
 }
 

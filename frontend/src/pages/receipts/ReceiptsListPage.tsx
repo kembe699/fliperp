@@ -52,7 +52,7 @@ export function ReceiptsListPage() {
     queryFn: () =>
       fetchSales({
         page,
-        per_page: 15,
+        per_page: 10,
         status: status === 'all' ? undefined : status,
         branch_id: branchId ?? undefined,
         served_by: servedBy === 'all' ? undefined : Number(servedBy),

@@ -55,7 +55,7 @@ export function CustomersListPage() {
     queryFn: () =>
       fetchCustomers({
         page,
-        per_page: 15,
+        per_page: 10,
         customer_type: customerType === 'all' ? undefined : (customerType as CustomerType),
         branch_id: branchId === 'all' ? undefined : Number(branchId),
         is_active: activeStatus === 'all' ? undefined : activeStatus === 'active',

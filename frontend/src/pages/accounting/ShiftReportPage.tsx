@@ -38,7 +38,7 @@ export function ShiftReportPage() {
     queryFn: () =>
       fetchCashDrawerSessions({
         page,
-        per_page: 15,
+        per_page: 10,
         user_id: userId === 'all' ? undefined : Number(userId),
         branch_id: branchId === 'all' ? undefined : Number(branchId),
         status: status === 'all' ? undefined : status,

@@ -57,7 +57,7 @@ export function CrmCampaignDetailPage() {
   })
   const { data: recipients, isLoading: loadingRecipients } = useQuery({
     queryKey: ['crm-campaign-recipients', campaignId, filter, page, campaign?.stats.sent],
-    queryFn: () => fetchCampaignRecipients(campaignId, { page, per_page: 20, filter: filter === 'all' ? undefined : filter }),
+    queryFn: () => fetchCampaignRecipients(campaignId, { page, per_page: 10, filter: filter === 'all' ? undefined : filter }),
     enabled: !!campaign && campaign.status !== 'draft',
   })
 

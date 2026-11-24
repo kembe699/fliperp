@@ -47,7 +47,7 @@ export function ProductsListPage() {
     queryFn: () =>
       fetchProducts({
         page,
-        per_page: 15,
+        per_page: 10,
         category_id: categoryId === 'all' ? undefined : Number(categoryId),
         is_active: activeStatus === 'all' ? undefined : activeStatus === 'active',
         low_stock: lowStockOnly || undefined,

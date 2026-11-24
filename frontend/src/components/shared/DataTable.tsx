@@ -116,7 +116,7 @@ export function DataTable<T>({
   exportable = true,
   exportFileName,
   dateFilterKey,
-  pageSize: initialPageSize = 20,
+  pageSize: initialPageSize = 10,
   renderExpanded,
 }: DataTableProps<T>) {
   const [expandedKey, setExpandedKey] = useState<string | number | null>(null)
