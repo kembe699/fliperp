@@ -61,8 +61,14 @@ export function UserFormDialog({
       }
       return user ? updateUser(user.id, payload) : createUser({ ...payload, password: password || '' })
     },
-    onSuccess: () => {
-      toast.success(user ? 'User updated' : 'User created')
+    onSuccess: (saved) => {
+      if (user) {
+        toast.success('User updated')
+      } else if ((saved as { welcome_email_sent?: boolean }).welcome_email_sent) {
+        toast.success(`User created. Sign-in details were emailed to ${email}.`)
+      } else {
+        toast.warning('User created, but the sign-in email could not be sent. Share the details with them directly.')
+      }
       queryClient.invalidateQueries({ queryKey: ['users', 'all'] })
       onOpenChange(false)
     },
@@ -93,6 +99,7 @@ export function UserFormDialog({
             <div className="space-y-1.5">
               <Label required={!user}>{user ? 'New Password (optional)' : 'Password'}</Label>
               <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Min 8 characters" />
+              {!user && <p className="text-xs text-muted-foreground">Emailed to the user with your client code and how to sign in.</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Phone</Label>
