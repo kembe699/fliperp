@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataTable, type DataTableColumn } from '@/components/shared/DataTable'
 import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
+import { useSystemAccounts } from '@/hooks/use-system-accounts'
 
 const NONE = '__none'
 const today = () => {
@@ -236,7 +237,9 @@ export function PayrollRunDetailPage() {
 function PayDialog({ target, onClose, onPay }: { target: PayTarget | null; onClose: () => void; onPay: (values: SalaryPaymentInput) => Promise<void> }) {
   const { data: paymentTypes = [] } = useQuery({ queryKey: ['payment-types'], queryFn: fetchPaymentTypes, enabled: !!target })
   const { data: accounts = [] } = useQuery({ queryKey: ['chart-of-accounts'], queryFn: fetchChartOfAccounts, enabled: !!target })
-  const cashAndBank = accounts.filter((a) => a.type === 'asset')
+  const { byFunction: systemAccounts } = useSystemAccounts()
+  const defaultCash = systemAccounts.cash
+  const cashAndBank = accounts.filter((a) => a.type === 'asset' && a.is_postable !== false && a.is_active)
   const [paymentTypeId, setPaymentTypeId] = useState(NONE)
   const [accountId, setAccountId] = useState(NONE)
   const [reference, setReference] = useState('')
@@ -303,9 +306,9 @@ function PayDialog({ target, onClose, onPay }: { target: PayTarget | null; onClo
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE}>Cash (1000)</SelectItem>
+                <SelectItem value={NONE}>{defaultCash ? `${defaultCash.code} ${defaultCash.name}` : 'Default cash account'}</SelectItem>
                 {cashAndBank
-                  .filter((a) => a.code !== '1000')
+                  .filter((a) => a.id !== defaultCash?.id)
                   .map((a) => (
                     <SelectItem key={a.id} value={String(a.id)}>
                       {a.code} {a.name}

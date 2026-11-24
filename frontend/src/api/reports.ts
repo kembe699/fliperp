@@ -22,7 +22,8 @@ export type { ChartOfAccount }
 
 export async function fetchChartOfAccounts(): Promise<ChartOfAccount[]> {
   const { data } = await api.get<PaginatedResponse<ChartOfAccount>>('/chart-of-accounts', {
-    params: { per_page: 200 },
+    // Every account: a donor chart (G711) has well over 200.
+    params: { per_page: 1000 },
   })
   return data.data
 }

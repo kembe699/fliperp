@@ -13,9 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class DepreciationService
 {
-    public const DEPRECIATION_EXPENSE_ACCOUNT_CODE = '5100';
 
-    public const ACCUMULATED_DEPRECIATION_ACCOUNT_CODE = '1900';
 
     public function __construct(protected JournalEntryService $journalEntryService) {}
 
@@ -99,8 +97,8 @@ class DepreciationService
 
     protected function postDepreciationJournal(int $companyId, Carbon $periodDate, float $totalDepreciation)
     {
-        $expenseAccount = $this->resolveAccount($companyId, self::DEPRECIATION_EXPENSE_ACCOUNT_CODE);
-        $accumulatedAccount = $this->resolveAccount($companyId, self::ACCUMULATED_DEPRECIATION_ACCOUNT_CODE);
+        $expenseAccount = $this->resolveAccount($companyId, 'depreciation_expense');
+        $accumulatedAccount = $this->resolveAccount($companyId, 'accumulated_depreciation');
 
         return $this->journalEntryService->postModuleEntry([
             'reference_number' => 'DEPR-'.$periodDate->format('Ym').'-'.now()->format('His'),
@@ -114,16 +112,9 @@ class DepreciationService
         ]);
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }

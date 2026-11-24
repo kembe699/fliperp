@@ -28,9 +28,7 @@ use Illuminate\Support\Collection;
  */
 class AgingReportService
 {
-    public const RECEIVABLE_ACCOUNT_CODE = '1100';
 
-    public const PAYABLE_ACCOUNT_CODE = '2000';
 
     protected const BUCKETS = ['d0_30', 'd31_60', 'd61_90', 'd90_plus'];
 
@@ -49,7 +47,7 @@ class AgingReportService
                 (float) $invoice->total_amount, (float) $invoice->paid_as_of, $asOf,
             ));
 
-        return $this->build($companyId, $asOf, $documents, 'customer', self::RECEIVABLE_ACCOUNT_CODE, debitNormal: true);
+        return $this->build($companyId, $asOf, $documents, 'customer', 'accounts_receivable', debitNormal: true);
     }
 
     public function payables(int $companyId, string $asOf): array
@@ -66,7 +64,7 @@ class AgingReportService
                 (float) $bill->total_amount, (float) $bill->paid_as_of, $asOf,
             ));
 
-        return $this->build($companyId, $asOf, $documents, 'supplier', self::PAYABLE_ACCOUNT_CODE, debitNormal: false);
+        return $this->build($companyId, $asOf, $documents, 'supplier', 'accounts_payable', debitNormal: false);
     }
 
     protected function documentRow(
@@ -101,7 +99,7 @@ class AgingReportService
         ];
     }
 
-    protected function build(int $companyId, string $asOf, Collection $documents, string $partyKey, string $controlCode, bool $debitNormal): array
+    protected function build(int $companyId, string $asOf, Collection $documents, string $partyKey, string $controlFunction, bool $debitNormal): array
     {
         $open = $documents->filter(fn (array $row) => $row['balance'] > 0.004)->sortBy('due_date')->values();
 
@@ -130,15 +128,16 @@ class AgingReportService
         }
 
         $round = fn (array $values) => array_map(fn ($value) => is_float($value) ? round($value, 2) : $value, $values);
-        $controlBalance = $this->controlBalance($companyId, $controlCode, $asOf, $debitNormal);
+        $control = app(\App\Services\Finance\SystemAccountService::class)->find($companyId, $controlFunction);
+        $controlBalance = $this->controlBalance($companyId, $control, $asOf, $debitNormal);
         $outstanding = round($totals['outstanding'], 2);
 
         return [
             'as_of' => $asOf,
             'totals' => $round($totals),
             'control_account' => [
-                'code' => $controlCode,
-                'name' => ChartOfAccount::withoutGlobalScopes()->where('company_id', $companyId)->where('code', $controlCode)->value('name'),
+                'code' => $control?->code,
+                'name' => $control?->name,
                 'balance' => $controlBalance,
             ],
             'difference' => round($controlBalance - $outstanding, 2),
@@ -147,10 +146,8 @@ class AgingReportService
         ];
     }
 
-    protected function controlBalance(int $companyId, string $code, string $asOf, bool $debitNormal): float
+    protected function controlBalance(int $companyId, ?ChartOfAccount $account, string $asOf, bool $debitNormal): float
     {
-        $account = ChartOfAccount::withoutGlobalScopes()->where('company_id', $companyId)->where('code', $code)->first();
-
         if (! $account) {
             return 0.0;
         }

@@ -27,9 +27,7 @@ use Illuminate\Validation\ValidationException;
  */
 class GrnService
 {
-    public const INVENTORY_ACCOUNT_CODE = '1200';
 
-    public const ACCOUNTS_PAYABLE_ACCOUNT_CODE = '2000';
 
     public function __construct(
         protected StockMovementService $stockMovementService,
@@ -242,7 +240,7 @@ class GrnService
             'exchange_rate' => 1,
         ] + (count(array_unique(array_map(fn ($coded) => implode('-', $coded['dimensions']), $codedAmounts))) === 1 ? $codedAmounts[0]['dimensions'] : []));
 
-        $payableAccount = $this->resolveAccount($grn->company_id, self::ACCOUNTS_PAYABLE_ACCOUNT_CODE);
+        $payableAccount = $this->resolveAccount($grn->company_id, 'accounts_payable');
 
         $journalEntry = $this->journalEntryService->postModuleEntry([
             'reference_number' => 'GRN-JE-'.$grn->reference_number,
@@ -275,16 +273,9 @@ class GrnService
         ] + $coded['dimensions'], $codedAmounts, $amounts);
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }

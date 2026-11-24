@@ -22,7 +22,6 @@ use Illuminate\Support\Collection;
  */
 class ProfitAndLossService
 {
-    public const COGS_ACCOUNT_CODE = '5300';
 
     public function generate(int $companyId, string $from, string $to, ?int $branchId = null, array $dimensions = []): array
     {
@@ -63,7 +62,7 @@ class ProfitAndLossService
         return ChartOfAccount::query()
             ->where('company_id', $companyId)
             ->where(fn ($query) => $query
-                ->where('code', self::COGS_ACCOUNT_CODE)
+                ->whereKey(app(\App\Services\Finance\SystemAccountService::class)->find($companyId, 'cost_of_sales')?->id ?? 0)
                 ->orWhereIn('id', Category::withoutGlobalScopes()->where('company_id', $companyId)->whereNotNull('cogs_account_id')->select('cogs_account_id')))
             ->pluck('id')
             ->map(fn ($id) => (int) $id)

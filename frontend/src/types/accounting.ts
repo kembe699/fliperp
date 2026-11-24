@@ -10,6 +10,8 @@ export interface ChartOfAccount {
   type: ChartOfAccountType
   parent_id: number | null
   is_active: boolean
+  /** false for a heading: it groups other accounts and takes no postings. */
+  is_postable?: boolean
   opening_balance?: number
   opening_balance_date?: string | null
   opening_balance_entry_id?: number | null
@@ -130,3 +132,17 @@ export interface ReportSnapshot {
   data: unknown
   generated_at: string
 }
+
+/** An automatic-posting function and the account the company uses for it (Accounting > System accounts). */
+export interface SystemAccount {
+  function: SystemAccountFunction
+  label: string
+  default_code: string
+  account: Pick<ChartOfAccount, 'id' | 'code' | 'name' | 'type'> | null
+}
+
+export type SystemAccountFunction =
+  | 'cash' | 'accounts_receivable' | 'inventory' | 'accumulated_depreciation' | 'accounts_payable'
+  | 'statutory_deductions_payable' | 'net_salaries_payable' | 'tax_payable' | 'opening_balance_equity'
+  | 'sales_revenue' | 'salary_expense' | 'depreciation_expense' | 'default_expense' | 'cost_of_sales'
+  | 'cash_short_over' | 'fx_gain' | 'fx_loss'

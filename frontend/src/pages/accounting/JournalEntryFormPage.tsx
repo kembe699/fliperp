@@ -145,7 +145,7 @@ export function JournalEntryFormPage() {
             <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
               <div className="w-full sm:w-auto sm:flex-1">
                 <SearchableSelect
-                  options={(accounts ?? []).map((account) => ({ value: String(account.id), label: `${account.code} — ${account.name}` }))}
+                  options={(accounts ?? []).filter((account) => account.is_postable !== false).map((account) => ({ value: String(account.id), label: `${account.code} — ${account.name}` }))}
                   value={row.account_id ? String(row.account_id) : null}
                   onChange={(value) => updateRow(row.key, { account_id: value ? Number(value) : null })}
                   placeholder="Select account"

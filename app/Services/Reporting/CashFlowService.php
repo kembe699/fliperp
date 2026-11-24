@@ -27,7 +27,6 @@ use Illuminate\Validation\ValidationException;
  */
 class CashFlowService
 {
-    public const CASH_ACCOUNT_CODE = '1000';
 
     protected array $categoryLabels = [
         'pos' => 'sales',
@@ -38,11 +37,11 @@ class CashFlowService
 
     public function generate(int $companyId, string $from, string $to, ?int $branchId = null): array
     {
-        $cashAccount = ChartOfAccount::query()->where('company_id', $companyId)->where('code', self::CASH_ACCOUNT_CODE)->first();
+        $cashAccount = app(\App\Services\Finance\SystemAccountService::class)->find($companyId, 'cash');
 
         if (! $cashAccount) {
             throw ValidationException::withMessages([
-                'chart_of_accounts' => ['Required account with code '.self::CASH_ACCOUNT_CODE.' is missing from the chart of accounts.'],
+                'chart_of_accounts' => ['No cash account is set for this company (Accounting > System accounts).'],
             ]);
         }
 

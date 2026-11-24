@@ -1,0 +1,366 @@
+[
+    {
+        "source": "procurement",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "5200 General Operating Expenses",
+                "debit": 550.0,
+                "credit": 0.0,
+                "transaction_debit": 550.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "2000 Accounts Payable",
+                "debit": 0.0,
+                "credit": 550.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 550.0
+            }
+        ]
+    },
+    {
+        "source": "procurement",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "2000 Accounts Payable",
+                "debit": 550.0,
+                "credit": 0.0,
+                "transaction_debit": 550.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 0.0,
+                "credit": 550.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 550.0
+            }
+        ]
+    },
+    {
+        "source": "payroll",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "5000 Salaries Expense",
+                "debit": 500000.0,
+                "credit": 0.0,
+                "transaction_debit": 500000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "2100 Statutory Deductions Payable",
+                "debit": 0.0,
+                "credit": 25000.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 25000.0
+            },
+            {
+                "account": "2200 Net Salaries Payable",
+                "debit": 0.0,
+                "credit": 475000.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 475000.0
+            }
+        ]
+    },
+    {
+        "source": "payroll",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "2200 Net Salaries Payable",
+                "debit": 475000.0,
+                "credit": 0.0,
+                "transaction_debit": 475000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 0.0,
+                "credit": 475000.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 475000.0
+            }
+        ]
+    },
+    {
+        "source": "sales",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "1100 Accounts Receivable",
+                "debit": 440.0,
+                "credit": 0.0,
+                "transaction_debit": 440.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "4000 Sales Revenue",
+                "debit": 0.0,
+                "credit": 400.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 400.0
+            },
+            {
+                "account": "2300 Tax Payable",
+                "debit": 0.0,
+                "credit": 40.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 40.0
+            }
+        ]
+    },
+    {
+        "source": "sales",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 440.0,
+                "credit": 0.0,
+                "transaction_debit": 440.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1100 Accounts Receivable",
+                "debit": 0.0,
+                "credit": 440.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 440.0
+            }
+        ]
+    },
+    {
+        "source": "pos",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 220.0,
+                "credit": 0.0,
+                "transaction_debit": 220.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "4000 Sales Revenue",
+                "debit": 0.0,
+                "credit": 200.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 200.0
+            },
+            {
+                "account": "2300 Tax Payable",
+                "debit": 0.0,
+                "credit": 20.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 20.0
+            },
+            {
+                "account": "5300 Cost of Goods Sold",
+                "debit": 100.0,
+                "credit": 0.0,
+                "transaction_debit": 100.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1200 Inventory",
+                "debit": 0.0,
+                "credit": 100.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 100.0
+            }
+        ]
+    },
+    {
+        "source": "pos_cash_drawer",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "5400 Cash Short\/Over",
+                "debit": 300.0,
+                "credit": 0.0,
+                "transaction_debit": 300.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 0.0,
+                "credit": 300.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 300.0
+            }
+        ]
+    },
+    {
+        "source": "payment_request",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "5200 General Operating Expenses",
+                "debit": 120.0,
+                "credit": 0.0,
+                "transaction_debit": 120.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 0.0,
+                "credit": 120.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 120.0
+            }
+        ]
+    },
+    {
+        "source": "procurement",
+        "status": "posted",
+        "currency": "SSP",
+        "lines": [
+            {
+                "account": "5200 General Operating Expenses",
+                "debit": 10.26,
+                "credit": 0.0,
+                "transaction_debit": 80000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "2000 Accounts Payable",
+                "debit": 0.0,
+                "credit": 10.26,
+                "transaction_debit": 0.0,
+                "transaction_credit": 80000.0
+            }
+        ]
+    },
+    {
+        "source": "procurement",
+        "status": "posted",
+        "currency": "SSP",
+        "lines": [
+            {
+                "account": "2000 Accounts Payable",
+                "debit": 10.26,
+                "credit": 0.0,
+                "transaction_debit": 80000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 0.0,
+                "credit": 10.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 80000.0
+            },
+            {
+                "account": "5500 Realised FX Gain\/Loss",
+                "debit": 0.0,
+                "credit": 0.26,
+                "transaction_debit": 0.0,
+                "transaction_credit": 0.0
+            }
+        ]
+    },
+    {
+        "source": "sales",
+        "status": "posted",
+        "currency": "SSP",
+        "lines": [
+            {
+                "account": "1100 Accounts Receivable",
+                "debit": 10.0,
+                "credit": 0.0,
+                "transaction_debit": 78000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "4000 Sales Revenue",
+                "debit": 0.0,
+                "credit": 10.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 78000.0
+            }
+        ]
+    },
+    {
+        "source": "sales",
+        "status": "posted",
+        "currency": "SSP",
+        "lines": [
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 9.75,
+                "credit": 0.0,
+                "transaction_debit": 78000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1100 Accounts Receivable",
+                "debit": 0.0,
+                "credit": 10.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 78000.0
+            },
+            {
+                "account": "5500 Realised FX Gain\/Loss",
+                "debit": 0.25,
+                "credit": 0.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 0.0
+            }
+        ]
+    },
+    {
+        "source": "assets",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "5100 Depreciation Expense",
+                "debit": 1000.0,
+                "credit": 0.0,
+                "transaction_debit": 1000.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "1900 Accumulated Depreciation",
+                "debit": 0.0,
+                "credit": 1000.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 1000.0
+            }
+        ]
+    },
+    {
+        "source": "opening_balance",
+        "status": "posted",
+        "currency": "USD",
+        "lines": [
+            {
+                "account": "1000 Cash and Bank",
+                "debit": 2500.0,
+                "credit": 0.0,
+                "transaction_debit": 2500.0,
+                "transaction_credit": 0.0
+            },
+            {
+                "account": "3900 Opening Balance Equity",
+                "debit": 0.0,
+                "credit": 2500.0,
+                "transaction_debit": 0.0,
+                "transaction_credit": 2500.0
+            }
+        ]
+    }
+]

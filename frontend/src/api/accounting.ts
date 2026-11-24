@@ -1,6 +1,6 @@
 import { api } from '@/lib/api'
 import type { ApiResponse, PaginatedResponse } from '@/types/api'
-import type { AccountingPeriod, AccountingPeriodStatus, ChartOfAccount, ChartOfAccountType, JournalEntry, JournalEntryStatus } from '@/types/accounting'
+import type { AccountingPeriod, AccountingPeriodStatus, ChartOfAccount, ChartOfAccountType, JournalEntry, JournalEntryStatus, SystemAccount, SystemAccountFunction } from '@/types/accounting'
 import type { Coding } from '@/types/grants'
 
 // Chart of Accounts
@@ -12,6 +12,18 @@ export interface ChartOfAccountInput {
   opening_balance_date?: string | null
   parent_id?: number | null
   is_active?: boolean
+  is_postable?: boolean
+}
+
+// System accounts: which account each automatic posting uses.
+export async function fetchSystemAccounts(): Promise<SystemAccount[]> {
+  const { data } = await api.get<ApiResponse<SystemAccount[]>>('/system-accounts')
+  return data.data
+}
+
+export async function updateSystemAccounts(accounts: Partial<Record<SystemAccountFunction, number>>): Promise<SystemAccount[]> {
+  const { data } = await api.put<ApiResponse<SystemAccount[]>>('/system-accounts', { accounts })
+  return data.data
 }
 
 export async function createChartOfAccount(values: ChartOfAccountInput): Promise<ChartOfAccount> {

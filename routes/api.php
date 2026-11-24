@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\BudgetPeriodController;
 use App\Http\Controllers\Api\CashDrawerController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChartOfAccountController;
+use App\Http\Controllers\Api\SystemAccountController;
 use App\Http\Controllers\Api\ChatAttachmentController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CompanyController;
@@ -212,6 +213,8 @@ Route::prefix('v1')->group(function () {
 
         // Finance core
         Route::post('chart-of-accounts/seed', [ChartOfAccountController::class, 'seed']);
+        Route::get('system-accounts', [SystemAccountController::class, 'index']);
+        Route::put('system-accounts', [SystemAccountController::class, 'update']);
         Route::apiResource('chart-of-accounts', ChartOfAccountController::class);
         // Declared before the resource so 'lookup'/'currencies' aren't read as {exchange_rate} ids.
         Route::get('exchange-rates/lookup', [ExchangeRateController::class, 'lookup']);

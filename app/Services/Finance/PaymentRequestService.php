@@ -46,10 +46,7 @@ use Throwable;
  */
 class PaymentRequestService
 {
-    /** Where payments leave from until the "pay from account" choice exists (see resolvePaymentAccount). */
-    public const CASH_ACCOUNT_CODE = '1000';
 
-    public const DEFAULT_EXPENSE_ACCOUNT_CODE = '5200';
 
     /**
      * Private disk: quotes, invoices and receipts are only ever served through
@@ -576,22 +573,18 @@ class PaymentRequestService
      */
     protected function resolvePaymentAccount(PaymentRequest $request): ChartOfAccount
     {
-        return $this->account($request->company_id, self::CASH_ACCOUNT_CODE);
+        return $this->account($request->company_id, 'cash');
     }
 
     protected function expenseAccountId(PaymentRequest $request): int
     {
-        return $request->expense_account_id ?: $this->account($request->company_id, self::DEFAULT_EXPENSE_ACCOUNT_CODE)->id;
+        return $request->expense_account_id ?: $this->account($request->company_id, 'default_expense')->id;
     }
 
-    protected function account(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function account(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::withoutGlobalScopes()->where('company_id', $companyId)->where('code', $code)->first();
-        if (! $account) {
-            throw ValidationException::withMessages(['chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."]]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 
     protected function journalReference(PaymentRequest $request): string

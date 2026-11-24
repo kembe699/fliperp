@@ -15,9 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class SupplierPaymentService
 {
-    public const ACCOUNTS_PAYABLE_ACCOUNT_CODE = '2000';
 
-    public const CASH_ACCOUNT_CODE = '1000';
 
     public function __construct(
         protected SupplierBillService $supplierBillService,
@@ -51,8 +49,8 @@ class SupplierPaymentService
             $bill->update(['amount_paid' => (float) $bill->amount_paid + $amount]);
             $this->supplierBillService->refreshStatus($bill);
 
-            $payableAccount = $this->resolveAccount($bill->company_id, self::ACCOUNTS_PAYABLE_ACCOUNT_CODE);
-            $cashAccount = $this->resolveAccount($bill->company_id, self::CASH_ACCOUNT_CODE);
+            $payableAccount = $this->resolveAccount($bill->company_id, 'accounts_payable');
+            $cashAccount = $this->resolveAccount($bill->company_id, 'cash');
 
             // Paid in the bill's currency at the payment date's rate (or one
             // typed on the payment). Payable is cleared at the bill's own rate;
@@ -116,16 +114,9 @@ class SupplierPaymentService
         ]);
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }

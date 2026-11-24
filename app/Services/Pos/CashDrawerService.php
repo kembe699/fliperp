@@ -29,9 +29,7 @@ use Illuminate\Validation\ValidationException;
  */
 class CashDrawerService
 {
-    public const CASH_ACCOUNT_CODE = '1000';
 
-    public const CASH_SHORT_OVER_ACCOUNT_CODE = '5400';
 
     public function __construct(
         protected JournalEntryService $journalEntryService,
@@ -175,8 +173,8 @@ class CashDrawerService
      */
     protected function postVarianceEntry(CashDrawerSession $session, float $variance): JournalEntry
     {
-        $cashAccount = $this->resolveAccount($session->company_id, self::CASH_ACCOUNT_CODE);
-        $shortOverAccount = $this->resolveAccount($session->company_id, self::CASH_SHORT_OVER_ACCOUNT_CODE);
+        $cashAccount = $this->resolveAccount($session->company_id, 'cash');
+        $shortOverAccount = $this->resolveAccount($session->company_id, 'cash_short_over');
         $amount = abs($variance);
 
         $lines = $variance < 0
@@ -236,8 +234,8 @@ class CashDrawerService
                 ]);
             }
 
-            $cashAccount = $this->resolveAccount($session->company_id, self::CASH_ACCOUNT_CODE);
-            $shortOverAccount = $this->resolveAccount($session->company_id, self::CASH_SHORT_OVER_ACCOUNT_CODE);
+            $cashAccount = $this->resolveAccount($session->company_id, 'cash');
+            $shortOverAccount = $this->resolveAccount($session->company_id, 'cash_short_over');
 
             $referenceNumber = 'CDREC-'.$session->id.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
 
@@ -267,16 +265,9 @@ class CashDrawerService
         });
     }
 
-    protected function resolveAccount(int $companyId, string $code): ChartOfAccount
+    /** The company's account for an automatic-posting function (see SystemAccountService). */
+    protected function resolveAccount(int $companyId, string $function): ChartOfAccount
     {
-        $account = ChartOfAccount::query()->where('company_id', $companyId)->where('code', $code)->first();
-
-        if (! $account) {
-            throw ValidationException::withMessages([
-                'chart_of_accounts' => ["Required account with code {$code} is missing from the chart of accounts."],
-            ]);
-        }
-
-        return $account;
+        return app(\App\Services\Finance\SystemAccountService::class)->account($companyId, $function);
     }
 }
