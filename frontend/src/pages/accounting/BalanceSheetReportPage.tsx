@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 import { AccountingPeriodSelect } from '@/components/shared/AccountingPeriodSelect'
+import { GroupedStatementSection } from '@/components/accounting/GroupedStatementSection'
+import { useAuthStore } from '@/lib/auth-store'
 
 function Section({ title, total, accounts, currencyCode }: { title: string; total: number; accounts: ReportAccountLine[]; currencyCode?: string }) {
   return (
@@ -49,6 +51,8 @@ function Section({ title, total, accounts, currencyCode }: { title: string; tota
 
 export function BalanceSheetReportPage() {
   const baseCurrency = useBaseCurrency()
+  // A not-for-profit company sees this as its Statement of Financial Position.
+  const nonprofit = useAuthStore((state) => state.company?.reporting_mode === 'nonprofit')
   const [showIn, setShowIn] = useState(baseCurrency)
   const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [asOf, setAsOf] = useState(() => toISODate(new Date()))
@@ -66,14 +70,14 @@ export function BalanceSheetReportPage() {
     <div>
       <PageHeader
         parent="Accounting Reports"
-        title="Balance Sheet"
+        title={data?.presentation?.title ?? (nonprofit ? 'Statement of Financial Position' : 'Balance Sheet')}
         action={
           <div className="flex gap-2">
             <Button variant="outline" disabled={snapshotMutation.isPending} onClick={() => snapshotMutation.mutate()}>
               <Camera className="h-4 w-4" />
               Save Snapshot
             </Button>
-            <ExportMenu path="/reports/balance-sheet/export" params={{ as_of: asOf, currency: currencyParam }} fileName={`balance-sheet-as-of-${asOf}`} />
+            <ExportMenu path="/reports/balance-sheet/export" params={{ as_of: asOf, currency: currencyParam }} fileName={`${nonprofit ? 'financial-position' : 'balance-sheet'}-as-of-${asOf}`} />
           </div>
         }
       />
@@ -98,6 +102,24 @@ export function BalanceSheetReportPage() {
           <CardContent className="p-8">
             {isLoading || !data ? (
               <FlipLoaderBlock />
+            ) : data.presentation ? (
+              <>
+                <GroupedStatementSection section={data.presentation.assets} currencyCode={currencyCode} />
+                <GroupedStatementSection section={data.presentation.liabilities} currencyCode={currencyCode} />
+                <GroupedStatementSection
+                  section={data.presentation.net_assets}
+                  currencyCode={currencyCode}
+                  total={data.equity.total}
+                  extraRows={[{ label: data.presentation.surplus_label, amount: data.equity.net_income }]}
+                />
+                <div className="flex justify-between border-t-2 border-border pt-2 text-base font-bold text-foreground">
+                  <span>{data.presentation.total_label}</span>
+                  <span>{formatCurrency(data.total_liabilities_and_equity, currencyCode)}</span>
+                </div>
+                {Math.round(data.assets.total * 100) !== Math.round(data.total_liabilities_and_equity * 100) && (
+                  <p className="mt-4 text-sm font-medium text-danger">Warning: assets do not equal liabilities + net assets.</p>
+                )}
+              </>
             ) : (
               <>
                 <Section title="Assets" total={data.assets.total} accounts={data.assets.accounts} currencyCode={currencyCode} />

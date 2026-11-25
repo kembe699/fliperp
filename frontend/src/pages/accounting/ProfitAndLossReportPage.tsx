@@ -21,6 +21,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FlipLoaderBlock } from '@/components/brand/FlipLoader'
 import { AccountingPeriodSelect } from '@/components/shared/AccountingPeriodSelect'
+import { GroupedStatementSection } from '@/components/accounting/GroupedStatementSection'
+import { useAuthStore } from '@/lib/auth-store'
 
 function Section({ title, total, accounts, currencyCode }: { title: string; total: number; accounts: ReportAccountLine[]; currencyCode?: string }) {
   return (
@@ -51,6 +53,8 @@ function Section({ title, total, accounts, currencyCode }: { title: string; tota
 
 export function ProfitAndLossReportPage() {
   const baseCurrency = useBaseCurrency()
+  // A not-for-profit company sees this as its Statement of Income and Expenses.
+  const nonprofit = useAuthStore((state) => state.company?.reporting_mode === 'nonprofit')
   const [showIn, setShowIn] = useState(baseCurrency)
   const currencyParam = showIn === baseCurrency ? undefined : showIn
   const [from, setFrom] = useState(() => toISODate(startOfMonth()))
@@ -70,14 +74,14 @@ export function ProfitAndLossReportPage() {
     <div>
       <PageHeader
         parent="Accounting Reports"
-        title="Profit & Loss"
+        title={data?.presentation?.title ?? (nonprofit ? 'Statement of Income and Expenses' : 'Profit & Loss')}
         action={
           <div className="flex gap-2">
             <Button variant="outline" disabled={snapshotMutation.isPending} onClick={() => snapshotMutation.mutate()}>
               <Camera className="h-4 w-4" />
               Save Snapshot
             </Button>
-            <ExportMenu path="/reports/profit-and-loss/export" params={{ from, to, currency: currencyParam, ...dimensions }} fileName={`profit-and-loss-${from}-to-${to}`} />
+            <ExportMenu path="/reports/profit-and-loss/export" params={{ from, to, currency: currencyParam, ...dimensions }} fileName={`${nonprofit ? 'income-and-expenses' : 'profit-and-loss'}-${from}-to-${to}`} />
           </div>
         }
       />
@@ -107,6 +111,24 @@ export function ProfitAndLossReportPage() {
           <CardContent className="p-8">
             {isLoading || !data ? (
               <FlipLoaderBlock />
+            ) : data.presentation ? (
+              <>
+                <GroupedStatementSection section={data.presentation.income} currencyCode={currencyCode} />
+                {data.presentation.show_cost_of_sales && data.presentation.cost_of_sales && (
+                  <>
+                    <GroupedStatementSection section={data.presentation.cost_of_sales} currencyCode={currencyCode} />
+                    <div className="mb-6 flex justify-between border-y border-border py-2 text-base font-bold text-foreground">
+                      <span>{data.presentation.gross_label}</span>
+                      <span>{formatCurrency(data.gross_profit, currencyCode)}</span>
+                    </div>
+                  </>
+                )}
+                <GroupedStatementSection section={data.presentation.expenditure} currencyCode={currencyCode} />
+                <div className={`flex justify-between border-t-2 border-border pt-2 text-lg font-bold ${data.net_profit >= 0 ? 'text-success' : 'text-danger'}`}>
+                  <span>{data.presentation.result_label}</span>
+                  <span>{formatCurrency(data.net_profit, currencyCode)}</span>
+                </div>
+              </>
             ) : (
               <>
                 <Section title="Revenue" total={data.revenue.total} accounts={data.revenue.accounts} currencyCode={currencyCode} />

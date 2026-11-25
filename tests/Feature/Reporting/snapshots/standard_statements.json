@@ -1,0 +1,190 @@
+{
+    "profit_and_loss": {
+        "from": "2026-03-01",
+        "to": "2026-03-20",
+        "revenue": {
+            "total": 2400,
+            "accounts": [
+                {
+                    "code": "4000",
+                    "name": "Sales Revenue",
+                    "amount": 2400
+                }
+            ]
+        },
+        "cogs": {
+            "total": 900,
+            "accounts": [
+                {
+                    "code": "5300",
+                    "name": "Cost of Goods Sold",
+                    "amount": 900
+                }
+            ]
+        },
+        "gross_profit": 1500,
+        "operating_expenses": {
+            "total": 850.55,
+            "accounts": [
+                {
+                    "code": "5000",
+                    "name": "Salaries Expense",
+                    "amount": 700
+                },
+                {
+                    "code": "5200",
+                    "name": "General Operating Expenses",
+                    "amount": 150.55
+                }
+            ]
+        },
+        "net_profit": 649.45,
+        "currency": {
+            "code": "USD",
+            "base_currency": "USD",
+            "converted": false
+        }
+    },
+    "profit_and_loss_cost_centre": {
+        "from": "2026-03-01",
+        "to": "2026-03-20",
+        "revenue": {
+            "total": 0,
+            "accounts": []
+        },
+        "cogs": {
+            "total": 0,
+            "accounts": []
+        },
+        "gross_profit": 0,
+        "operating_expenses": {
+            "total": 700,
+            "accounts": [
+                {
+                    "code": "5000",
+                    "name": "Salaries Expense",
+                    "amount": 700
+                }
+            ]
+        },
+        "net_profit": -700,
+        "currency": {
+            "code": "USD",
+            "base_currency": "USD",
+            "converted": false
+        }
+    },
+    "balance_sheet": {
+        "as_of": "2026-03-20",
+        "assets": {
+            "total": 7700,
+            "accounts": [
+                {
+                    "code": "1000",
+                    "name": "Cash and Bank",
+                    "amount": 5000
+                },
+                {
+                    "code": "1100",
+                    "name": "Accounts Receivable",
+                    "amount": 2400
+                },
+                {
+                    "code": "1200",
+                    "name": "Inventory",
+                    "amount": 300
+                }
+            ]
+        },
+        "liabilities": {
+            "total": 2050.55,
+            "accounts": [
+                {
+                    "code": "2000",
+                    "name": "Accounts Payable",
+                    "amount": 2050.55
+                }
+            ]
+        },
+        "equity": {
+            "total": 5649.45,
+            "accounts": [
+                {
+                    "code": "3000",
+                    "name": "Capital",
+                    "amount": 5000
+                }
+            ],
+            "net_income": 649.45
+        },
+        "total_liabilities_and_equity": 7700,
+        "currency": {
+            "code": "USD",
+            "base_currency": "USD",
+            "converted": false
+        }
+    },
+    "profit_and_loss_csv": "\ufeffCode,Account,Amount\n,Revenue,\n4000,\"Sales Revenue\",2400\n,\"Total Revenue\",2400\n,\"Cost of Goods Sold\",\n5300,\"Cost of Goods Sold\",900\n,\"Total Cost of Goods Sold\",900\n,\"Gross Profit\",1500\n,\"Operating Expenses\",\n5000,\"Salaries Expense\",700\n5200,\"General Operating Expenses\",150.55\n,\"Total Operating Expenses\",850.55\n,\"Net Profit\",649.45\n",
+    "balance_sheet_csv": "\ufeffCode,Account,Amount\n,Assets,\n1000,\"Cash and Bank\",5000\n1100,\"Accounts Receivable\",2400\n1200,Inventory,300\n,\"Total Assets\",7700\n,Liabilities,\n2000,\"Accounts Payable\",2050.55\n,\"Total Liabilities\",2050.55\n,Equity,\n3000,Capital,5000\n,\"Net Income (accumulated)\",649.45\n,\"Total Equity\",5649.45\n,\"Total Liabilities + Equity\",7700\n",
+    "profit_and_loss_snapshot": {
+        "from": "2026-03-01",
+        "to": "2026-03-20",
+        "revenue": {
+            "total": 2400,
+            "accounts": [
+                {
+                    "code": "4000",
+                    "name": "Sales Revenue",
+                    "amount": 2400
+                }
+            ]
+        },
+        "cogs": {
+            "total": 900,
+            "accounts": [
+                {
+                    "code": "5300",
+                    "name": "Cost of Goods Sold",
+                    "amount": 900
+                }
+            ]
+        },
+        "gross_profit": 1500,
+        "operating_expenses": {
+            "total": 850.55,
+            "accounts": [
+                {
+                    "code": "5000",
+                    "name": "Salaries Expense",
+                    "amount": 700
+                },
+                {
+                    "code": "5200",
+                    "name": "General Operating Expenses",
+                    "amount": 150.55
+                }
+            ]
+        },
+        "net_profit": 649.45,
+        "currency": {
+            "code": "USD",
+            "base_currency": "USD",
+            "converted": false
+        }
+    },
+    "dashboard": {
+        "branch_id": null,
+        "from": "2026-03-01",
+        "to": "2026-03-20",
+        "total_sales": 0,
+        "total_purchases": 0,
+        "gross_profit_estimate": 1500,
+        "low_stock_product_count": 0,
+        "overdue_invoices_total": 0,
+        "overdue_supplier_bills_total": 0,
+        "pending_leave_requests_count": 0,
+        "upcoming_payroll_run": null,
+        "cash_drawer_variance": 0,
+        "budget_vs_actual": null
+    }
+}

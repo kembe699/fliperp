@@ -157,7 +157,7 @@ export function DashboardPage() {
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <HeroBalanceCard
-            label="Net Position (Gross Profit Estimate) — This Month"
+            label={company?.reporting_mode === 'nonprofit' ? 'Surplus/(Deficit) Estimate — This Month' : 'Net Position (Gross Profit Estimate) — This Month'}
             value={summaryLoading || !summary ? '—' : formatCurrency(summary.gross_profit_estimate, company?.currency_code)}
             stats={
               summary

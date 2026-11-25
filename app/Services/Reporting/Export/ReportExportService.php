@@ -69,6 +69,10 @@ class ReportExportService
 
     public function profitAndLoss(array $data): array
     {
+        if (isset($data['presentation'])) {
+            return $this->incomeAndExpenses($data);
+        }
+
         $rows = [
             ...$this->section('Revenue', $data['revenue']['accounts'], 'Total Revenue', $data['revenue']['total']),
             ...$this->section('Cost of Goods Sold', $data['cogs']['accounts'], 'Total Cost of Goods Sold', $data['cogs']['total']),
@@ -82,6 +86,10 @@ class ReportExportService
 
     public function balanceSheet(array $data): array
     {
+        if (isset($data['presentation'])) {
+            return $this->financialPosition($data);
+        }
+
         $rows = [
             ...$this->section('Assets', $data['assets']['accounts'], 'Total Assets', $data['assets']['total']),
             ...$this->section('Liabilities', $data['liabilities']['accounts'], 'Total Liabilities', $data['liabilities']['total']),
@@ -93,6 +101,65 @@ class ReportExportService
         ];
 
         return $this->table('Balance Sheet', 'As of '.$data['as_of'], $data, $this->amountColumns(), $rows);
+    }
+
+    /** A not-for-profit company's P&L: Statement of Income and Expenses, grouped by heading. */
+    protected function incomeAndExpenses(array $data): array
+    {
+        $p = $data['presentation'];
+        $rows = $this->groupedSection($p['income']);
+        if (! empty($p['show_cost_of_sales'])) {
+            $rows = [...$rows, ...$this->groupedSection($p['cost_of_sales']), ['code' => '', 'name' => $p['gross_label'], 'amount' => $data['gross_profit'], '_style' => 'subtotal']];
+        }
+        $rows = [...$rows, ...$this->groupedSection($p['expenditure']), ['code' => '', 'name' => $p['result_label'], 'amount' => $data['net_profit'], '_style' => 'total']];
+
+        return $this->table($p['title'], $this->range($data), $data, $this->amountColumns(), $rows);
+    }
+
+    /** A not-for-profit company's Balance Sheet: Statement of Financial Position, grouped by heading. */
+    protected function financialPosition(array $data): array
+    {
+        $p = $data['presentation'];
+        // The fund accounts' own total is replaced by one that includes the surplus line.
+        $netAssets = $this->groupedSection($p['net_assets']);
+        array_pop($netAssets);
+        $rows = [
+            ...$this->groupedSection($p['assets']),
+            ...$this->groupedSection($p['liabilities']),
+            ...$netAssets,
+            ['code' => '', 'name' => $p['surplus_label'], 'amount' => $data['equity']['net_income']],
+            ['code' => '', 'name' => $p['net_assets']['total_label'], 'amount' => $data['equity']['total'], '_style' => 'subtotal'],
+            ['code' => '', 'name' => $p['total_label'], 'amount' => $data['total_liabilities_and_equity'], '_style' => 'total'],
+        ];
+
+        return $this->table($p['title'], 'As of '.$data['as_of'], $data, $this->amountColumns(), $rows);
+    }
+
+    /** A grouped section: its title, each heading with its accounts and a subtotal, then the section total. */
+    protected function groupedSection(array $section): array
+    {
+        $rows = [['code' => '', 'name' => $section['label'], 'amount' => null, '_style' => 'section']];
+        foreach ($section['groups'] as $group) {
+            $rows = [...$rows, ...$this->groupRows($group, 0)];
+        }
+        $rows[] = ['code' => '', 'name' => $section['total_label'], 'amount' => $section['total'], '_style' => 'subtotal'];
+
+        return $rows;
+    }
+
+    protected function groupRows(array $group, int $depth): array
+    {
+        $indent = str_repeat('    ', $depth);
+        $rows = [['code' => $group['code'], 'name' => $indent.$group['name'], 'amount' => null, '_style' => $depth === 0 ? 'section' : null]];
+        foreach ($group['accounts'] as $account) {
+            $rows[] = ['code' => $account['code'], 'name' => $indent.'    '.$account['name'], 'amount' => $account['amount']];
+        }
+        foreach ($group['groups'] as $sub) {
+            $rows = [...$rows, ...$this->groupRows($sub, $depth + 1)];
+        }
+        $rows[] = ['code' => '', 'name' => $indent.'Total '.$group['name'], 'amount' => $group['total'], '_style' => 'subtotal'];
+
+        return $rows;
     }
 
     /** One account's ledger, or every account's (generateAll), with opening and closing rows per account. */
