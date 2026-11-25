@@ -31,6 +31,8 @@ export interface Company {
   enabled_modules: string[]
   /** The person who raised a PO, stock adjustment or journal entry may approve it themselves. */
   allow_self_approval: boolean
+  /** 'nonprofit': statements titled and grouped the not-for-profit way. */
+  reporting_mode?: 'standard' | 'nonprofit'
   billing_customer_id: number | null
   onboarded_by: number | null
   suspended_at: string | null

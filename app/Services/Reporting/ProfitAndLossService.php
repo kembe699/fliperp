@@ -28,7 +28,11 @@ class ProfitAndLossService
         $revenueAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'revenue', $dimensions);
         $expenseAccounts = $this->accountBalances($companyId, $from, $to, $branchId, 'expense', $dimensions);
 
-        $cogsIds = self::cogsAccountIds($companyId);
+        // A not-for-profit company has no cost of sales unless it turns it back
+        // on (reporting option show_cost_of_sales): every expense is expenditure.
+        $nonprofit = NonprofitPresentation::company($companyId);
+        $showCostOfSales = $nonprofit ? (bool) $nonprofit->reportingOption('show_cost_of_sales') : true;
+        $cogsIds = $showCostOfSales ? self::cogsAccountIds($companyId) : [];
         $cogsAccounts = $expenseAccounts->filter(fn ($row) => in_array($row['account_id'], $cogsIds, true))->values();
         $operatingExpenseAccounts = $expenseAccounts->reject(fn ($row) => in_array($row['account_id'], $cogsIds, true))->values();
 
@@ -38,7 +42,7 @@ class ProfitAndLossService
         $grossProfit = round($revenueTotal - $cogsTotal, 2);
         $netProfit = round($grossProfit - $operatingExpensesTotal, 2);
 
-        return [
+        $report = [
             'from' => $from,
             'to' => $to,
             'revenue' => ['total' => $revenueTotal, 'accounts' => $revenueAccounts->all()],
@@ -47,6 +51,14 @@ class ProfitAndLossService
             'operating_expenses' => ['total' => $operatingExpensesTotal, 'accounts' => $operatingExpenseAccounts->all()],
             'net_profit' => $netProfit,
         ];
+
+        // Standard companies get the report above unchanged; a not-for-profit
+        // one also gets its labels and heading groups (same figures).
+        if ($nonprofit) {
+            $report['presentation'] = (new NonprofitPresentation($companyId))->incomeAndExpenses($report, $showCostOfSales);
+        }
+
+        return $report;
     }
 
     /**

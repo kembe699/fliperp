@@ -41,13 +41,21 @@ class BalanceSheetService
 
         $equityTotal = round($equityAccountsTotal + $netIncome, 2);
 
-        return [
+        $report = [
             'as_of' => $asOf,
             'assets' => ['total' => $assetsTotal, 'accounts' => $assetAccounts->all()],
             'liabilities' => ['total' => $liabilitiesTotal, 'accounts' => $liabilityAccounts->all()],
             'equity' => ['total' => $equityTotal, 'accounts' => $equityAccounts->all(), 'net_income' => $netIncome],
             'total_liabilities_and_equity' => round($liabilitiesTotal + $equityTotal, 2),
         ];
+
+        // Standard companies get the report above unchanged; a not-for-profit
+        // one also gets its labels and heading groups (same figures).
+        if (NonprofitPresentation::company($companyId)) {
+            $report['presentation'] = (new NonprofitPresentation($companyId))->financialPosition($report);
+        }
+
+        return $report;
     }
 
     /**

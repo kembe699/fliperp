@@ -89,6 +89,14 @@ class DashboardAggregationService
             ->selectRaw('COALESCE(SUM(journal_entry_lines.credit - journal_entry_lines.debit), 0) as net')
             ->value('net');
 
+        // A not-for-profit company sees its surplus/(deficit): income less
+        // every expense, as on its Statement of Income and Expenses.
+        if (NonprofitPresentation::company($companyId)) {
+            $expenseIds = ChartOfAccount::query()->where('company_id', $companyId)->where('type', 'expense')->pluck('id');
+
+            return round($net($revenueIds) + $net($expenseIds), 2);
+        }
+
         return round($net($revenueIds) + $net($cogsIds), 2);
     }
 

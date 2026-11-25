@@ -92,6 +92,44 @@ export interface TrialBalanceReport {
   total_credit: number
 }
 
+/** A heading of the chart with its accounts and sub-headings (not-for-profit statements). */
+export interface StatementGroup {
+  code: string
+  name: string
+  total: number
+  accounts: ReportAccountLine[]
+  groups: StatementGroup[]
+}
+
+export interface StatementSection {
+  label: string
+  total_label: string
+  total: number
+  groups: StatementGroup[]
+}
+
+/** Present only for a company whose reporting_mode is 'nonprofit'. */
+export interface IncomeAndExpensesPresentation {
+  mode: 'nonprofit'
+  title: string
+  show_cost_of_sales: boolean
+  income: StatementSection
+  cost_of_sales?: StatementSection
+  gross_label?: string
+  expenditure: StatementSection
+  result_label: string
+}
+
+export interface FinancialPositionPresentation {
+  mode: 'nonprofit'
+  title: string
+  assets: StatementSection
+  liabilities: StatementSection
+  net_assets: StatementSection
+  surplus_label: string
+  total_label: string
+}
+
 export interface ProfitAndLossReport {
   currency?: ReportCurrencyInfo
   from: string
@@ -101,6 +139,7 @@ export interface ProfitAndLossReport {
   gross_profit: number
   operating_expenses: { total: number; accounts: ReportAccountLine[] }
   net_profit: number
+  presentation?: IncomeAndExpensesPresentation
 }
 
 export interface BalanceSheetReport {
@@ -110,6 +149,7 @@ export interface BalanceSheetReport {
   liabilities: { total: number; accounts: ReportAccountLine[] }
   equity: { total: number; accounts: ReportAccountLine[]; net_income: number }
   total_liabilities_and_equity: number
+  presentation?: FinancialPositionPresentation
 }
 
 export interface CashFlowReport {

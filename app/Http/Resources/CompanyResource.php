@@ -23,6 +23,7 @@ class CompanyResource extends JsonResource
             // Resolved list: every module for a company that has never had them set.
             'enabled_modules' => $this->enabledModules(),
             'allow_self_approval' => (bool) $this->allow_self_approval,
+            'reporting_mode' => $this->reporting_mode ?? 'standard',
             'billing_customer_id' => $this->billing_customer_id,
             'onboarded_by' => $this->onboarded_by,
             'suspended_at' => $this->suspended_at?->toIso8601String(),

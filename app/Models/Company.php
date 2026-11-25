@@ -36,6 +36,8 @@ class Company extends Model
         'activated_at',
         'enabled_modules',
         'allow_self_approval',
+        'reporting_mode',
+        'reporting_options',
     ];
 
     protected function casts(): array
@@ -47,7 +49,22 @@ class Company extends Model
             'activated_at' => 'datetime',
             'enabled_modules' => 'array',
             'allow_self_approval' => 'boolean',
+            'reporting_options' => 'array',
         ];
+    }
+
+    /** Statements presented the not-for-profit way (config/reporting.php). */
+    public function isNonprofit(): bool
+    {
+        return $this->reporting_mode === 'nonprofit';
+    }
+
+    /** A reporting option: this company's override, else its mode's default. */
+    public function reportingOption(string $key): mixed
+    {
+        $mode = in_array($this->reporting_mode, config('reporting.modes'), true) ? $this->reporting_mode : 'standard';
+
+        return ($this->reporting_options ?? [])[$key] ?? config("reporting.{$mode}.{$key}");
     }
 
     /**
